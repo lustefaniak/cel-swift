@@ -412,8 +412,14 @@ struct Generator {
         if rng.chance(80) || depth <= 0 {
           (key, identity) = keyLiteral(k)
         } else {
-          key = gen(k, depth - 1)
-          identity = "expr:" + key.rendered
+          let computed = gen(k, depth - 1)
+          if computed.children.isEmpty {
+            // A literal or variable: literals go through keyLiteral so equal values share an identity.
+            (key, identity) = keyLiteral(k)
+          } else {
+            key = computed
+            identity = "expr:" + key.rendered
+          }
         }
         if keys.contains(identity) { continue }
         keys.append(identity)
@@ -910,7 +916,9 @@ struct Generator {
     for fn in ["indexOf", "lastIndexOf"] {
       addIf(&o, full, 2, "str_\(fn)") { g in
         if g.rng.chance(40) {
-          return Node("%0.\(fn)($1, $2)", [g.gen(.string, d), g.gen(.string, d), g.smallInt(d)], .int, ext: true)
+          // Offset 0: an offset past the end is an error in cel-swift and -1 in cel-go (docs/divergences.md),
+          // which changes the cost and the outcome of the surrounding expression.
+          return Node("%0.\(fn)($1, 0)", [g.gen(.string, d), g.gen(.string, d)], .int, ext: true)
         }
         return Node("%0.\(fn)($1)", [g.gen(.string, d), g.gen(.string, d)], .int, ext: true)
       }
