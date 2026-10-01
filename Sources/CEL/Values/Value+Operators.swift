@@ -34,7 +34,13 @@ extension Value {
     case (.double(let a), .double(let b)): return .double(a + b)
     case (.string(let a), .string(let b)): return .string(a + b)
     case (.bytes(let a), .bytes(let b)): return .bytes(a + b)
-    case (.list(let a), .list(let b)): return .list(concatLists(a, b))
+    case (.list(let a), .list(let b)):
+      // A comprehension accumulator appends in place (cel-go mutableList.Add).
+      if let mutable = a as? MutableList {
+        mutable.append(contentsOf: b)
+        return .list(mutable)
+      }
+      return .list(concatLists(a, b))
     case (.duration(let a), .duration(let b)): return lift(addDurationChecked(a, b), Value.duration)
     case (.duration(let a), .timestamp(let b)):
       return lift(addTimeDurationChecked(b, a), Value.timestamp)
