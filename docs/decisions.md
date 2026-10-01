@@ -5,8 +5,8 @@ first tag (2026-10-01). Each entry gives the outcome and the reason in short; th
 the git history of this file (up to `b01d58c`). After `0.1.0` changing any of these is a SemVer-visible
 break (allowed in a minor before 1.0).
 
-**Swift ergonomics go in a separate module.** After the port, a module on top of the core (name open,
-`CELSwift` or `CELErgonomics`) adds the idiomatic layer: `Codable` activations and result decoding, result
+**Swift ergonomics go in a separate module.** After the port, a module on top of the core (`CELSwift`, see
+`docs/ergonomics.md` for the name, the design and what is left) adds the idiomatic layer: `Codable` activations and result decoding, result
 builders or macros for declarations and custom functions, typed function bindings through generics and
 parameter packs, `ExpressibleBy*Literal` conformances, async evaluation, macro- or property-wrapper-driven
 environments. The core `CEL` module stays close to cel-go's shape (port fidelity). Being in the same package,

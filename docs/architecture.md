@@ -327,3 +327,27 @@ swift-protobuf has no dynamic messages, so the descriptor walk cel-go does at ru
 - `CELSpecProtos` holds the conformance messages with their adapters, `CELSpecProtos.protobufTypes`, and
   `Cel_Expr_Value` / `Cel_Expr_ExprValue` conversions (cel-go `cel/io.go`). `CELGoTestProtos` holds cel-go's
   `test/proto{2,3}pb` messages for ported tests. `tools/gen-protos.sh` regenerates all of them.
+
+## Swift layer (`Sources/CELSwift`)
+
+Not a port: the idiomatic layer over `CEL` and `CELPolicy`, designed in `docs/ergonomics.md`.
+
+- `Coding/`: `CELEncoder` / `CELDecoder` (`Encoder` / `Decoder` over `Value`). A struct encodes as a
+  `Record` (`ObjectValue`, fields in declaration order, `nil` optionals stored as `null` so `has()` is false
+  and reading gives `null`); its type name comes from `CELNamedType` or `String(reflecting:)` without anonymous
+  contexts. Leaf types (scalars, `Date`, `Duration`, `Data`, `URL`, `UUID`, `CELValueRepresentable`) are
+  converted directly; `OptionalMarker` / `SequenceMarker` / `DictionaryMarker` let generic code see through
+  the standard containers without decoding them.
+- `Schema/`: `CELSchema` runs a type's `init(from:)` against `SchemaDecoder`, which answers every request
+  with a placeholder and records the key and the requested type. Collections and optionals are typed
+  statically (no instance needed), so recursion through them terminates; the `StructType`s are
+  `StructTypeDescriptor`s registered in the environment's `TypeRegistry`.
+- `Program/TypedProgram.swift`: extends the given environment with the facts, compiles, runs
+  `OutputChecker` (result type and map-literal outputs against the output schema), and creates three programs:
+  plain, partial (`.partialEvaluation`) and explaining (`.trackState`, `.exhaustiveEvaluation`,
+  `.errorsAsValues`).
+- `Program/Explanation.swift`: conditions and terms come from the pre-composition ASTs
+  (`CompiledPolicy.rule`, a `package` property for this), their values from the composed expression's state:
+  the composer copies source ranges with the nodes, so a node is found by range and kind. Source text is cut
+  from the ranges, extended past field names (selections are recorded at their dot, qualified identifiers
+  at the last dot) and closing brackets (calls are recorded at the opening parenthesis).

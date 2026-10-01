@@ -56,6 +56,14 @@ behind it are recorded in `docs/decisions.md`.
 - `CELPolicy`: cel-go's YAML policy format, environment configs, the policy compiler and composer; YAML read
   through a port of go-yaml's composer, so positions and error messages match.
 - `CELTest`: cel-go's `tests.yaml` suites for policies and expressions.
+- `CELSwift`: the Swift-idiomatic layer over `CEL` and `CELPolicy` (`docs/ergonomics.md`). `CELEncoder` /
+  `CELDecoder` convert `Encodable` values to CEL values and results to `Decodable` types (dates, durations,
+  data, optionals, key strategies); `CELSchema` derives CEL types and object types from `Decodable` types, and
+  `Environment.Option.variables(from:)` declares a facts struct as variables; typed function overloads
+  implemented by Swift closures; `TypedProgram<Facts, Output>` compiles an expression or a policy, checks its
+  outputs against `Output` at load, evaluates, evaluates partially with lazily resolved facts, and explains
+  results condition by condition; `ValidationError` and `EvaluationError` with source positions. DocC catalog
+  with a getting-started article whose examples run as tests.
 - `cel-swift` command line tool: `eval`, `check`, `parse`, `repl` and `policy test` (same results as
   cel-go's `celtest`).
 
