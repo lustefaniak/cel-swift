@@ -266,6 +266,12 @@ partial.unknowns      // which attributes are needed to decide
 Errors: `CompileError` (list of issues with source locations, rendered like cel-go), `EvalError` (CEL
 runtime error values surface as `.error` or are thrown at the top level, configurable).
 
+**Swift ergonomics live in a separate module** (maintainer direction, after the port; name open, e.g.
+`CELSwift`): `Codable` activations and result decoding, result builders or macros for declarations and
+custom functions, typed bindings via generics / parameter packs, literal conformances, async evaluation,
+macro-driven environments. The core `CEL` API above stays close to cel-go's shape; `docs/decisions.md`
+records how this affects the open API questions.
+
 ## Testing
 
 1. **Conformance** (`CELConformanceTests`): reads cel-spec textproto files with swift-protobuf's text format
@@ -369,5 +375,5 @@ copy. Go's `regexp` is BSD-3-Clause; its notice goes into `NOTICE` and the `CELR
   costs nothing and invites early contributors.
 - Swift macro (`@CELType`) for exposing native Swift structs as CEL objects, analogous to cel-go's
   `ext.NativeTypes`: useful for PRBar's facts, needs a `swift-syntax` dependency, so it would live in its own
-  target.
+  target. Decided: part of the post-port Swift ergonomics module (see Public API sketch).
 - Minimum Swift version: 6.0 is enough for everything planned; nothing here needs 6.2.

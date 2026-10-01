@@ -72,6 +72,15 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    producing and accepting enum values, `type()`, equality and `int()` on them, and `enum_value` in the conformance
    value conversion. About one session after the API decision; cel-go and cel-cpp do not implement it either.
 
+## After the port
+
+- **Swift ergonomics module** (maintainer direction, name open: `CELSwift` / `CELErgonomics`): idiomatic
+  Swift on top of the core, using `Codable` activations and result decoding, result builders or macros for
+  declarations and custom functions, typed function bindings via generics / parameter packs,
+  `ExpressibleBy*Literal` conformances, async evaluation, macro- or property-wrapper-driven environments.
+  The core `CEL` module stays close to cel-go's shape; ergonomic API choices go there
+  (`docs/decisions.md`, introduction). Subsumes the `@CELType` macro of `docs/plan.md`.
+
 ## Open decisions for the maintainer
 
 In `docs/decisions.md`, one section each with options, affected code and a recommendation.

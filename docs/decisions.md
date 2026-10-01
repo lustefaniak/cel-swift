@@ -6,6 +6,15 @@ before `0.1.0`: after the tag a change is a SemVer-visible break (allowed in a m
 PRBar pays for it). When one is decided, record the outcome here in a line and move the details into
 `docs/architecture.md` or `docs/divergences.md`.
 
+**Maintainer direction (2026-10-01): Swift ergonomics go in a separate module.** After the port, a
+module on top of the core (working name `CELSwift` or `CELErgonomics`, name open) adds the idiomatic
+layer: `Codable` activations and result decoding, result builders or macros for declarations and
+custom functions, typed function bindings through generics and parameter packs, `ExpressibleBy*Literal`
+conformances, async evaluation, macro- or property-wrapper-driven environments. The core `CEL` module
+therefore stays close to cel-go's shape (port fidelity), and ergonomic API choices move to that module.
+Being in the same package, it can use `package` declarations of the core. Each section below says
+whether this changes its recommendation.
+
 ## 1. Package name: `cel-swift` or `swift-cel`
 
 Swift packages are conventionally `swift-<name>` (`swift-protobuf`, `swift-collections`); the repo is
@@ -23,6 +32,8 @@ Module and product names (`CEL`, `CELPolicy`, ...) do not change either way.
 
 Recommendation: **keep `cel-swift`**. The CEL family names its implementations `cel-<lang>`, the
 GitHub URL is what clients type, and the convention is not enforced anywhere. Decide now either way.
+The ergonomics module's name is a separate choice; `CELSwift` reads oddly if the package becomes
+`swift-cel`.
 
 ## 2. The public `enum CEL` shares the module's name
 
@@ -62,7 +73,10 @@ TestCustomInterpreterDecorator*, custom optimizer rows).
   `package`. More design work, smaller commitment.
 
 Recommendation: **keep it `package` for 0.1**, design the facade before 1.0 when a client needs custom
-macros. Record the cel-go tests it unblocks in the facade's issue.
+macros. Record the cel-go tests it unblocks in the facade's issue. The ergonomics direction strengthens
+this: Swift-macro-driven declarations and typed bindings in the ergonomics module can use the `package`
+AST, so the public facade is only needed for clients outside the package (custom parser macros, their
+own optimizers), and when it comes it should follow cel-go's `ast` package shape.
 
 ## 4. Converting expressions to and from the cel-spec protos
 
@@ -97,7 +111,9 @@ rename is cheap now.
 - **Both**: no.
 
 Recommendation: **keep `asInt`** and its siblings; the name tells the reader it is a case match, not a
-numeric conversion. If clients ask for conversions, add `Int(_ value: Value)`-style initializers.
+numeric conversion. With the ergonomics direction this matters less: conversions (`Int(value)`,
+`Decodable` results, literal conformances) belong to the ergonomics module, and the core accessors
+only need to be unambiguous, which `asInt` is.
 
 ## 6. Class-backed list, map and object payloads in `Value`
 
