@@ -1,5 +1,5 @@
-// Enum fields of the cel-spec conformance messages: `google.protobuf.NullValue` fields converted to JSON.
-// Not a ported file: cel-go gets these from protojson, which these tests compare against.
+// Enum fields of the cel-spec conformance messages: NullValue fields in JSON, undeclared numbers in proto2 enums.
+// Not a ported file: the expected values are what cel-go (protoreflect, protojson) does.
 
 import CEL
 import CELProtobuf
@@ -39,6 +39,60 @@ struct EnumFieldTests {
     #expect(
       fields["mapStringNullValue"]
         == Google_Protobuf_Value(structValue: Google_Protobuf_Struct(fields: ["foo": nil, "bar": nil])))
+  }
+
+  // MARK: Undeclared numbers in proto2 (closed) enum fields
+
+  /// The field of a proto2 message created with `fields`.
+  func proto2Field(_ name: String, _ fields: [String: Value]) throws -> Value {
+    let value = types.newValue(proto2, fields: fields)
+    let object = try #require(value.protobufObject)
+    return object.field(name)
+  }
+
+  /// cel-go stores any 32-bit number in a proto2 enum field, declared or not (Go enums are int32s);
+  /// swift-protobuf's closed enums cannot hold an undeclared one.
+  @Test func proto2EnumFieldsHoldUndeclaredNumbers() throws {
+    #expect(try proto2Field("standalone_enum", ["standalone_enum": 10]) == 10)
+    #expect(try proto2Field("standalone_enum", ["standalone_enum": -3]) == -3)
+    #expect(try proto2Field("single_nested_enum", ["single_nested_enum": 10]) == 10)
+    #expect(try proto2Field("repeated_nested_enum", ["repeated_nested_enum": [1, 10, 2]]) == [1, 10, 2])
+    #expect(try proto2Field("map_string_enum", ["map_string_enum": ["a": 10, "b": 1]]) == ["a": 10, "b": 1])
+    #expect(try proto2Field("map_int32_enum", ["map_int32_enum": [-1: 10, 2: 1]]) == [-1: 10, 2: 1])
+    let object = try #require(types.newValue(proto2, fields: ["standalone_enum": 10]).protobufObject)
+    #expect(object.isFieldSet("standalone_enum") == true)
+    #expect(object.isFieldSet("single_nested_enum") == false)
+    // The 32-bit range is still checked.
+    #expect(types.newValue(proto2, fields: ["standalone_enum": 2_147_483_648]).isError)
+  }
+
+  @Test func proto2UndeclaredEnumNumbersCompareAndSerialize() throws {
+    let ten = types.newValue(proto2, fields: ["standalone_enum": 10, "repeated_nested_enum": [10, 1]])
+    #expect(ten.celEquals(types.newValue(proto2, fields: ["standalone_enum": 10, "repeated_nested_enum": [10, 1]])) == true)
+    #expect(ten.celEquals(types.newValue(proto2, fields: ["standalone_enum": 11, "repeated_nested_enum": [10, 1]])) == false)
+    // Through an Any (binary encoding) and back.
+    let any = try types.message(from: ten, as: Google_Protobuf_Any.self)
+    let unpacked = try #require(types.value(of: any).protobufObject)
+    #expect(unpacked.field("standalone_enum") == 10)
+    #expect(unpacked.field("repeated_nested_enum") == [10, 1])
+    // Bytes from elsewhere: field 24 (standalone_enum) holding 10.
+    let decoded = try Cel_Expr_Conformance_Proto2_TestAllTypes(serializedBytes: [0xC0, 0x01, 0x0A] as [UInt8])
+    #expect(types.value(of: decoded).protobufObject?.field("standalone_enum") == 10)
+  }
+
+  /// protojson writes undeclared enum numbers as numbers and declared ones as names.
+  @Test func proto2UndeclaredEnumNumbersInJSON() throws {
+    let value = types.newValue(
+      proto2,
+      fields: ["standalone_enum": 10, "repeated_nested_enum": [1, 10], "map_int32_enum": [1: 10, 2: 1]])
+    let fields = try json(value).structValue.fields
+    #expect(fields["standaloneEnum"] == Google_Protobuf_Value(numberValue: 10))
+    #expect(
+      fields["repeatedNestedEnum"]
+        == Google_Protobuf_Value(listValue: Google_Protobuf_ListValue(values: ["BAR", 10])))
+    #expect(
+      fields["mapInt32Enum"]
+        == Google_Protobuf_Value(structValue: Google_Protobuf_Struct(fields: ["1": 10, "2": "BAR"])))
   }
 
   /// Nested messages are converted the same way.

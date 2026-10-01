@@ -273,12 +273,13 @@ struct DifferentialTests {
   }
 
   /// Triage helper: `CEL_DIFF_EXPR='expr; expr2'` runs each expression in the `full` environment (with the
-  /// bindings of case 0 of seed 0, `CEL_DIFF_UNCHECKED=1` for parse-only) and prints both answers.
+  /// bindings of case 0 of seed 0, `CEL_DIFF_UNCHECKED=1` for parse-only, `CEL_DIFF_PROFILE=proto` for the
+  /// TestAllTypes messages) and prints both answers.
   @Test(.enabled(if: env["CEL_DIFF_EXPR"] != nil && Oracle.isAvailable))
   func adHoc() throws {
     let texts = (Self.env["CEL_DIFF_EXPR"] ?? "").split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }
     var base = DiffCase.generate(seed: 0, index: 0)
-    base.profile = .full
+    base.profile = Self.env["CEL_DIFF_PROFILE"].flatMap(Profile.init(rawValue:)) ?? .full
     base.extensions = Profile.extensionVersions.map { ($0.0, "latest") }
     base.checked = Self.env["CEL_DIFF_UNCHECKED"] != "1"
     base.unknowns = (Self.env["CEL_DIFF_UNKNOWN"] ?? "").split(separator: ",").map {
