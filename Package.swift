@@ -79,7 +79,7 @@ let package = Package(
     ),
     .testTarget(
       name: "CELTests",
-      dependencies: ["CEL", "CELProtobuf", "CELGoTestProtos"],
+      dependencies: ["CEL", "CELExtensions", "CELProtobuf", "CELGoTestProtos"],
       exclude: ["ParserFixtures"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
