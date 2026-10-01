@@ -255,6 +255,11 @@ struct ExplanationBuilder {
       case .select(let select) where !select.testOnly:
         // A selection is recorded at its dot; the field name follows.
         end = max(end, fieldEnd(dot: nodeStart, field: select.field))
+      case .call(let call) where call.target == nil:
+        // A global call is recorded at its opening parenthesis; its name comes before.
+        if let nameStart = functionNameStart(paren: nodeStart, name: call.function) {
+          start = min(start, nameStart)
+        }
       case .ident(let name):
         // The checker resolves `a.b.c` to one identifier recorded at the last dot.
         guard let qualified = qualifiedNameSpan(dot: nodeStart, name: name) else { break }
@@ -283,6 +288,20 @@ struct ExplanationBuilder {
     let location = ast.sourceInfo.location(ofOffset: Int32(start))
     let located = location.line >= 1 && location.column >= 0
     return (String(text), located ? location.line : nil, located ? location.column + 1 : nil)
+  }
+
+  /// Where a call's function name starts, given the offset of its opening parenthesis; `nil` for
+  /// an operator, or when the source does not spell the name there.
+  private func functionNameStart(paren: Int, name: String) -> Int? {
+    guard paren < scalars.count, scalars[paren] == "(" else { return nil }
+    var end = paren
+    while end > 0, scalars[end - 1] == " " || scalars[end - 1] == "\n" || scalars[end - 1] == "\t" {
+      end -= 1
+    }
+    let spelled = Array(name.unicodeScalars)
+    let start = end - spelled.count
+    guard start >= 0, Array(scalars[start..<end]) == spelled else { return nil }
+    return start
   }
 
   /// The source range of a qualified identifier the checker recorded at its last dot, `nil` when

@@ -7,6 +7,11 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 
 ## [Unreleased]
 
+### Fixed
+
+- `CELSwift`: an explanation of a condition or term that starts with a global function call, such as
+  `size(pr.labels) > 0`, dropped the function name and pointed at the opening parenthesis.
+
 ## [0.1.0] - 2026-10-01
 
 First release, for PRBar. A port of cel-go v0.32.0, tested against cel-spec v0.25.3. The API decisions
