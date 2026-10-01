@@ -10,6 +10,7 @@ let package = Package(
     .library(name: "CELPolicy", targets: ["CELPolicy"]),
     .library(name: "CELTest", targets: ["CELTest"]),
     .library(name: "CELProtobuf", targets: ["CELProtobuf"]),
+    .library(name: "CELSwift", targets: ["CELSwift"]),
     .executable(name: "protoc-gen-cel-swift", targets: ["protoc-gen-cel-swift"]),
     .executable(name: "cel-swift", targets: ["cel-swift"]),
   ],
@@ -131,6 +132,18 @@ let package = Package(
       name: "CELExtensionsTests",
       dependencies: ["CEL", "CELExtensions"],
       resources: [.copy("Resources")],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    // Idiomatic Swift over CEL and CELPolicy: Codable facts and results, schemas from Swift types,
+    // typed functions and programs. See docs/ergonomics.md.
+    .target(
+      name: "CELSwift",
+      dependencies: ["CEL", "CELPolicy"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .testTarget(
+      name: "CELSwiftTests",
+      dependencies: ["CEL", "CELPolicy", "CELSwift"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .target(
