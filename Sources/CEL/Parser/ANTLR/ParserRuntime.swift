@@ -61,12 +61,12 @@ final class ParserRuntime {
 
   // MARK: Prediction (antlr ParserATNSimulator)
 
-  private var decisionToDFA: [DFA?]
+  private let cache = PredictionCache.shared
   private var mergeCache: MergeCache?
   private var startIndex = 0
   private var outerContext: ParserRuleContext?
   private var currentDFA: DFA?
-  private let errorState = DFAState(stateNumber: Int.max, configs: ATNConfigSet(fullCtx: false))
+  private var errorState: DFAState { cache.errorState }
 
   init(
     input: [Unicode.Scalar], sourceInfo: SourceInfo, errors: CELErrors, maxRecursionDepth: Int,
@@ -80,7 +80,6 @@ final class ParserRuntime {
     self.errorReportingLimit = errorReportingLimit
     self.errorRecoveryLimit = errorRecoveryLimit
     self.lookaheadLimit = lookaheadLimit
-    self.decisionToDFA = Array(repeating: nil, count: atn.decisionToState.count)
   }
 
   // MARK: - Token stream
@@ -743,16 +742,20 @@ final class ParserRuntime {
   // MARK: - Adaptive prediction (antlr ParserATNSimulator)
 
   private func dfa(_ decision: Int) -> DFA {
-    if let d = decisionToDFA[decision] {
+    if let d = cache.decisionToDFA[decision] {
       return d
     }
     let d = DFA(atn: atn, decision: decision)
-    decisionToDFA[decision] = d
+    cache.decisionToDFA[decision] = d
     return d
   }
 
   /// antlr `AdaptivePredict`. Sets `error` on failure and returns 0 (ATNInvalidAltNumber).
   func adaptivePredict(_ decision: Int) throws -> Int {
+    try cache.withLock { try lockedAdaptivePredict(decision) }
+  }
+
+  private func lockedAdaptivePredict(_ decision: Int) throws -> Int {
     let outer = ctx
     startIndex = tokenIndex
     outerContext = outer
