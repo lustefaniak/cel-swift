@@ -7,8 +7,6 @@
 # Every field is required, every entry must match at least one test. A test that is merely not implemented
 # yet needs no entry: it is simply absent from passing.txt. Skip only what cannot or should not pass, and
 # remove entries as they are fixed.
-string_ext/value_errors/indexof_out_of_range | * | cel-go v0.32 returns -1 for an offset past the end, the spec an error; the strings extension follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/conformance/BUILD.bazel (_TESTS_TO_SKIP)
-string_ext/value_errors/lastindexof_out_of_range | * | cel-go v0.32 returns -1 for an offset past the end, the spec an error; the strings extension follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/conformance/BUILD.bazel (_TESTS_TO_SKIP)
 network_ext/ipv4/ipv4_equals_ipv6 | * | the spec accepts IPv4-mapped IPv6 addresses, cel-go's ext.Network (strict, Kubernetes-compatible parsing) rejects them; the network extension follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/ext/network.go (parseIPAddr)
 network_ext/ipv4/ipv4_not_equals_ipv6 | * | the spec accepts IPv4-mapped IPv6 addresses, cel-go's ext.Network (strict, Kubernetes-compatible parsing) rejects them; the network extension follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/ext/network.go (parseIPAddr)
 network_ext/ip_type/is_ip_cidr_compile_error | checked | the test expects a type-check error as an evaluation error; cel-go's runner reports check errors as failures | https://github.com/google/cel-go/blob/v0.32.0/conformance/conformance_test.go

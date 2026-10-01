@@ -293,16 +293,18 @@ func charAt(_ str: String, _ ind: Int64) -> Result<String, ExtError> {
 
 /// Port of `indexOfOffset`.
 func indexOf(_ str: String, _ substr: String, _ offset: Int64) -> Result<Int64, ExtError> {
-  if offset < 0 {
+  let runes = Array(str.unicodeScalars)
+  // The spec and cel-cpp reject an offset past the end; cel-go returns -1 for it, or the length for an
+  // empty substring (docs/divergences.md).
+  if offset < 0 || offset > Int64(runes.count) {
     return .failure(ExtError("index out of range: \(offset)"))
   }
-  let runes = Array(str.unicodeScalars)
   if substr.isEmpty {
-    // The empty string matches at the search offset, clamped to the end of the string.
-    return .success(offset > Int64(runes.count) ? Int64(runes.count) : offset)
+    // The empty string matches at the search offset.
+    return .success(offset)
   }
   let subrunes = Array(substr.unicodeScalars)
-  // If the offset exceeds the length, return -1 rather than error.
+  // At the end of the string only the empty string matches.
   if offset >= Int64(runes.count) {
     return .success(-1)
   }
@@ -331,15 +333,17 @@ func lastIndexOf(_ str: String, _ substr: String) -> Result<Int64, ExtError> {
 
 /// Port of `lastIndexOfOffset`.
 func lastIndexOf(_ str: String, _ substr: String, _ offset: Int64) -> Result<Int64, ExtError> {
-  if offset < 0 {
+  let runes = Array(str.unicodeScalars)
+  // The spec and cel-cpp reject an offset past the end; cel-go returns -1 for it, or the length for an
+  // empty substring (docs/divergences.md).
+  if offset < 0 || offset > Int64(runes.count) {
     return .failure(ExtError("index out of range: \(offset)"))
   }
-  let runes = Array(str.unicodeScalars)
   if substr.isEmpty {
-    return .success(offset > Int64(runes.count) ? Int64(runes.count) : offset)
+    return .success(offset)
   }
   let subrunes = Array(substr.unicodeScalars)
-  // If the offset is far greater than the length return -1.
+  // At the end of the string only the empty string matches (cel-go does not search back from there).
   if offset >= Int64(runes.count) {
     return .success(-1)
   }

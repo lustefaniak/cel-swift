@@ -36,8 +36,11 @@ struct StringsTests {
     #expect(d.call("indexOf", "hello wello", "hello wello") == 0)
     #expect(d.call("indexOf", "hello wello", "ello", 6) == 7)
     #expect(d.call("indexOf", "hello wello", "elbo room!!") == -1)
-    #expect(d.call("indexOf", "hello", "", 10) == 5)
-    #expect(d.call("indexOf", "hello", "l", 10) == -1)
+    // Offsets past the end are errors per the spec; cel-go returns 5 and -1 (docs/divergences.md).
+    #expect(d.call("indexOf", "hello", "", 5) == 5)
+    #expect(d.call("indexOf", "hello", "l", 5) == -1)
+    #expect(errorMessage(d.call("indexOf", "hello", "", 10)) == "index out of range: 10")
+    #expect(errorMessage(d.call("indexOf", "hello", "l", 10)) == "index out of range: 10")
     #expect(errorMessage(d.call("indexOf", "tacocat", "a", -1)) == "index out of range: -1")
   }
 
@@ -55,7 +58,8 @@ struct StringsTests {
     #expect(d.call("lastIndexOf", "hello wello", "hello wello") == 0)
     #expect(d.call("lastIndexOf", "hello wello", "low") == -1)
     #expect(d.call("lastIndexOf", "hello wello", "ello", 6) == 1)
-    #expect(d.call("lastIndexOf", "hello", "", 10) == 5)
+    #expect(d.call("lastIndexOf", "hello", "", 5) == 5)
+    #expect(errorMessage(d.call("lastIndexOf", "hello", "", 10)) == "index out of range: 10")
     #expect(errorMessage(d.call("lastIndexOf", "tacocat", "a", -1)) == "index out of range: -1")
   }
 

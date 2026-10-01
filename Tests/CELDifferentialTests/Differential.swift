@@ -142,6 +142,16 @@ struct Mismatch: Sendable, CustomStringConvertible {
   static let divergences: [(reason: String, matches: @Sendable (Outcome, Outcome) -> Bool)] = [
     // docs/divergences.md: cel-go lets a repeated key overwrite the earlier entry.
     ("map literals reject repeated keys", { _, s in s.evalError?.hasPrefix("Failed with repeated key") ?? false }),
+    // docs/divergences.md: an `indexOf` / `lastIndexOf` offset past the end of the string is an error (spec),
+    // where cel-go returns -1 or the string length and evaluation goes on (to a value or another error).
+    // charAt and substring report the same message in both, so equal errors are still compared.
+    (
+      "string offsets past the end are errors",
+      { o, s in
+        guard let e = s.evalError, e.hasPrefix("index out of range: ") else { return false }
+        return o.evalError != e
+      }
+    ),
     // cel-go panics (recovered as `internal error: interface conversion ...`) in the runtime cost trackers of
     // ext/lists.go `distinct` and `sort`, which cast their argument to a list without checking for an error.
     ("cel-go panics", { o, _ in o.evalError?.hasPrefix("internal error: ") ?? false }),

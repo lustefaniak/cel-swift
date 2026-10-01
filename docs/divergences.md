@@ -206,6 +206,12 @@ messages, error node ids, observed ids and runtime cost). The differences:
 
 ## Extensions (`CELExtensions`)
 
+- **`indexOf` / `lastIndexOf` with an offset past the end of the string are errors**
+  (`index out of range: N`), as the cel-spec suite (`string_ext/value_errors/*indexof_out_of_range`) and
+  cel-cpp have it. cel-go changed this in v0.22 to return -1 (or the string length for an empty
+  substring) and skips those tests pending a spec update; when the pinned cel-spec adopts cel-go's
+  behaviour, follow it. An offset equal to the length is accepted as before. The cel-go table rows
+  `strings_test.go:148/150/159/161` expect the error here (`GoTableTests.specErrors`).
 - **`string.format` before strings version 4 formats `%f` and `%e` with en-US symbols only.** cel-go
   formats them through `golang.org/x/text/message` with the CLDR symbols of the configured locale
   (`ext.StringsLocale`, e.g. `de_DE` prints `3,140`). The `locale` argument of `Library.strings` is

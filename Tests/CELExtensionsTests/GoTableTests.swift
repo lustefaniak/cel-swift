@@ -111,6 +111,16 @@ private let unsupported: [String: String] = {
   return map
 }()
 
+/// Rows whose cel-go expectation is replaced by the spec's, with the error the port reports instead
+/// (docs/divergences.md).
+private let specErrors: [String: String] = [
+  // String offsets past the end: cel-go returns -1 (or the length for ''), the spec an error.
+  "strings_test.go:148": "index out of range: 30",
+  "strings_test.go:150": "index out of range: 30",
+  "strings_test.go:159": "index out of range: 30",
+  "strings_test.go:161": "index out of range: 30",
+]
+
 struct GoTableTests {
   /// The format tables carry cel-go's cost expectations; make sure the harness reads them.
   @Test func costExpectationsLoaded() {
@@ -136,7 +146,7 @@ struct GoTableTests {
 
   private func runRow(_ row: GoTableRow) throws {
     let env = try GoTables.environment(row.env)
-    let err = row.fields["err"] ?? ""
+    let err = specErrors[row.entry] ?? row.fields["err"] ?? ""
     let expr: String
     let expected: Value
     if row.kind == "format" {
