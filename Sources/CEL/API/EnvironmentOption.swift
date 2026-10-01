@@ -27,6 +27,9 @@ extension Environment {
     package var registry = TypeRegistry()
     package var libraryNames: [String] = []
     package var decorators: [ProgramDecorator] = []
+    package var costEstimateOptions = CostEstimateOptions()
+    package var costTrackers: [String: FunctionTracker] = [:]
+    package var regexProgramSizeLimit = 0
     package var programOptions: [Program.Option] = []
     package var validators: [ExpressionValidator] = []
     /// Types registered by libraries and options, re-registered when the provider is replaced.
@@ -113,6 +116,8 @@ extension Environment {
       macros += library.macros
       extraParserOptions += library.parserOptions
       decorators += library.decorators
+      costEstimateOptions.merge(library.costEstimateOptions)
+      costTrackers.merge(library.costTrackers) { _, new in new }
       homogeneousLiteralExemptFunctions += library.homogeneousLiteralExemptFunctions
     }
   }
@@ -363,6 +368,18 @@ extension Environment {
     /// (cel-go `ExpressionNodeLimit`, default 100,000).
     public static func expressionNodeLimit(_ nodes: Int) -> Option {
       Option { $0.expressionNodeCountLimit = nodes }
+    }
+
+    /// Limits the compiled program size of regular expressions, in instructions (cel-go
+    /// `RegexProgramSizeLimit`): pattern literals are rejected when the expression is checked,
+    /// computed patterns when the call is evaluated. Zero or less removes the limit.
+    public static func regexProgramSizeLimit(_ instructions: Int) -> Option {
+      Option {
+        $0.regexProgramSizeLimit = instructions
+        if instructions > 0 {
+          $0.validators.append(.regexProgramSizeLimit(instructions))
+        }
+      }
     }
   }
 }

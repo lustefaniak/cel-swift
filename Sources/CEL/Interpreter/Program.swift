@@ -47,6 +47,9 @@ package struct ProgramOptions: Sendable {
   package var costTracker = CostTrackerOptions()
   /// Check the interrupt every this many comprehension iterations; 0 disables interruption.
   package var interruptCheckFrequency: UInt = 0
+  /// The maximum regex program size, checked when planning constant patterns and when calling
+  /// with computed ones (cel-go `RegexProgramSizeLimit`); 0 disables the check.
+  package var regexProgramSizeLimit = 0
 
   package init(
     evalOptions: EvalOptions = [], costLimit: UInt64? = nil, interruptCheckFrequency: UInt = 0
@@ -204,6 +207,9 @@ package struct ProgramEnvironment: Sendable {
     if evalOptions.contains(.optimize) {
       planner.decorators.append(decOptimize())
       planner.decorators.append(decRegexOptimizer())
+    }
+    if options.regexProgramSizeLimit > 0 {
+      planner.decorators.append(decRegexProgramSizeLimit(options.regexProgramSizeLimit))
     }
     if !evalOptions.isDisjoint(with: [.exhaustiveEval, .trackState, .trackCost]) {
       var observers: [any StatefulObserver] = []

@@ -254,6 +254,17 @@ public struct Environment: Sendable {
     try makeProgram(expression.ast, source: expression.source, options: options)
   }
 
+  /// Estimates the cost of a checked expression with the environment's library cost estimators
+  /// (cel-go `Env.EstimateCost`).
+  package func estimateCost(
+    _ expression: CheckedExpression, estimator: any CostEstimator = DefaultCostEstimator(),
+    presenceTestHasCost: Bool = true
+  ) -> CostEstimate {
+    var options = configuration.costEstimateOptions
+    options.presenceTestHasCost = presenceTestHasCost
+    return Checker.estimateCost(expression.ast, estimator: estimator, options: options)
+  }
+
   package func makeProgram(_ ast: AST, source: any Source, options: [Program.Option]) throws(CompileError) -> Program {
     var settings = Program.Settings()
     for option in configuration.programOptions + options {
@@ -268,8 +279,12 @@ public struct Environment: Sendable {
       parserOptions: configuration.parserOptions,
       errorOnBadPresenceTest: configuration.errorOnBadPresenceTest)
     base.decorators = configuration.decorators + settings.decorators
+    base.costEstimateOptions = configuration.costEstimateOptions
+    base.costTrackers = configuration.costTrackers
     do {
-      let planned = try base.program(ast, options: settings.plannerOptions, dispatcher: dispatcher)
+      var plannerOptions = settings.plannerOptions
+      plannerOptions.regexProgramSizeLimit = configuration.regexProgramSizeLimit
+      let planned = try base.program(ast, options: plannerOptions, dispatcher: dispatcher)
       return Program(planned: planned, settings: settings)
     } catch {
       throw CompileError(message: "\(error)", source: source)
