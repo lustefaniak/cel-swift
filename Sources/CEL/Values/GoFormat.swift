@@ -2,8 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
-// Ported from Go src/internal/strconv/ftoa.go (formatDigits, fmtE, fmtF) and
-// src/strconv/quote.go, as used by cel-go for `string(double)`, duration formatting and
+// Ported from Go src/internal/strconv/ftoa.go (formatDigits, fmtE, fmtF), as used by cel-go for `string(double)`, duration formatting and
 // `types.Format`. Shortest round-trip digits come from Swift's `Double.description`, which, like
 // Go's shortest formatting, yields the shortest digit string that round-trips, choosing the
 // closest candidate.
@@ -163,60 +162,9 @@ private func fmtF(_ dst: inout [UInt8], _ neg: Bool, _ d: ShortestDecimal, _ pre
 
 // MARK: - strconv.Quote
 
-/// Go `strconv.Quote`: a double-quoted string with Go escapes for control and non-printable
-/// characters.
-///
-/// Printability follows Go's `unicode.IsPrint` approximately: letters, marks, numbers,
-/// punctuation, symbols and the ASCII space are printed as is.
+/// Go `strconv.Quote`, shared with the debug printer (`Common/GoStrconv.swift`).
 func goQuote(_ s: String) -> String {
-  var out = "\""
-  for scalar in s.unicodeScalars {
-    switch scalar {
-    case "\u{07}": out += "\\a"
-    case "\u{08}": out += "\\b"
-    case "\u{0C}": out += "\\f"
-    case "\n": out += "\\n"
-    case "\r": out += "\\r"
-    case "\t": out += "\\t"
-    case "\u{0B}": out += "\\v"
-    case "\\": out += "\\\\"
-    case "\"": out += "\\\""
-    default:
-      if isGoPrint(scalar) {
-        out.unicodeScalars.append(scalar)
-      } else if scalar.value < 0x80 {
-        out += "\\x" + hex(scalar.value, width: 2)
-      } else if scalar.value < 0x10000 {
-        out += "\\u" + hex(scalar.value, width: 4)
-      } else {
-        out += "\\U" + hex(scalar.value, width: 8)
-      }
-    }
-  }
-  out += "\""
-  return out
-}
-
-private func hex(_ v: UInt32, width: Int) -> String {
-  let digits = String(v, radix: 16)
-  return String(repeating: "0", count: max(0, width - digits.utf8.count)) + digits
-}
-
-private func isGoPrint(_ scalar: Unicode.Scalar) -> Bool {
-  if scalar == " " {
-    return true
-  }
-  switch scalar.properties.generalCategory {
-  case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
-    .nonspacingMark, .spacingMark, .enclosingMark,
-    .decimalNumber, .letterNumber, .otherNumber,
-    .connectorPunctuation, .dashPunctuation, .openPunctuation, .closePunctuation,
-    .initialPunctuation, .finalPunctuation, .otherPunctuation,
-    .mathSymbol, .currencySymbol, .modifierSymbol, .otherSymbol:
-    return true
-  default:
-    return false
-  }
+  GoFormat.quote(s)
 }
 
 // MARK: - fmt %v

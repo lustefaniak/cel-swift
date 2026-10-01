@@ -87,6 +87,25 @@ public enum MapKey: Sendable, Hashable, CustomStringConvertible {
   }
 }
 
+extension MapKey: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral,
+  ExpressibleByBooleanLiteral
+{
+  /// Creates a `string` key.
+  public init(stringLiteral value: String) {
+    self = .string(value)
+  }
+
+  /// Creates an `int` key.
+  public init(integerLiteral value: Int64) {
+    self = .int(value)
+  }
+
+  /// Creates a `bool` key.
+  public init(booleanLiteral value: Bool) {
+    self = .bool(value)
+  }
+}
+
 /// A CEL map.
 ///
 /// Implement this protocol to expose host dictionaries to CEL without copying them.
