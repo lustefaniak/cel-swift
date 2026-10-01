@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 export CEL_FUZZ=1
 scratch="${FUZZ_SCRATCH:-.build-fuzz}"
-for target in cel-fuzz-parser cel-fuzz-checker cel-fuzz-eval; do
-  swift build -c release --scratch-path "$scratch" --product "$target" \
+for target in cel-fuzz-parser cel-fuzz-checker cel-fuzz-evaluator; do
+  swift build -c release --scratch-path "$scratch" --product "$target" -j "${FUZZ_JOBS:-4}" \
     -Xswiftc -sanitize=fuzzer,address -Xswiftc -g
 done
