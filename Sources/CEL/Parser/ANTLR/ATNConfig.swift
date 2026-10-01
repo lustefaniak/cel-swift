@@ -370,6 +370,15 @@ final class DFA {
     }
   }
 
+  /// The states' edges point at each other (loops in the grammar give cycles), which ARC cannot
+  /// free. Go's garbage collector does; here the per-parse DFA breaks the cycles when it goes.
+  deinit {
+    for state in states.values {
+      state.edges = nil
+    }
+    s0?.edges = nil
+  }
+
   var count: Int { states.count }
 
   func get(_ s: DFAState) -> DFAState? {
