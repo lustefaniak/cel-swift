@@ -1,0 +1,8302 @@
+[
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x < 10 && (y == 0 || 'hello' != 'goodbye')",
+  "id": "0-checked",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x < 10 && (y == 0 || 'hello' != 'goodbye')",
+  "id": "0-parsed",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": true,
+  "expr": "x < 10 && y == 0",
+  "id": "1-checked",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": false,
+  "expr": "x < 10 && y == 0",
+  "id": "1-parsed",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "1"
+   }
+  },
+  "checked": true,
+  "expr": "x < 10 && y == 0",
+  "id": "2-checked",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "1"
+   }
+  },
+  "checked": false,
+  "expr": "x < 10 && y == 0",
+  "id": "2-parsed",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": true,
+  "expr": "x < 10 || y == 0",
+  "id": "3-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": false,
+  "expr": "x < 10 || y == 0",
+  "id": "3-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "1"
+   }
+  },
+  "checked": true,
+  "expr": "x < 10 || y == 0",
+  "id": "4-checked",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "1"
+   }
+  },
+  "checked": false,
+  "expr": "x < 10 || y == 0",
+  "id": "4-parsed",
+  "residual": "x < 10",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x || y",
+  "id": "5-checked",
+  "residual": "x || y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    2
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "2": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x || y",
+  "id": "5-parsed",
+  "residual": "x || y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    2
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "2": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x && y",
+  "id": "6-checked",
+  "residual": "x && y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    2
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "2": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x && y",
+  "id": "6-parsed",
+  "residual": "x && y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    2
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "2": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": true,
+  "expr": "x && !y",
+  "id": "7-checked",
+  "residual": "x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": false,
+  "expr": "x && !y",
+  "id": "7-parsed",
+  "residual": "x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": true,
+  "expr": "!(x || y)",
+  "id": "8-checked",
+  "residual": "!x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": false,
+  "expr": "!(x || y)",
+  "id": "8-parsed",
+  "residual": "!x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x && (1/0 > 0)",
+  "id": "9-checked",
+  "residual": "x && 1 / 0 > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x && (1/0 > 0)",
+  "id": "9-parsed",
+  "residual": "x && 1 / 0 > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "(1/0 > 0) || x",
+  "id": "10-checked",
+  "residual": "1 / 0 > 0 || x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "(1/0 > 0) || x",
+  "id": "10-parsed",
+  "residual": "1 / 0 > 0 || x",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x || (1/0 > 0)",
+  "id": "11-checked",
+  "residual": "x || 1 / 0 > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x || (1/0 > 0)",
+  "id": "11-parsed",
+  "residual": "x || 1 / 0 > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": true
+   }
+  },
+  "checked": true,
+  "expr": "x && y && z",
+  "id": "12-checked",
+  "residual": "x && z",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": true
+   }
+  },
+  "checked": false,
+  "expr": "x && y && z",
+  "id": "12-parsed",
+  "residual": "x && z",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": true,
+  "expr": "x || y || z",
+  "id": "13-checked",
+  "residual": "x || z",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": false
+   }
+  },
+  "checked": false,
+  "expr": "x || y || z",
+  "id": "13-parsed",
+  "residual": "x || z",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": true
+   }
+  },
+  "checked": true,
+  "expr": "x || y || z",
+  "id": "14-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "bool": true
+   }
+  },
+  "checked": false,
+  "expr": "x || y || z",
+  "id": "14-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "bool"
+   ],
+   [
+    "y",
+    "bool"
+   ],
+   [
+    "z",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "int": "1"
+   },
+   "b": {
+    "int": "2"
+   }
+  },
+  "checked": true,
+  "expr": "c ? a : b",
+  "id": "15-checked",
+  "residual": "c ? a : b",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "int": "1"
+   },
+   "b": {
+    "int": "2"
+   }
+  },
+  "checked": false,
+  "expr": "c ? a : b",
+  "id": "15-parsed",
+  "residual": "c ? a : b",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "b": {
+    "int": "2"
+   },
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": true,
+  "expr": "c ? a : b",
+  "id": "16-checked",
+  "residual": "a",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "b": {
+    "int": "2"
+   },
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": false,
+  "expr": "c ? a : b",
+  "id": "16-parsed",
+  "residual": "a",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "int": "1"
+   },
+   "c": {
+    "bool": false
+   }
+  },
+  "checked": true,
+  "expr": "c ? a : b",
+  "id": "17-checked",
+  "residual": "b",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "b"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "int": "1"
+   },
+   "c": {
+    "bool": false
+   }
+  },
+  "checked": false,
+  "expr": "c ? a : b",
+  "id": "17-parsed",
+  "residual": "b",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "b"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": true,
+  "expr": "(c ? a : b) + 1 > 3",
+  "id": "18-checked",
+  "residual": "a + 1 > 3",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   },
+   {
+    "path": [],
+    "variable": "b"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": false,
+  "expr": "(c ? a : b) + 1 > 3",
+  "id": "18-parsed",
+  "residual": "a + 1 > 3",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   },
+   {
+    "path": [],
+    "variable": "b"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "int"
+   ],
+   [
+    "b",
+    "int"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "b": {
+    "map": [
+     {
+      "key": {
+       "string": "f"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": true,
+  "expr": "c ? a.f : b.f",
+  "id": "19-checked",
+  "residual": "a.f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "b",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "b": {
+    "map": [
+     {
+      "key": {
+       "string": "f"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "c": {
+    "bool": true
+   }
+  },
+  "checked": false,
+  "expr": "c ? a.f : b.f",
+  "id": "19-parsed",
+  "residual": "a.f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "b",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "3"
+   }
+  },
+  "checked": true,
+  "expr": "x + 1 == y",
+  "id": "20-checked",
+  "residual": "x + 1 == 3",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "3"
+   }
+  },
+  "checked": false,
+  "expr": "x + 1 == y",
+  "id": "20-parsed",
+  "residual": "x + 1 == 3",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "3"
+   }
+  },
+  "checked": true,
+  "expr": "x + y * 2",
+  "id": "21-checked",
+  "residual": "x + 6",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "3"
+   }
+  },
+  "checked": false,
+  "expr": "x + y * 2",
+  "id": "21-parsed",
+  "residual": "x + 6",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "s": {
+    "string": "abc"
+   }
+  },
+  "checked": true,
+  "expr": "size(s) > n && s.startsWith('a')",
+  "id": "22-checked",
+  "residual": "3 > n",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "n"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "n"
+   }
+  ],
+  "variables": [
+   [
+    "s",
+    "string"
+   ],
+   [
+    "n",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "s": {
+    "string": "abc"
+   }
+  },
+  "checked": false,
+  "expr": "size(s) > n && s.startsWith('a')",
+  "id": "22-parsed",
+  "residual": "3 > n",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "n"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "n"
+   }
+  ],
+  "variables": [
+   [
+    "s",
+    "string"
+   ],
+   [
+    "n",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "p": {
+    "string": "a"
+   },
+   "s": {
+    "string": "abc"
+   }
+  },
+  "checked": true,
+  "expr": "s.startsWith(p) && s.endsWith(q)",
+  "id": "23-checked",
+  "residual": "\"abc\".endsWith(q)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "q"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "q"
+   }
+  ],
+  "variables": [
+   [
+    "s",
+    "string"
+   ],
+   [
+    "p",
+    "string"
+   ],
+   [
+    "q",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "p": {
+    "string": "a"
+   },
+   "s": {
+    "string": "abc"
+   }
+  },
+  "checked": false,
+  "expr": "s.startsWith(p) && s.endsWith(q)",
+  "id": "23-parsed",
+  "residual": "\"abc\".endsWith(q)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "q"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "q"
+   }
+  ],
+  "variables": [
+   [
+    "s",
+    "string"
+   ],
+   [
+    "p",
+    "string"
+   ],
+   [
+    "q",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "5"
+   }
+  },
+  "checked": true,
+  "expr": "string(x) + '!' == s",
+  "id": "24-checked",
+  "residual": "\"5!\" == s",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "s"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "s"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "s",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "5"
+   }
+  },
+  "checked": false,
+  "expr": "string(x) + '!' == s",
+  "id": "24-parsed",
+  "residual": "\"5!\" == s",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "s"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "s"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "s",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x == string(y)",
+  "id": "25-checked",
+  "residual": "x == string(y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x == string(y)",
+  "id": "25-parsed",
+  "residual": "x == string(y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1,
+    4
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ],
+    "4": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   },
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "10"
+   }
+  },
+  "checked": true,
+  "expr": "x == string(y)",
+  "id": "26-checked",
+  "residual": "x == \"10\"",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "10"
+   }
+  },
+  "checked": false,
+  "expr": "x == string(y)",
+  "id": "26-parsed",
+  "residual": "x == \"10\"",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "d": {
+    "double": 2.5
+   }
+  },
+  "checked": true,
+  "expr": "int(d) + 1 > i",
+  "id": "27-checked",
+  "residual": "3 > i",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "i"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "i"
+   }
+  ],
+  "variables": [
+   [
+    "d",
+    "double"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "d": {
+    "double": 2.5
+   }
+  },
+  "checked": false,
+  "expr": "int(d) + 1 > i",
+  "id": "27-parsed",
+  "residual": "3 > i",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "i"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "i"
+   }
+  ],
+  "variables": [
+   [
+    "d",
+    "double"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "u": {
+    "uint": "2"
+   }
+  },
+  "checked": true,
+  "expr": "u + 1u == v",
+  "id": "28-checked",
+  "residual": "3u == v",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "v"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "v"
+   }
+  ],
+  "variables": [
+   [
+    "u",
+    "uint"
+   ],
+   [
+    "v",
+    "uint"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "u": {
+    "uint": "2"
+   }
+  },
+  "checked": false,
+  "expr": "u + 1u == v",
+  "id": "28-parsed",
+  "residual": "3u == v",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "v"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "v"
+   }
+  ],
+  "variables": [
+   [
+    "u",
+    "uint"
+   ],
+   [
+    "v",
+    "uint"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "t": {
+    "timestamp": "2020-01-01T00:00:00Z"
+   }
+  },
+  "checked": true,
+  "expr": "t + duration('1h') < now",
+  "id": "29-checked",
+  "residual": "timestamp(\"2020-01-01T01:00:00Z\") < now",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "now"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "now"
+   }
+  ],
+  "variables": [
+   [
+    "t",
+    "timestamp"
+   ],
+   [
+    "now",
+    "timestamp"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "t": {
+    "timestamp": "2020-01-01T00:00:00Z"
+   }
+  },
+  "checked": false,
+  "expr": "t + duration('1h') < now",
+  "id": "29-parsed",
+  "residual": "timestamp(\"2020-01-01T01:00:00Z\") < now",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "now"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "now"
+   }
+  ],
+  "variables": [
+   [
+    "t",
+    "timestamp"
+   ],
+   [
+    "now",
+    "timestamp"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "d": {
+    "duration": "90s"
+   }
+  },
+  "checked": true,
+  "expr": "d > duration('1m') && d < limit",
+  "id": "30-checked",
+  "residual": "duration(\"90s\") < limit",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "limit"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "limit"
+   }
+  ],
+  "variables": [
+   [
+    "d",
+    "duration"
+   ],
+   [
+    "limit",
+    "duration"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "d": {
+    "duration": "90s"
+   }
+  },
+  "checked": false,
+  "expr": "d > duration('1m') && d < limit",
+  "id": "30-parsed",
+  "residual": "duration(\"90s\") < limit",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "limit"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "limit"
+   }
+  ],
+  "variables": [
+   [
+    "d",
+    "duration"
+   ],
+   [
+    "limit",
+    "duration"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "3"
+   }
+  },
+  "checked": true,
+  "expr": "type(x) == int && x > y",
+  "id": "31-checked",
+  "residual": "3 > y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "dyn"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "3"
+   }
+  },
+  "checked": false,
+  "expr": "type(x) == int && x > y",
+  "id": "31-parsed",
+  "residual": "3 > y",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "dyn"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x in [1, 2, 3]",
+  "id": "32-checked",
+  "residual": "x in [1, 2, 3]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x in [1, 2, 3]",
+  "id": "32-parsed",
+  "residual": "x in [1, 2, 3]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "1 in l",
+  "id": "33-checked",
+  "residual": "1 in l",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "l"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "l"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "1 in l",
+  "id": "33-parsed",
+  "residual": "1 in l",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "l"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "l"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "x in l",
+  "id": "34-checked",
+  "residual": "x in [1, 2]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "x in l",
+  "id": "34-parsed",
+  "residual": "x in [1, 2]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": []
+   }
+  },
+  "checked": true,
+  "expr": "x in l",
+  "id": "35-checked",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": []
+   }
+  },
+  "checked": false,
+  "expr": "x in l",
+  "id": "35-parsed",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "l",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "k in m",
+  "id": "36-checked",
+  "residual": "k in {\"a\": 1}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "k"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "k"
+   }
+  ],
+  "variables": [
+   [
+    "k",
+    "string"
+   ],
+   [
+    "m",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "k in m",
+  "id": "36-parsed",
+  "residual": "k in {\"a\": 1}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "k"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "k"
+   }
+  ],
+  "variables": [
+   [
+    "k",
+    "string"
+   ],
+   [
+    "m",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x in {}",
+  "id": "37-checked",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x in {}",
+  "id": "37-parsed",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "2"
+   }
+  },
+  "checked": true,
+  "expr": "[x, y, 1 + 2]",
+  "id": "38-checked",
+  "residual": "[x, 2, 3]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "2"
+   }
+  },
+  "checked": false,
+  "expr": "[x, y, 1 + 2]",
+  "id": "38-parsed",
+  "residual": "[x, 2, 3]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "{'a': x, 'b': 1 + 1}",
+  "id": "39-checked",
+  "residual": "{\"a\": x, \"b\": 2}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "{'a': x, 'b': 1 + 1}",
+  "id": "39-parsed",
+  "residual": "{\"a\": x, \"b\": 2}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "2"
+   }
+  },
+  "checked": true,
+  "expr": "[x, y] == [1, 2]",
+  "id": "40-checked",
+  "residual": "[x, 2] == [1, 2]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "2"
+   }
+  },
+  "checked": false,
+  "expr": "[x, y] == [1, 2]",
+  "id": "40-parsed",
+  "residual": "[x, 2] == [1, 2]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a.b.c == 1",
+  "id": "41-checked",
+  "residual": "a.b.c == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, map(string, int))"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a.b.c == 1",
+  "id": "41-parsed",
+  "residual": "a.b.c == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, map(string, int))"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "key": {
+       "string": "d"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a.b.c == 1 && a.d == 2",
+  "id": "42-checked",
+  "residual": "a.b.c == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a.b.c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     },
+     {
+      "string": "c"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "key": {
+       "string": "d"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a.b.c == 1 && a.d == 2",
+  "id": "42-parsed",
+  "residual": "a.b.c == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a.b.c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     },
+     {
+      "string": "c"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "key": {
+       "string": "d"
+      },
+      "value": {
+       "int": "3"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a.b.c == 1 && a.d == 2",
+  "id": "43-checked",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     },
+     {
+      "string": "c"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "c"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "key": {
+       "string": "d"
+      },
+      "value": {
+       "int": "3"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a.b.c == 1 && a.d == 2",
+  "id": "43-parsed",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     },
+     {
+      "string": "c"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a['b'] == 1",
+  "id": "44-checked",
+  "residual": "a[\"b\"] == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a['b'] == 1",
+  "id": "44-parsed",
+  "residual": "a[\"b\"] == 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a[0] + a[1]",
+  "id": "45-checked",
+  "residual": "a[0] + 2",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[0]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "int": "0"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a[0] + a[1]",
+  "id": "45-parsed",
+  "residual": "a[0] + 2",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[0]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "int": "0"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a[0] + a[1]",
+  "id": "46-checked",
+  "residual": "a[0] + a[1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2,
+    6
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[0]"
+    ],
+    "6": [
+     "a[1]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     "*"
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a[0] + a[1]",
+  "id": "46-parsed",
+  "residual": "a[0] + a[1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2,
+    6
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[0]"
+    ],
+    "6": [
+     "a[1]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     "*"
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "a[1u]",
+  "id": "47-checked",
+  "residual": "a[1u]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[1u]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "uint": "1"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(uint, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "a[1u]",
+  "id": "47-parsed",
+  "residual": "a[1u]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[1u]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "uint": "1"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(uint, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "a[true]",
+  "id": "48-checked",
+  "residual": "a[true]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[true]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "bool": true
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(bool, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "a[true]",
+  "id": "48-parsed",
+  "residual": "a[true]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a[true]"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "bool": true
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(bool, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "10"
+     },
+     {
+      "int": "20"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a[i]",
+  "id": "49-checked",
+  "residual": "a[i]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "i"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "i"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "list": [
+     {
+      "int": "10"
+     },
+     {
+      "int": "20"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a[i]",
+  "id": "49-parsed",
+  "residual": "a[i]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "i"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "i"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "i": {
+    "int": "1"
+   }
+  },
+  "checked": true,
+  "expr": "a[i] == 20",
+  "id": "50-checked",
+  "residual": "a[i] == 20",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "i": {
+    "int": "1"
+   }
+  },
+  "checked": false,
+  "expr": "a[i] == 20",
+  "id": "50-parsed",
+  "residual": "a[i] == 20",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ],
+   [
+    "i",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "a[a.size() - 1]",
+  "id": "51-checked",
+  "residual": "a[a.size() - 1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "a[a.size() - 1]",
+  "id": "51-parsed",
+  "residual": "a[a.size() - 1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "m[k].f",
+  "id": "52-checked",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "k"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "k"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "m[k].f",
+  "id": "52-parsed",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "k"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "k"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   }
+  },
+  "checked": true,
+  "expr": "m[k].f",
+  "id": "53-checked",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "m.x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "x"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   }
+  },
+  "checked": false,
+  "expr": "m[k].f",
+  "id": "53-parsed",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "m.x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "x"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   },
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "m[k].f",
+  "id": "54-checked",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "m.x.f"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     "*",
+     {
+      "string": "f"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   },
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "m[k].f",
+  "id": "54-parsed",
+  "residual": "m[k].f",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "m.x.f"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     "*",
+     {
+      "string": "f"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   },
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "m[k].f",
+  "id": "55-checked",
+  "residual": "1",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "1"
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "y"
+     },
+     {
+      "string": "f"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "k": {
+    "string": "x"
+   },
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "x"
+      },
+      "value": {
+       "map": [
+        {
+         "key": {
+          "string": "f"
+         },
+         "value": {
+          "int": "1"
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "m[k].f",
+  "id": "55-parsed",
+  "residual": "1",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "1"
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "y"
+     },
+     {
+      "string": "f"
+     }
+    ],
+    "variable": "m"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, map(string, int))"
+   ],
+   [
+    "k",
+    "string"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "request.time": {
+    "timestamp": "2020-01-01T00:00:00Z"
+   }
+  },
+  "checked": true,
+  "expr": "request.auth.claims.email == 'a@b.c' && request.time > timestamp(0)",
+  "id": "56-checked",
+  "residual": "request.auth.claims.email == \"a@b.c\"",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "request.auth.claims.email"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "email"
+     }
+    ],
+    "variable": "request.auth.claims"
+   }
+  ],
+  "variables": [
+   [
+    "request.auth.claims",
+    "map(string, string)"
+   ],
+   [
+    "request.time",
+    "timestamp"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "request.time": {
+    "timestamp": "2020-01-01T00:00:00Z"
+   }
+  },
+  "checked": false,
+  "expr": "request.auth.claims.email == 'a@b.c' && request.time > timestamp(0)",
+  "id": "56-parsed",
+  "residual": "request.auth.claims.email == \"a@b.c\"",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "request.auth.claims.email"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "email"
+     }
+    ],
+    "variable": "request.auth.claims"
+   }
+  ],
+  "variables": [
+   [
+    "request.auth.claims",
+    "map(string, string)"
+   ],
+   [
+    "request.time",
+    "timestamp"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "has(a.b)",
+  "id": "57-checked",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "has(a.b)",
+  "id": "57-parsed",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "has(a.b)",
+  "id": "58-checked",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "has(a.b)",
+  "id": "58-parsed",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": []
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "has(a.b.c)",
+  "id": "59-checked",
+  "residual": "has(a.b.c)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, map(string, int))"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "map": []
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "has(a.b.c)",
+  "id": "59-parsed",
+  "residual": "has(a.b.c)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, map(string, int))"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "c"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "has(a.b) || has(a.c)",
+  "id": "60-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "c"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "has(a.b) || has(a.c)",
+  "id": "60-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "c"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "has(a.b) && has(a.c)",
+  "id": "61-checked",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "c"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "has(a.b) && has(a.c)",
+  "id": "61-parsed",
+  "residual": "has(a.b)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a.b"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "b"
+     }
+    ],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "y": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "(true ? x : y).abc == u",
+  "id": "62-checked",
+  "residual": "1 == u",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "u"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "u"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "map(string, int)"
+   ],
+   [
+    "u",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "y": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "(true ? x : y).abc == u",
+  "id": "62-parsed",
+  "residual": "1 == u",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "u"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "u"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "map(string, int)"
+   ],
+   [
+    "u",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "y": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "(c ? x : y).abc",
+  "id": "63-checked",
+  "residual": "(c ? x : y).abc",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   },
+   "y": {
+    "map": [
+     {
+      "key": {
+       "string": "abc"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "(c ? x : y).abc",
+  "id": "63-parsed",
+  "residual": "(c ? x : y).abc",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x.exists(i, i < 10)",
+  "id": "64-checked",
+  "residual": "x.exists(i, i < 10)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x.exists(i, i < 10)",
+  "id": "64-parsed",
+  "residual": "x.exists(i, i < 10)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "11"
+   }
+  },
+  "checked": true,
+  "expr": "x.exists(i, i < 10) && [11, 12, 13].all(i, i in [y, 12, 13])",
+  "id": "65-checked",
+  "residual": "x.exists(i, i < 10)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "11"
+   }
+  },
+  "checked": false,
+  "expr": "x.exists(i, i < 10) && [11, 12, 13].all(i, i in [y, 12, 13])",
+  "id": "65-parsed",
+  "residual": "x.exists(i, i < 10)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.all(i, i > y)",
+  "id": "66-checked",
+  "residual": "[1, 2].all(i, i > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.all(i, i > y)",
+  "id": "66-parsed",
+  "residual": "[1, 2].all(i, i > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": []
+   }
+  },
+  "checked": true,
+  "expr": "l.all(i, i > y)",
+  "id": "67-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": []
+   }
+  },
+  "checked": false,
+  "expr": "l.all(i, i > y)",
+  "id": "67-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.exists(i, i == y)",
+  "id": "68-checked",
+  "residual": "[1, 2].exists(i, i == y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.exists(i, i == y)",
+  "id": "68-parsed",
+  "residual": "[1, 2].exists(i, i == y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.exists_one(i, i == y)",
+  "id": "69-checked",
+  "residual": "[1, 2].exists_one(i, i == y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.exists_one(i, i == y)",
+  "id": "69-parsed",
+  "residual": "[1, 2].exists_one(i, i == y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.map(i, i * y)",
+  "id": "70-checked",
+  "residual": "[1, 2].map(i, i * y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.map(i, i * y)",
+  "id": "70-parsed",
+  "residual": "[1, 2].map(i, i * y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.filter(i, i > y)",
+  "id": "71-checked",
+  "residual": "[1, 2].filter(i, i > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.filter(i, i > y)",
+  "id": "71-parsed",
+  "residual": "[1, 2].filter(i, i > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.map(i, i * 2).filter(i, i > y).size() > 0",
+  "id": "72-checked",
+  "residual": "[2, 4].filter(i, i > y).size() > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    18
+   ],
+   "unknown_attributes": {
+    "18": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.map(i, i * 2).filter(i, i > y).size() > 0",
+  "id": "72-parsed",
+  "residual": "[2, 4].filter(i, i > y).size() > 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    18
+   ],
+   "unknown_attributes": {
+    "18": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "l.map(i, i > 1, i * y)",
+  "id": "73-checked",
+  "residual": "[1, 2].map(i, i > 1, i * y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "l": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "l.map(i, i > 1, i * y)",
+  "id": "73-parsed",
+  "residual": "[1, 2].map(i, i > 1, i * y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "l",
+    "list(int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "foo": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "string": "b"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "foo.exists(t, t == bar.baz.x)",
+  "id": "74-checked",
+  "residual": "{\"a\": \"b\"}.exists(t, t == bar.baz.x)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "bar.baz.x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "baz"
+     },
+     "*"
+    ],
+    "variable": "bar"
+   }
+  ],
+  "variables": [
+   [
+    "foo",
+    "map(string, dyn)"
+   ],
+   [
+    "bar",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "foo": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "string": "b"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "foo.exists(t, t == bar.baz.x)",
+  "id": "74-parsed",
+  "residual": "{\"a\": \"b\"}.exists(t, t == bar.baz.x)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "bar.baz.x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "baz"
+     },
+     "*"
+    ],
+    "variable": "bar"
+   }
+  ],
+  "variables": [
+   [
+    "foo",
+    "map(string, dyn)"
+   ],
+   [
+    "bar",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "users": {
+    "list": [
+     {
+      "string": "alice"
+     },
+     {
+      "string": "bob"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "users.filter(u, u.startsWith(r.attr.prefix))",
+  "id": "75-checked",
+  "residual": "[\"alice\", \"bob\"].filter(u, u.startsWith(r.attr.prefix))",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "r.attr.prefix"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "attr"
+     },
+     "*"
+    ],
+    "variable": "r"
+   }
+  ],
+  "variables": [
+   [
+    "users",
+    "list(string)"
+   ],
+   [
+    "r",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "users": {
+    "list": [
+     {
+      "string": "alice"
+     },
+     {
+      "string": "bob"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "users.filter(u, u.startsWith(r.attr.prefix))",
+  "id": "75-parsed",
+  "residual": "[\"alice\", \"bob\"].filter(u, u.startsWith(r.attr.prefix))",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "r.attr.prefix"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [
+     {
+      "string": "attr"
+     },
+     "*"
+    ],
+    "variable": "r"
+   }
+  ],
+  "variables": [
+   [
+    "users",
+    "list(string)"
+   ],
+   [
+    "r",
+    "map(string, dyn)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "2"
+   }
+  },
+  "checked": true,
+  "expr": "[1, 2, 3].exists(i, i == x) || y",
+  "id": "76-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "2"
+   }
+  },
+  "checked": false,
+  "expr": "[1, 2, 3].exists(i, i == x) || y",
+  "id": "76-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "2"
+   }
+  },
+  "checked": true,
+  "expr": "[1, 2, 3].all(i, i != x) && y",
+  "id": "77-checked",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "2"
+   }
+  },
+  "checked": false,
+  "expr": "[1, 2, 3].all(i, i != x) && y",
+  "id": "77-parsed",
+  "residual": "false",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": false
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[x, 2].exists(i, i == 2)",
+  "id": "78-checked",
+  "residual": "[x, 2].exists(i, i == 2)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[x, 2].exists(i, i == 2)",
+  "id": "78-parsed",
+  "residual": "[x, 2].exists(i, i == 2)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[x, 3].exists(i, i == 2)",
+  "id": "79-checked",
+  "residual": "[x, 3].exists(i, i == 2)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[x, 3].exists(i, i == 2)",
+  "id": "79-parsed",
+  "residual": "[x, 3].exists(i, i == 2)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[x, 3].all(i, i == 3)",
+  "id": "80-checked",
+  "residual": "[x, 3].all(i, i == 3)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[x, 3].all(i, i == 3)",
+  "id": "80-parsed",
+  "residual": "[x, 3].all(i, i == 3)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[x, 2].all(i, i == 3)",
+  "id": "81-checked",
+  "residual": "[x, 2].all(i, i == 3)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[x, 2].all(i, i == 3)",
+  "id": "81-parsed",
+  "residual": "[x, 2].all(i, i == 3)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    2
+   ],
+   "unknown_attributes": {
+    "2": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "m.all(k, m[k] > y)",
+  "id": "82-checked",
+  "residual": "{\"a\": 1}.all(k, m[k] > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": [
+     {
+      "key": {
+       "string": "a"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "m.all(k, m[k] > y)",
+  "id": "82-parsed",
+  "residual": "{\"a\": 1}.all(k, m[k] > y)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    8
+   ],
+   "unknown_attributes": {
+    "8": [
+     "y"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, int)"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "[has(a.b), has(c.d)].exists(x, x == true)",
+  "id": "83-checked",
+  "residual": "[false, has(c.d)].exists(x, x == true)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "[has(a.b), has(c.d)].exists(x, x == true)",
+  "id": "83-parsed",
+  "residual": "[false, has(c.d)].exists(x, x == true)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "optional": null
+   },
+   "z": {
+    "int": "42"
+   }
+  },
+  "checked": true,
+  "expr": "x.or(y).orValue(z)",
+  "id": "84-checked",
+  "residual": "x.or(y).orValue(z)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "optional": null
+   },
+   "z": {
+    "int": "42"
+   }
+  },
+  "checked": false,
+  "expr": "x.or(y).orValue(z)",
+  "id": "84-parsed",
+  "residual": "x.or(y).orValue(z)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "optional": null
+   },
+   "y": {
+    "optional": null
+   }
+  },
+  "checked": true,
+  "expr": "x.or(y).orValue(z)",
+  "id": "85-checked",
+  "residual": "optional.none().orValue(z)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "optional": null
+   },
+   "y": {
+    "optional": null
+   }
+  },
+  "checked": false,
+  "expr": "x.or(y).orValue(z)",
+  "id": "85-parsed",
+  "residual": "optional.none().orValue(z)",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "z"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "optional": {
+     "int": "1"
+    }
+   }
+  },
+  "checked": true,
+  "expr": "x.or(y).orValue(z)",
+  "id": "86-checked",
+  "residual": "1",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "1"
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "optional": {
+     "int": "1"
+    }
+   }
+  },
+  "checked": false,
+  "expr": "x.or(y).orValue(z)",
+  "id": "86-parsed",
+  "residual": "1",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "1"
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "y"
+   },
+   {
+    "path": [],
+    "variable": "z"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "optional(int)"
+   ],
+   [
+    "y",
+    "optional(int)"
+   ],
+   [
+    "z",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "a.?b.orValue(0) + 1",
+  "id": "87-checked",
+  "residual": "a.?b.orValue(0) + 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "a.?b.orValue(0) + 1",
+  "id": "87-parsed",
+  "residual": "a.?b.orValue(0) + 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "a.?b.orValue(0) + c",
+  "id": "88-checked",
+  "residual": "2 + c",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "2"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "a.?b.orValue(0) + c",
+  "id": "88-parsed",
+  "residual": "2 + c",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    7
+   ],
+   "unknown_attributes": {
+    "7": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "a[?'b'].hasValue() || c",
+  "id": "89-checked",
+  "residual": "c",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "a[?'b'].hasValue() || c",
+  "id": "89-parsed",
+  "residual": "c",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    5
+   ],
+   "unknown_attributes": {
+    "5": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "bool"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[?a.?b, 1]",
+  "id": "90-checked",
+  "residual": "[?a.?b, 1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[?a.?b, 1]",
+  "id": "90-parsed",
+  "residual": "[?a.?b, 1]",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    4
+   ],
+   "unknown_attributes": {
+    "4": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "{?'k': a.?b}",
+  "id": "91-checked",
+  "residual": "{?\"k\": a.?b}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "{?'k': a.?b}",
+  "id": "91-parsed",
+  "residual": "{?\"k\": a.?b}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    6
+   ],
+   "unknown_attributes": {
+    "6": [
+     "a"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "a"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "{?'k': a.?b, 'j': c}",
+  "id": "92-checked",
+  "residual": "{?\"k\": optional.of(1), \"j\": c}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "a": {
+    "map": [
+     {
+      "key": {
+       "string": "b"
+      },
+      "value": {
+       "int": "1"
+      }
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "{?'k': a.?b, 'j': c}",
+  "id": "92-parsed",
+  "residual": "{?\"k\": optional.of(1), \"j\": c}",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    9
+   ],
+   "unknown_attributes": {
+    "9": [
+     "c"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "c"
+   }
+  ],
+  "variables": [
+   [
+    "a",
+    "map(string, int)"
+   ],
+   [
+    "c",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "optional.of(x).value() + 1",
+  "id": "93-checked",
+  "residual": "optional.of(x).value() + 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "optional.of(x).value() + 1",
+  "id": "93-parsed",
+  "residual": "optional.of(x).value() + 1",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "optional.ofNonZeroValue(x).hasValue()",
+  "id": "94-checked",
+  "residual": "optional.ofNonZeroValue(x).hasValue()",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "optional.ofNonZeroValue(x).hasValue()",
+  "id": "94-parsed",
+  "residual": "optional.ofNonZeroValue(x).hasValue()",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    3
+   ],
+   "unknown_attributes": {
+    "3": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x == (1/0)",
+  "id": "95-checked",
+  "residual": "x == 1 / 0",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x == (1/0)",
+  "id": "95-parsed",
+  "residual": "x == 1 / 0",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x != (1/0)",
+  "id": "96-checked",
+  "residual": "x != 1 / 0",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x != (1/0)",
+  "id": "96-parsed",
+  "residual": "x != 1 / 0",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "x + [1][5]",
+  "id": "97-checked",
+  "residual": "x + [1][5]",
+  "residual_error": null,
+  "result": {
+   "error": "index out of bounds: 5"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "x + [1][5]",
+  "id": "97-parsed",
+  "residual": "x + [1][5]",
+  "residual_error": null,
+  "result": {
+   "error": "index out of bounds: 5"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "[x, 1/0]",
+  "id": "98-checked",
+  "residual": "[x, 1 / 0]",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "[x, 1/0]",
+  "id": "98-parsed",
+  "residual": "[x, 1 / 0]",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": true,
+  "expr": "{'a': x, 'b': 1/0}",
+  "id": "99-checked",
+  "residual": "{\"a\": x, \"b\": 1 / 0}",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {},
+  "checked": false,
+  "expr": "{'a': x, 'b': 1/0}",
+  "id": "99-parsed",
+  "residual": "{\"a\": x, \"b\": 1 / 0}",
+  "residual_error": null,
+  "result": {
+   "error": "division by zero"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": true,
+  "expr": "x / y",
+  "id": "100-checked",
+  "residual": "x / 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "y": {
+    "int": "0"
+   }
+  },
+  "checked": false,
+  "expr": "x / y",
+  "id": "100-parsed",
+  "residual": "x / 0",
+  "residual_error": null,
+  "result": {
+   "unknown": [
+    1
+   ],
+   "unknown_attributes": {
+    "1": [
+     "x"
+    ]
+   }
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "x",
+    "int"
+   ],
+   [
+    "y",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": []
+   }
+  },
+  "checked": true,
+  "expr": "m.missing == x",
+  "id": "101-checked",
+  "residual": "m.missing == x",
+  "residual_error": null,
+  "result": {
+   "error": "no such key: missing"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, int)"
+   ],
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "m": {
+    "map": []
+   }
+  },
+  "checked": false,
+  "expr": "m.missing == x",
+  "id": "101-parsed",
+  "residual": "m.missing == x",
+  "residual_error": null,
+  "result": {
+   "error": "no such key: missing"
+  },
+  "unknowns": [
+   {
+    "path": [],
+    "variable": "x"
+   }
+  ],
+  "variables": [
+   [
+    "m",
+    "map(string, int)"
+   ],
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "1"
+   }
+  },
+  "checked": true,
+  "expr": "x + 1",
+  "id": "102-checked",
+  "residual": "2",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "2"
+   }
+  },
+  "unknowns": [],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "int": "1"
+   }
+  },
+  "checked": false,
+  "expr": "x + 1",
+  "id": "102-parsed",
+  "residual": "2",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "int": "2"
+   }
+  },
+  "unknowns": [],
+  "variables": [
+   [
+    "x",
+    "int"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": true,
+  "expr": "x.exists(i, i > 1)",
+  "id": "103-checked",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ]
+  ]
+ },
+ {
+  "bindings": {
+   "x": {
+    "list": [
+     {
+      "int": "1"
+     },
+     {
+      "int": "2"
+     }
+    ]
+   }
+  },
+  "checked": false,
+  "expr": "x.exists(i, i > 1)",
+  "id": "103-parsed",
+  "residual": "true",
+  "residual_error": null,
+  "result": {
+   "value": {
+    "bool": true
+   }
+  },
+  "unknowns": [],
+  "variables": [
+   [
+    "x",
+    "list(int)"
+   ]
+  ]
+ }
+]

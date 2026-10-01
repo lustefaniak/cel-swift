@@ -36,6 +36,7 @@ process keeps running until stdin closes, so a test driver can start it once and
 | `unknowns` | eval | attribute patterns to mark unknown, each `{"variable": "x", "path": [q, ...]}` where a qualifier `q` is a typed `string`, `int`, `uint` or `bool` value or the JSON string `"*"` for a wildcard. Turns on `cel.OptPartialEval`. |
 | `cost_limit` | eval | `cel.CostLimit(n)` |
 | `size_hints` | eval | `{"x": {"min": 0, "max": 10}}`: size estimates for the static cost estimator, keyed by the dot-joined `AstNode.Path()` |
+| `residual` | eval | also track state (`cel.OptTrackState`) and report the residual expression and the unknown attribute trails (see Response) |
 
 `parser` options map one to one to `cel.dev/cel-go/parser` options: `max_recursion_depth`,
 `error_recovery_limit`, `error_recovery_lookahead_token_limit`, `error_reporting_limit`,
@@ -81,6 +82,8 @@ the caret-snippet format) and `issues` (`message`, `line`, 1-based, `column`, 0-
 | `result` | exactly one of `{"value": V}`, `{"error": "message"}`, `{"unknown": [expr ids, ascending]}` |
 | `cost` | actual runtime cost (`cel.CostTracking(nil)`), also on errors |
 | `cost_estimate` | `{"min", "max"}` from `env.EstimateCost` with `size_hints`; checked mode only |
+| `unknown_attributes` (in `result`) | with `residual`, for an unknown result: expression id (as a string) to its attribute trails, e.g. `{"4": ["a.b[0]"]}` |
+| `residual` / `residual_error` | with `residual`: `cel.AstToString(env.ResidualAst(ast, details))`, the residual of a partial evaluation |
 
 ## Value encoding
 

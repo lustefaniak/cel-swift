@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -37,6 +38,7 @@ type request struct {
 	Unknowns      []unknownPattern           `json:"unknowns,omitempty"`
 	CostLimit     *uint64                    `json:"cost_limit,omitempty"`
 	SizeHints     map[string]sizeHint        `json:"size_hints,omitempty"`
+	Residual      bool                       `json:"residual,omitempty"`
 }
 
 type parserOptions struct {
@@ -79,6 +81,8 @@ type evalResult struct {
 	Value   json.RawMessage `json:"value,omitempty"`
 	Error   *string         `json:"error,omitempty"`
 	Unknown []int64         `json:"unknown,omitempty"`
+	// UnknownAttributes maps each unknown expression id to its attribute trails; only with `residual`.
+	UnknownAttributes map[string][]string `json:"unknown_attributes,omitempty"`
 }
 
 type response struct {
@@ -105,9 +109,11 @@ type response struct {
 	CheckedDebug *string         `json:"checked_debug,omitempty"`
 
 	// eval
-	Result       *evalResult `json:"result,omitempty"`
-	Cost         *uint64     `json:"cost,omitempty"`
-	CostEstimate *costRange  `json:"cost_estimate,omitempty"`
+	Result        *evalResult `json:"result,omitempty"`
+	Cost          *uint64     `json:"cost,omitempty"`
+	CostEstimate  *costRange  `json:"cost_estimate,omitempty"`
+	Residual      *string     `json:"residual,omitempty"`
+	ResidualError string      `json:"residual_error,omitempty"`
 }
 
 func strp(s string) *string { return &s }
@@ -265,6 +271,9 @@ func handleEval(req *request, e *cel.Env, resp *response) {
 	if len(req.Unknowns) > 0 {
 		progOpts = append(progOpts, cel.EvalOptions(cel.OptPartialEval))
 	}
+	if req.Residual {
+		progOpts = append(progOpts, cel.EvalOptions(cel.OptTrackState))
+	}
 	prg, err := e.Program(a, progOpts...)
 	if err != nil {
 		resp.Error = err.Error()
@@ -309,6 +318,17 @@ func handleEval(req *request, e *cel.Env, resp *response) {
 		ids := append([]int64(nil), out.(*types.Unknown).IDs()...)
 		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 		resp.Result.Unknown = ids
+		if req.Residual {
+			resp.Result.UnknownAttributes = map[string][]string{}
+			for _, id := range ids {
+				trails, _ := out.(*types.Unknown).GetAttributeTrails(id)
+				names := make([]string, 0, len(trails))
+				for _, t := range trails {
+					names = append(names, t.String())
+				}
+				resp.Result.UnknownAttributes[strconv.FormatInt(id, 10)] = names
+			}
+		}
 	case types.IsError(out):
 		resp.Result.Error = strp(out.(*types.Err).String())
 	default:
@@ -318,6 +338,19 @@ func handleEval(req *request, e *cel.Env, resp *response) {
 			return
 		}
 		resp.Result.Value = v
+	}
+	if req.Residual && details != nil && details.State() != nil {
+		residual, err := e.ResidualAst(a, details)
+		if err != nil {
+			resp.ResidualError = err.Error()
+			return
+		}
+		text, err := cel.AstToString(residual)
+		if err != nil {
+			resp.ResidualError = err.Error()
+			return
+		}
+		resp.Residual = &text
 	}
 }
 
