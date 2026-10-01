@@ -107,3 +107,23 @@ public struct Library: Sendable {
     return result
   }
 }
+
+extension ProgramEnvironment {
+  /// Installs a library: merges its functions and variables into the declarations, registers its
+  /// types when the provider is a ``TypeRegistry``, adds its macros (replacing macros with the same
+  /// key), parser options and planner decorators (cel-go `cel.Lib`). Singleton deduplication by
+  /// name is the caller's job.
+  package mutating func install(_ library: Library) throws {
+    try declare(library.variables, functions: library.functions)
+    if !library.types.isEmpty, var registry = provider as? TypeRegistry {
+      for type in library.types {
+        try registry.register(type)
+      }
+      provider = registry
+    }
+    let keys = Set(library.macros.map(\.key))
+    macros = macros.filter { !keys.contains($0.key) } + library.macros
+    parserOptions += library.parserOptions
+    decorators += library.decorators
+  }
+}

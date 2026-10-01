@@ -43,10 +43,14 @@ extension Library {
           blockFunction, .overload("cel_block_list", argTypes: [.list(.dyn), paramT], resultType: paramT))
       ])
     }
-    return Library(
+    var lib = Library(
       name: "cel.lib.ext.cel.bindings", alias: "bindings", version: version, functions: functions,
       macros: [BindingsMacros.bind],
       homogeneousLiteralExemptFunctions: version >= 1 ? [blockFunction] : [])
+    if version >= 1 {
+      lib.decorators = [BlockPlan.decorator]
+    }
+    return lib
   }
 
   /// The two-variable comprehension library: `all`, `exists`, `existsOne`, `transformList`,

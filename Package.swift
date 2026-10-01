@@ -73,6 +73,7 @@ let package = Package(
       name: "CELConformanceTests",
       dependencies: [
         "CEL",
+        "CELExtensions",
         "CELProtobuf",
         "CELSpecProtos",
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),

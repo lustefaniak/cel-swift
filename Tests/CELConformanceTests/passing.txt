@@ -83,6 +83,96 @@ checked basic/variables/self_eval_bound_lookup
 parse-only basic/variables/self_eval_bound_lookup
 checked basic/variables/self_eval_unbound_lookup
 checked basic/variables/unbound_is_runtime_error
+checked bindings_ext/bind/bind_nested
+parse-only bindings_ext/bind/bind_nested
+checked bindings_ext/bind/boolean_literal
+parse-only bindings_ext/bind/boolean_literal
+checked bindings_ext/bind/macro_exists
+parse-only bindings_ext/bind/macro_exists
+checked bindings_ext/bind/macro_not_exists
+parse-only bindings_ext/bind/macro_not_exists
+checked bindings_ext/bind/shadowing
+parse-only bindings_ext/bind/shadowing
+checked bindings_ext/bind/shadowing_namespace_resolution
+parse-only bindings_ext/bind/shadowing_namespace_resolution
+checked bindings_ext/bind/shadowing_namespace_resolution_selector
+parse-only bindings_ext/bind/shadowing_namespace_resolution_selector
+checked bindings_ext/bind/string_concat
+parse-only bindings_ext/bind/string_concat
+checked block_ext/basic/adjacent_macros
+parse-only block_ext/basic/adjacent_macros
+checked block_ext/basic/call
+parse-only block_ext/basic/call
+checked block_ext/basic/inclusion_list
+parse-only block_ext/basic/inclusion_list
+checked block_ext/basic/inclusion_map
+parse-only block_ext/basic/inclusion_map
+checked block_ext/basic/int_add
+parse-only block_ext/basic/int_add
+checked block_ext/basic/macro_shadowed_variable_1
+parse-only block_ext/basic/macro_shadowed_variable_1
+checked block_ext/basic/macro_shadowed_variable_2
+parse-only block_ext/basic/macro_shadowed_variable_2
+checked block_ext/basic/map_index
+parse-only block_ext/basic/map_index
+checked block_ext/basic/multiple_macros_1
+parse-only block_ext/basic/multiple_macros_1
+checked block_ext/basic/multiple_macros_2
+parse-only block_ext/basic/multiple_macros_2
+checked block_ext/basic/multiple_macros_3
+parse-only block_ext/basic/multiple_macros_3
+checked block_ext/basic/nested_list_construction
+parse-only block_ext/basic/nested_list_construction
+checked block_ext/basic/nested_macros_1
+parse-only block_ext/basic/nested_macros_1
+checked block_ext/basic/nested_macros_2
+parse-only block_ext/basic/nested_macros_2
+checked block_ext/basic/nested_map_construction
+parse-only block_ext/basic/nested_map_construction
+checked block_ext/basic/nested_ternary
+parse-only block_ext/basic/nested_ternary
+checked block_ext/basic/optional_list
+parse-only block_ext/basic/optional_list
+checked block_ext/basic/optional_map
+parse-only block_ext/basic/optional_map
+checked block_ext/basic/optional_map_chained
+parse-only block_ext/basic/optional_map_chained
+checked block_ext/basic/optional_message
+parse-only block_ext/basic/optional_message
+checked block_ext/basic/presence_test
+parse-only block_ext/basic/presence_test
+checked block_ext/basic/presence_test_2
+parse-only block_ext/basic/presence_test_2
+checked block_ext/basic/presence_test_with_ternary
+parse-only block_ext/basic/presence_test_with_ternary
+checked block_ext/basic/presence_test_with_ternary_2
+parse-only block_ext/basic/presence_test_with_ternary_2
+checked block_ext/basic/presence_test_with_ternary_3
+parse-only block_ext/basic/presence_test_with_ternary_3
+checked block_ext/basic/presence_test_with_ternary_nested
+parse-only block_ext/basic/presence_test_with_ternary_nested
+checked block_ext/basic/select
+parse-only block_ext/basic/select
+checked block_ext/basic/select_nested_1
+parse-only block_ext/basic/select_nested_1
+checked block_ext/basic/select_nested_2
+parse-only block_ext/basic/select_nested_2
+checked block_ext/basic/select_nested_message_map_index_1
+parse-only block_ext/basic/select_nested_message_map_index_1
+checked block_ext/basic/select_nested_message_map_index_2
+parse-only block_ext/basic/select_nested_message_map_index_2
+checked block_ext/basic/size_1
+parse-only block_ext/basic/size_1
+checked block_ext/basic/size_2
+parse-only block_ext/basic/size_2
+checked block_ext/basic/size_3
+parse-only block_ext/basic/size_3
+checked block_ext/basic/size_4
+parse-only block_ext/basic/size_4
+checked block_ext/basic/ternary
+parse-only block_ext/basic/ternary
+checked block_ext/basic/timestamp
+parse-only block_ext/basic/timestamp
 checked comparisons/bound/bool_lt_right_true
 parse-only comparisons/bound/bool_lt_right_true
 checked comparisons/bound/bytes_gt_left_false
@@ -1523,6 +1613,14 @@ parse-only dynamic/value_struct/literal_empty
 checked dynamic/value_struct/literal_no_field_access
 checked dynamic/value_struct/var
 parse-only dynamic/value_struct/var
+checked encoders_ext/decode/hello
+parse-only encoders_ext/decode/hello
+checked encoders_ext/decode/hello_without_padding
+parse-only encoders_ext/decode/hello_without_padding
+checked encoders_ext/encode/hello
+parse-only encoders_ext/encode/hello
+checked encoders_ext/round_trip/hello
+parse-only encoders_ext/round_trip/hello
 checked enums/legacy_proto2/access_repeated_enum
 parse-only enums/legacy_proto2/access_repeated_enum
 checked enums/legacy_proto2/arithmetic
@@ -2004,16 +2102,110 @@ checked lists/size/map
 parse-only lists/size/map
 checked lists/size/map_empty
 parse-only lists/size/map_empty
+checked lists_ext/distinct/bools
+parse-only lists_ext/distinct/bools
+checked lists_ext/distinct/empty
+parse-only lists_ext/distinct/empty
+checked lists_ext/distinct/heterogeneous
+parse-only lists_ext/distinct/heterogeneous
+checked lists_ext/distinct/ints
+parse-only lists_ext/distinct/ints
+checked lists_ext/distinct/single_element
+parse-only lists_ext/distinct/single_element
+checked lists_ext/distinct/strings
+parse-only lists_ext/distinct/strings
+checked lists_ext/distinct/uints
+parse-only lists_ext/distinct/uints
+checked lists_ext/flatten/already_flat
+parse-only lists_ext/flatten/already_flat
+checked lists_ext/flatten/default_depth
+parse-only lists_ext/flatten/default_depth
+checked lists_ext/flatten/default_depth_nested
+parse-only lists_ext/flatten/default_depth_nested
+checked lists_ext/flatten/depth_two
+parse-only lists_ext/flatten/depth_two
+checked lists_ext/flatten/depth_zero
+parse-only lists_ext/flatten/depth_zero
+checked lists_ext/flatten/empty_list
+parse-only lists_ext/flatten/empty_list
+checked lists_ext/flatten/empty_sublists
+parse-only lists_ext/flatten/empty_sublists
+checked lists_ext/flatten/negative_depth
 parse-only lists_ext/flatten/negative_depth
+checked lists_ext/range/limit_exceeded_error
 parse-only lists_ext/range/limit_exceeded_error
+checked lists_ext/range/negative_error
 parse-only lists_ext/range/negative_error
+checked lists_ext/range/positive
+parse-only lists_ext/range/positive
+checked lists_ext/range/single
+parse-only lists_ext/range/single
+checked lists_ext/range/zero
+parse-only lists_ext/range/zero
+checked lists_ext/reverse/double_reverse
+parse-only lists_ext/reverse/double_reverse
+checked lists_ext/reverse/empty
+parse-only lists_ext/reverse/empty
+checked lists_ext/reverse/integers
+parse-only lists_ext/reverse/integers
+checked lists_ext/reverse/single
+parse-only lists_ext/reverse/single
+checked lists_ext/reverse/strings
+parse-only lists_ext/reverse/strings
+checked lists_ext/slice/empty_end
+parse-only lists_ext/slice/empty_end
+checked lists_ext/slice/empty_middle
+parse-only lists_ext/slice/empty_middle
+checked lists_ext/slice/empty_start
+parse-only lists_ext/slice/empty_start
+checked lists_ext/slice/end_greater_than_length
 parse-only lists_ext/slice/end_greater_than_length
+checked lists_ext/slice/full
+parse-only lists_ext/slice/full
+checked lists_ext/slice/negative_end_index
 parse-only lists_ext/slice/negative_end_index
+checked lists_ext/slice/negative_start_index
 parse-only lists_ext/slice/negative_start_index
+checked lists_ext/slice/start_greater_than_end
 parse-only lists_ext/slice/start_greater_than_end
+checked lists_ext/slice/sublist
+parse-only lists_ext/slice/sublist
+checked lists_ext/sort/bools
+parse-only lists_ext/sort/bools
+checked lists_ext/sort/bytes
+parse-only lists_ext/sort/bytes
+checked lists_ext/sort/doubles
+parse-only lists_ext/sort/doubles
+checked lists_ext/sort/durations
+parse-only lists_ext/sort/durations
+checked lists_ext/sort/empty
+parse-only lists_ext/sort/empty
+checked lists_ext/sort/incomparable_type_error
 parse-only lists_ext/sort/incomparable_type_error
+checked lists_ext/sort/integers
+parse-only lists_ext/sort/integers
+checked lists_ext/sort/mixed_types_error
 parse-only lists_ext/sort/mixed_types_error
+checked lists_ext/sort/single
+parse-only lists_ext/sort/single
+checked lists_ext/sort/strings
+parse-only lists_ext/sort/strings
+checked lists_ext/sort/timestamps
+parse-only lists_ext/sort/timestamps
+checked lists_ext/sort/uints
+parse-only lists_ext/sort/uints
+checked lists_ext/sortBy/empty
+parse-only lists_ext/sortBy/empty
+checked lists_ext/sortBy/identity_key
+parse-only lists_ext/sortBy/identity_key
+checked lists_ext/sortBy/mixed_key_types_error
 parse-only lists_ext/sortBy/mixed_key_types_error
+checked lists_ext/sortBy/number_key
+parse-only lists_ext/sortBy/number_key
+checked lists_ext/sortBy/single
+parse-only lists_ext/sortBy/single
+checked lists_ext/sortBy/string_key
+parse-only lists_ext/sortBy/string_key
 checked logic/AND/all_false
 parse-only logic/AND/all_false
 checked logic/AND/all_true
@@ -2153,31 +2345,496 @@ checked macros/nested/all_all
 parse-only macros/nested/all_all
 checked macros/nested/filter_all
 parse-only macros/nested/filter_all
+checked macros2/all/list_elem_all_true
+parse-only macros2/all/list_elem_all_true
+checked macros2/all/list_elem_error_exhaustive
 parse-only macros2/all/list_elem_error_exhaustive
+checked macros2/all/list_elem_error_shortcircuit
+parse-only macros2/all/list_elem_error_shortcircuit
+checked macros2/all/list_elem_none_true
+parse-only macros2/all/list_elem_none_true
+checked macros2/all/list_elem_some_true
+parse-only macros2/all/list_elem_some_true
+checked macros2/all/list_elem_type_error_exhaustive
 parse-only macros2/all/list_elem_type_error_exhaustive
+checked macros2/all/list_elem_type_exhaustive
+parse-only macros2/all/list_elem_type_exhaustive
+checked macros2/all/list_elem_type_shortcircuit
+parse-only macros2/all/list_elem_type_shortcircuit
+checked macros2/all/list_empty
+parse-only macros2/all/list_empty
+checked macros2/all/map_key
+parse-only macros2/all/map_key
+checked macros2/exists/list_elem_all_true
+parse-only macros2/exists/list_elem_all_true
+checked macros2/exists/list_elem_exists_error
 parse-only macros2/exists/list_elem_exists_error
+checked macros2/exists/list_elem_none_true
+parse-only macros2/exists/list_elem_none_true
+checked macros2/exists/list_elem_some_true
+parse-only macros2/exists/list_elem_some_true
+checked macros2/exists/list_elem_type_exhaustive
+parse-only macros2/exists/list_elem_type_exhaustive
+checked macros2/exists/list_elem_type_shortcircuit
+parse-only macros2/exists/list_elem_type_shortcircuit
+checked macros2/exists/list_empty
+parse-only macros2/exists/list_empty
+checked macros2/exists/map_key
+parse-only macros2/exists/map_key
+checked macros2/exists/map_key_type_exhaustive
+parse-only macros2/exists/map_key_type_exhaustive
+checked macros2/exists/map_key_type_shortcircuit
+parse-only macros2/exists/map_key_type_shortcircuit
+checked macros2/exists/not_map_key
+parse-only macros2/exists/not_map_key
+checked macros2/existsOne/list_all
+parse-only macros2/existsOne/list_all
+checked macros2/existsOne/list_empty
+parse-only macros2/existsOne/list_empty
+checked macros2/existsOne/list_many
+parse-only macros2/existsOne/list_many
+checked macros2/existsOne/list_no_shortcircuit
 parse-only macros2/existsOne/list_no_shortcircuit
+checked macros2/existsOne/list_none
+parse-only macros2/existsOne/list_none
+checked macros2/existsOne/list_one
+parse-only macros2/existsOne/list_one
+checked macros2/existsOne/list_one_false
+parse-only macros2/existsOne/list_one_false
+checked macros2/existsOne/list_one_true
+parse-only macros2/existsOne/list_one_true
+checked macros2/existsOne/map_one
+parse-only macros2/existsOne/map_one
+checked macros2/transformList/empty
+parse-only macros2/transformList/empty
+checked macros2/transformList/empty_filter
+parse-only macros2/transformList/empty_filter
+checked macros2/transformList/error
 parse-only macros2/transformList/error
+checked macros2/transformList/error_filter
 parse-only macros2/transformList/error_filter
+checked macros2/transformList/many
+parse-only macros2/transformList/many
+checked macros2/transformList/many_filter
+parse-only macros2/transformList/many_filter
+checked macros2/transformList/one
+parse-only macros2/transformList/one
+checked macros2/transformList/one_filter
+parse-only macros2/transformList/one_filter
+checked macros2/transformMap/empty
+parse-only macros2/transformMap/empty
+checked macros2/transformMap/empty_filter
+parse-only macros2/transformMap/empty_filter
+checked macros2/transformMap/error
 parse-only macros2/transformMap/error
+checked macros2/transformMap/error_filter
 parse-only macros2/transformMap/error_filter
+checked macros2/transformMap/many
+parse-only macros2/transformMap/many
+checked macros2/transformMap/many_filter
+parse-only macros2/transformMap/many_filter
+checked macros2/transformMap/one
+parse-only macros2/transformMap/one
+checked macros2/transformMap/one_filter
+parse-only macros2/transformMap/one_filter
+checked math_ext/abs/int_overflow
 parse-only math_ext/abs/int_overflow
+checked math_ext/abs/negative_double
+parse-only math_ext/abs/negative_double
+checked math_ext/abs/negative_int
+parse-only math_ext/abs/negative_int
+checked math_ext/abs/positive_double
+parse-only math_ext/abs/positive_double
+checked math_ext/abs/positive_int
+parse-only math_ext/abs/positive_int
+checked math_ext/abs/uint
+parse-only math_ext/abs/uint
+checked math_ext/bit_and/int_dyn_error
 parse-only math_ext/bit_and/int_dyn_error
+checked math_ext/bit_and/int_int_intersect
+parse-only math_ext/bit_and/int_int_intersect
+checked math_ext/bit_and/int_int_intersect_neg
+parse-only math_ext/bit_and/int_int_intersect_neg
+checked math_ext/bit_and/int_int_non_intersect
+parse-only math_ext/bit_and/int_int_non_intersect
+checked math_ext/bit_and/uint_uint_intersect
+parse-only math_ext/bit_and/uint_uint_intersect
+checked math_ext/bit_and/uint_uint_non_intersect
+parse-only math_ext/bit_and/uint_uint_non_intersect
+checked math_ext/bit_not/dyn_error
 parse-only math_ext/bit_not/dyn_error
+checked math_ext/bit_not/int_negative
+parse-only math_ext/bit_not/int_negative
+checked math_ext/bit_not/int_positive
+parse-only math_ext/bit_not/int_positive
+checked math_ext/bit_not/int_zero
+parse-only math_ext/bit_not/int_zero
+checked math_ext/bit_not/uint_positive
+parse-only math_ext/bit_not/uint_positive
+checked math_ext/bit_not/uint_zero
+parse-only math_ext/bit_not/uint_zero
+checked math_ext/bit_or/dyn_int_error
 parse-only math_ext/bit_or/dyn_int_error
+checked math_ext/bit_or/int_int_positive
+parse-only math_ext/bit_or/int_int_positive
+checked math_ext/bit_or/int_int_positive_negative
+parse-only math_ext/bit_or/int_int_positive_negative
+checked math_ext/bit_or/uint_uint
+parse-only math_ext/bit_or/uint_uint
+checked math_ext/bit_shift_left/bad_shift
 parse-only math_ext/bit_shift_left/bad_shift
+checked math_ext/bit_shift_left/dyn_int_error
 parse-only math_ext/bit_shift_left/dyn_int_error
+checked math_ext/bit_shift_left/int
+parse-only math_ext/bit_shift_left/int
+checked math_ext/bit_shift_left/int_large_shift
+parse-only math_ext/bit_shift_left/int_large_shift
+checked math_ext/bit_shift_left/int_negative_large_shift
+parse-only math_ext/bit_shift_left/int_negative_large_shift
+checked math_ext/bit_shift_left/uint
+parse-only math_ext/bit_shift_left/uint
+checked math_ext/bit_shift_left/uint_large_shift
+parse-only math_ext/bit_shift_left/uint_large_shift
+checked math_ext/bit_shift_right/bad_shift
 parse-only math_ext/bit_shift_right/bad_shift
+checked math_ext/bit_shift_right/dyn_int_error
 parse-only math_ext/bit_shift_right/dyn_int_error
+checked math_ext/bit_shift_right/int
+parse-only math_ext/bit_shift_right/int
+checked math_ext/bit_shift_right/int_large_shift
+parse-only math_ext/bit_shift_right/int_large_shift
+checked math_ext/bit_shift_right/int_negative
+parse-only math_ext/bit_shift_right/int_negative
+checked math_ext/bit_shift_right/int_negative_large_shift
+parse-only math_ext/bit_shift_right/int_negative_large_shift
+checked math_ext/bit_shift_right/uint
+parse-only math_ext/bit_shift_right/uint
+checked math_ext/bit_shift_right/uint_large_shift
+parse-only math_ext/bit_shift_right/uint_large_shift
+checked math_ext/bit_xor/dyn_dyn_error
 parse-only math_ext/bit_xor/dyn_dyn_error
+checked math_ext/bit_xor/int_int_positive
+parse-only math_ext/bit_xor/int_int_positive
+checked math_ext/bit_xor/int_int_positive_negative
+parse-only math_ext/bit_xor/int_int_positive_negative
+checked math_ext/bit_xor/uint_uint
+parse-only math_ext/bit_xor/uint_uint
+checked math_ext/ceil/dyn_error
 parse-only math_ext/ceil/dyn_error
+checked math_ext/ceil/negative
+parse-only math_ext/ceil/negative
+checked math_ext/ceil/positive
+parse-only math_ext/ceil/positive
+checked math_ext/floor/dyn_error
 parse-only math_ext/floor/dyn_error
+checked math_ext/floor/negative
+parse-only math_ext/floor/negative
+checked math_ext/floor/positive
+parse-only math_ext/floor/positive
+checked math_ext/greatest_double_result/binary_first_arg_double_max
+parse-only math_ext/greatest_double_result/binary_first_arg_double_max
+checked math_ext/greatest_double_result/binary_first_arg_double_min
+parse-only math_ext/greatest_double_result/binary_first_arg_double_min
+checked math_ext/greatest_double_result/binary_first_arg_greater
+parse-only math_ext/greatest_double_result/binary_first_arg_greater
+checked math_ext/greatest_double_result/binary_same_args
+parse-only math_ext/greatest_double_result/binary_same_args
+checked math_ext/greatest_double_result/binary_second_arg_double_max
+parse-only math_ext/greatest_double_result/binary_second_arg_double_max
+checked math_ext/greatest_double_result/binary_second_arg_double_min
+parse-only math_ext/greatest_double_result/binary_second_arg_double_min
+checked math_ext/greatest_double_result/binary_second_arg_greater
+parse-only math_ext/greatest_double_result/binary_second_arg_greater
+checked math_ext/greatest_double_result/binary_with_int
+parse-only math_ext/greatest_double_result/binary_with_int
+checked math_ext/greatest_double_result/binary_with_uint
+parse-only math_ext/greatest_double_result/binary_with_uint
+checked math_ext/greatest_double_result/quaternary_mixed
+parse-only math_ext/greatest_double_result/quaternary_mixed
+checked math_ext/greatest_double_result/quaternary_mixed_array
+parse-only math_ext/greatest_double_result/quaternary_mixed_array
+checked math_ext/greatest_double_result/quaternary_mixed_dyn_array
+parse-only math_ext/greatest_double_result/quaternary_mixed_dyn_array
+checked math_ext/greatest_double_result/ternary_double_max
+parse-only math_ext/greatest_double_result/ternary_double_max
+checked math_ext/greatest_double_result/ternary_double_min
+parse-only math_ext/greatest_double_result/ternary_double_min
+checked math_ext/greatest_double_result/ternary_first_arg_greatest
+parse-only math_ext/greatest_double_result/ternary_first_arg_greatest
+checked math_ext/greatest_double_result/ternary_same_args
+parse-only math_ext/greatest_double_result/ternary_same_args
+checked math_ext/greatest_double_result/ternary_third_arg_greatest
+parse-only math_ext/greatest_double_result/ternary_third_arg_greatest
+checked math_ext/greatest_double_result/ternary_with_int
+parse-only math_ext/greatest_double_result/ternary_with_int
+checked math_ext/greatest_double_result/ternary_with_negatives
+parse-only math_ext/greatest_double_result/ternary_with_negatives
+checked math_ext/greatest_double_result/ternary_with_uint
+parse-only math_ext/greatest_double_result/ternary_with_uint
+checked math_ext/greatest_double_result/unary_negative
+parse-only math_ext/greatest_double_result/unary_negative
+checked math_ext/greatest_double_result/unary_positive
+parse-only math_ext/greatest_double_result/unary_positive
+checked math_ext/greatest_int_result/binary_first_arg_greater
+parse-only math_ext/greatest_int_result/binary_first_arg_greater
+checked math_ext/greatest_int_result/binary_first_arg_int_max
+parse-only math_ext/greatest_int_result/binary_first_arg_int_max
+checked math_ext/greatest_int_result/binary_first_arg_int_min
+parse-only math_ext/greatest_int_result/binary_first_arg_int_min
+checked math_ext/greatest_int_result/binary_same_args
+parse-only math_ext/greatest_int_result/binary_same_args
+checked math_ext/greatest_int_result/binary_second_arg_greater
+parse-only math_ext/greatest_int_result/binary_second_arg_greater
+checked math_ext/greatest_int_result/binary_second_arg_int_max
+parse-only math_ext/greatest_int_result/binary_second_arg_int_max
+checked math_ext/greatest_int_result/binary_second_arg_int_min
+parse-only math_ext/greatest_int_result/binary_second_arg_int_min
+checked math_ext/greatest_int_result/binary_with_decimal
+parse-only math_ext/greatest_int_result/binary_with_decimal
+checked math_ext/greatest_int_result/binary_with_uint
+parse-only math_ext/greatest_int_result/binary_with_uint
+checked math_ext/greatest_int_result/quaternary_mixed
+parse-only math_ext/greatest_int_result/quaternary_mixed
+checked math_ext/greatest_int_result/quaternary_mixed_array
+parse-only math_ext/greatest_int_result/quaternary_mixed_array
+checked math_ext/greatest_int_result/quaternary_mixed_dyn_array
+parse-only math_ext/greatest_int_result/quaternary_mixed_dyn_array
+checked math_ext/greatest_int_result/ternary_first_arg_greatest
+parse-only math_ext/greatest_int_result/ternary_first_arg_greatest
+checked math_ext/greatest_int_result/ternary_int_max
+parse-only math_ext/greatest_int_result/ternary_int_max
+checked math_ext/greatest_int_result/ternary_int_min
+parse-only math_ext/greatest_int_result/ternary_int_min
+checked math_ext/greatest_int_result/ternary_same_args
+parse-only math_ext/greatest_int_result/ternary_same_args
+checked math_ext/greatest_int_result/ternary_third_arg_greatest
+parse-only math_ext/greatest_int_result/ternary_third_arg_greatest
+checked math_ext/greatest_int_result/ternary_with_decimal
+parse-only math_ext/greatest_int_result/ternary_with_decimal
+checked math_ext/greatest_int_result/ternary_with_negatives
+parse-only math_ext/greatest_int_result/ternary_with_negatives
+checked math_ext/greatest_int_result/ternary_with_uint
+parse-only math_ext/greatest_int_result/ternary_with_uint
+checked math_ext/greatest_int_result/unary_negative
+parse-only math_ext/greatest_int_result/unary_negative
+checked math_ext/greatest_int_result/unary_positive
+parse-only math_ext/greatest_int_result/unary_positive
+checked math_ext/greatest_uint_result/binary_first_arg_greater
+parse-only math_ext/greatest_uint_result/binary_first_arg_greater
+checked math_ext/greatest_uint_result/binary_first_arg_uint_max
+parse-only math_ext/greatest_uint_result/binary_first_arg_uint_max
+checked math_ext/greatest_uint_result/binary_same_args
+parse-only math_ext/greatest_uint_result/binary_same_args
+checked math_ext/greatest_uint_result/binary_second_arg_greater
+parse-only math_ext/greatest_uint_result/binary_second_arg_greater
+checked math_ext/greatest_uint_result/binary_second_arg_uint_max
+parse-only math_ext/greatest_uint_result/binary_second_arg_uint_max
+checked math_ext/greatest_uint_result/binary_with_decimal
+parse-only math_ext/greatest_uint_result/binary_with_decimal
+checked math_ext/greatest_uint_result/binary_with_int
+parse-only math_ext/greatest_uint_result/binary_with_int
+checked math_ext/greatest_uint_result/quaternary_mixed
+parse-only math_ext/greatest_uint_result/quaternary_mixed
+checked math_ext/greatest_uint_result/quaternary_mixed_array
+parse-only math_ext/greatest_uint_result/quaternary_mixed_array
+checked math_ext/greatest_uint_result/quaternary_mixed_dyn_array
+parse-only math_ext/greatest_uint_result/quaternary_mixed_dyn_array
+checked math_ext/greatest_uint_result/ternary_first_arg_greatest
+parse-only math_ext/greatest_uint_result/ternary_first_arg_greatest
+checked math_ext/greatest_uint_result/ternary_int_max
+parse-only math_ext/greatest_uint_result/ternary_int_max
+checked math_ext/greatest_uint_result/ternary_same_args
+parse-only math_ext/greatest_uint_result/ternary_same_args
+checked math_ext/greatest_uint_result/ternary_third_arg_greatest
+parse-only math_ext/greatest_uint_result/ternary_third_arg_greatest
+checked math_ext/greatest_uint_result/ternary_with_decimal
+parse-only math_ext/greatest_uint_result/ternary_with_decimal
+checked math_ext/greatest_uint_result/ternary_with_int
+parse-only math_ext/greatest_uint_result/ternary_with_int
+checked math_ext/greatest_uint_result/unary
+parse-only math_ext/greatest_uint_result/unary
+checked math_ext/isFinite/dyn_error
 parse-only math_ext/isFinite/dyn_error
+checked math_ext/isFinite/false_inf
+parse-only math_ext/isFinite/false_inf
+checked math_ext/isFinite/false_nan
+parse-only math_ext/isFinite/false_nan
+checked math_ext/isFinite/true
+parse-only math_ext/isFinite/true
+checked math_ext/isInf/dyn_error
 parse-only math_ext/isInf/dyn_error
+checked math_ext/isInf/false
+parse-only math_ext/isInf/false
+checked math_ext/isInf/true
+parse-only math_ext/isInf/true
+checked math_ext/isNaN/dyn_error
 parse-only math_ext/isNaN/dyn_error
+checked math_ext/isNaN/false
+parse-only math_ext/isNaN/false
+checked math_ext/isNaN/true
+parse-only math_ext/isNaN/true
+checked math_ext/least_double_result/binary_first_arg_double_max
+parse-only math_ext/least_double_result/binary_first_arg_double_max
+checked math_ext/least_double_result/binary_first_arg_double_min
+parse-only math_ext/least_double_result/binary_first_arg_double_min
+checked math_ext/least_double_result/binary_first_arg_least
+parse-only math_ext/least_double_result/binary_first_arg_least
+checked math_ext/least_double_result/binary_same_args
+parse-only math_ext/least_double_result/binary_same_args
+checked math_ext/least_double_result/binary_second_arg_double_max
+parse-only math_ext/least_double_result/binary_second_arg_double_max
+checked math_ext/least_double_result/binary_second_arg_double_min
+parse-only math_ext/least_double_result/binary_second_arg_double_min
+checked math_ext/least_double_result/binary_second_arg_least
+parse-only math_ext/least_double_result/binary_second_arg_least
+checked math_ext/least_double_result/binary_with_int
+parse-only math_ext/least_double_result/binary_with_int
+checked math_ext/least_double_result/binary_with_uint
+parse-only math_ext/least_double_result/binary_with_uint
+checked math_ext/least_double_result/quaternary_mixed
+parse-only math_ext/least_double_result/quaternary_mixed
+checked math_ext/least_double_result/quaternary_mixed_array
+parse-only math_ext/least_double_result/quaternary_mixed_array
+checked math_ext/least_double_result/quaternary_mixed_dyn_array
+parse-only math_ext/least_double_result/quaternary_mixed_dyn_array
+checked math_ext/least_double_result/ternary_double_max
+parse-only math_ext/least_double_result/ternary_double_max
+checked math_ext/least_double_result/ternary_double_min
+parse-only math_ext/least_double_result/ternary_double_min
+checked math_ext/least_double_result/ternary_first_arg_least
+parse-only math_ext/least_double_result/ternary_first_arg_least
+checked math_ext/least_double_result/ternary_same_args
+parse-only math_ext/least_double_result/ternary_same_args
+checked math_ext/least_double_result/ternary_third_arg_least
+parse-only math_ext/least_double_result/ternary_third_arg_least
+checked math_ext/least_double_result/ternary_with_int
+parse-only math_ext/least_double_result/ternary_with_int
+checked math_ext/least_double_result/ternary_with_negatives
+parse-only math_ext/least_double_result/ternary_with_negatives
+checked math_ext/least_double_result/ternary_with_uint
+parse-only math_ext/least_double_result/ternary_with_uint
+checked math_ext/least_double_result/unary_negative
+parse-only math_ext/least_double_result/unary_negative
+checked math_ext/least_double_result/unary_positive
+parse-only math_ext/least_double_result/unary_positive
+checked math_ext/least_int_result/binary_first_arg_int_max
+parse-only math_ext/least_int_result/binary_first_arg_int_max
+checked math_ext/least_int_result/binary_first_arg_int_min
+parse-only math_ext/least_int_result/binary_first_arg_int_min
+checked math_ext/least_int_result/binary_first_arg_least
+parse-only math_ext/least_int_result/binary_first_arg_least
+checked math_ext/least_int_result/binary_same_args
+parse-only math_ext/least_int_result/binary_same_args
+checked math_ext/least_int_result/binary_second_arg_int_max
+parse-only math_ext/least_int_result/binary_second_arg_int_max
+checked math_ext/least_int_result/binary_second_arg_int_min
+parse-only math_ext/least_int_result/binary_second_arg_int_min
+checked math_ext/least_int_result/binary_second_arg_least
+parse-only math_ext/least_int_result/binary_second_arg_least
+checked math_ext/least_int_result/binary_with_decimal
+parse-only math_ext/least_int_result/binary_with_decimal
+checked math_ext/least_int_result/binary_with_uint
+parse-only math_ext/least_int_result/binary_with_uint
+checked math_ext/least_int_result/quaternary_mixed
+parse-only math_ext/least_int_result/quaternary_mixed
+checked math_ext/least_int_result/quaternary_mixed_array
+parse-only math_ext/least_int_result/quaternary_mixed_array
+checked math_ext/least_int_result/quaternary_mixed_dyn_array
+parse-only math_ext/least_int_result/quaternary_mixed_dyn_array
+checked math_ext/least_int_result/ternary_first_arg_least
+parse-only math_ext/least_int_result/ternary_first_arg_least
+checked math_ext/least_int_result/ternary_int_max
+parse-only math_ext/least_int_result/ternary_int_max
+checked math_ext/least_int_result/ternary_int_min
+parse-only math_ext/least_int_result/ternary_int_min
+checked math_ext/least_int_result/ternary_same_args
+parse-only math_ext/least_int_result/ternary_same_args
+checked math_ext/least_int_result/ternary_third_arg_least
+parse-only math_ext/least_int_result/ternary_third_arg_least
+checked math_ext/least_int_result/ternary_with_decimal
+parse-only math_ext/least_int_result/ternary_with_decimal
+checked math_ext/least_int_result/ternary_with_negatives
+parse-only math_ext/least_int_result/ternary_with_negatives
+checked math_ext/least_int_result/ternary_with_uint
+parse-only math_ext/least_int_result/ternary_with_uint
+checked math_ext/least_int_result/unary_negative
+parse-only math_ext/least_int_result/unary_negative
+checked math_ext/least_int_result/unary_positive
+parse-only math_ext/least_int_result/unary_positive
+checked math_ext/least_uint_result/binary_first_arg_least
+parse-only math_ext/least_uint_result/binary_first_arg_least
+checked math_ext/least_uint_result/binary_first_arg_uint_max
+parse-only math_ext/least_uint_result/binary_first_arg_uint_max
+checked math_ext/least_uint_result/binary_same_args
+parse-only math_ext/least_uint_result/binary_same_args
+checked math_ext/least_uint_result/binary_second_arg_least
+parse-only math_ext/least_uint_result/binary_second_arg_least
+checked math_ext/least_uint_result/binary_second_arg_uint_max
+parse-only math_ext/least_uint_result/binary_second_arg_uint_max
+checked math_ext/least_uint_result/binary_with_decimal
+parse-only math_ext/least_uint_result/binary_with_decimal
+checked math_ext/least_uint_result/binary_with_int
+parse-only math_ext/least_uint_result/binary_with_int
+checked math_ext/least_uint_result/quaternary_mixed
+parse-only math_ext/least_uint_result/quaternary_mixed
+checked math_ext/least_uint_result/quaternary_mixed_array
+parse-only math_ext/least_uint_result/quaternary_mixed_array
+checked math_ext/least_uint_result/quaternary_mixed_dyn_array
+parse-only math_ext/least_uint_result/quaternary_mixed_dyn_array
+checked math_ext/least_uint_result/ternary_first_arg_least
+parse-only math_ext/least_uint_result/ternary_first_arg_least
+checked math_ext/least_uint_result/ternary_same_args
+parse-only math_ext/least_uint_result/ternary_same_args
+checked math_ext/least_uint_result/ternary_third_arg_least
+parse-only math_ext/least_uint_result/ternary_third_arg_least
+checked math_ext/least_uint_result/ternary_uint_max
+parse-only math_ext/least_uint_result/ternary_uint_max
+checked math_ext/least_uint_result/ternary_with_decimal
+parse-only math_ext/least_uint_result/ternary_with_decimal
+checked math_ext/least_uint_result/ternary_with_int
+parse-only math_ext/least_uint_result/ternary_with_int
+checked math_ext/least_uint_result/unary
+parse-only math_ext/least_uint_result/unary
+checked math_ext/round/dyn_error
 parse-only math_ext/round/dyn_error
+checked math_ext/round/nan
+parse-only math_ext/round/nan
+checked math_ext/round/negative_down
+parse-only math_ext/round/negative_down
+checked math_ext/round/negative_mid
+parse-only math_ext/round/negative_mid
+checked math_ext/round/negative_up
+parse-only math_ext/round/negative_up
+checked math_ext/round/positive_down
+parse-only math_ext/round/positive_down
+checked math_ext/round/positive_up
+parse-only math_ext/round/positive_up
+checked math_ext/sign/dyn_error
 parse-only math_ext/sign/dyn_error
+checked math_ext/sign/negative_double
+parse-only math_ext/sign/negative_double
+checked math_ext/sign/negative_int
+parse-only math_ext/sign/negative_int
+checked math_ext/sign/positive_double
+parse-only math_ext/sign/positive_double
+checked math_ext/sign/positive_int
+parse-only math_ext/sign/positive_int
+checked math_ext/sign/positive_uint
+parse-only math_ext/sign/positive_uint
+checked math_ext/sign/zero_double
+parse-only math_ext/sign/zero_double
+checked math_ext/sign/zero_int
+parse-only math_ext/sign/zero_int
+checked math_ext/sign/zero_uint
+parse-only math_ext/sign/zero_uint
+checked math_ext/trunc/dyn_error
 parse-only math_ext/trunc/dyn_error
+checked math_ext/trunc/nan
+parse-only math_ext/trunc/nan
+checked math_ext/trunc/negative
+parse-only math_ext/trunc/negative
+checked math_ext/trunc/positive
+parse-only math_ext/trunc/positive
 checked namespace/namespace/self_eval_container_lookup
 parse-only namespace/namespace/self_eval_container_lookup
 checked namespace/namespace/self_eval_container_lookup_unchecked
@@ -2202,15 +2859,139 @@ checked namespace/namespace_shadowing/disambiguation
 parse-only namespace/namespace_shadowing/disambiguation
 checked namespace/qualified/self_eval_qualified_lookup
 parse-only namespace/qualified/self_eval_qualified_lookup
+checked network_ext/cidr/cidr_contains_cidr
+parse-only network_ext/cidr/cidr_contains_cidr
+checked network_ext/cidr/cidr_contains_cidr_ipv4_exact
+parse-only network_ext/cidr/cidr_contains_cidr_ipv4_exact
+checked network_ext/cidr/cidr_contains_cidr_ipv4_object
+parse-only network_ext/cidr/cidr_contains_cidr_ipv4_object
+checked network_ext/cidr/cidr_contains_cidr_ipv4_object_32
+parse-only network_ext/cidr/cidr_contains_cidr_ipv4_object_32
+checked network_ext/cidr/cidr_contains_cidr_ipv4_string
+parse-only network_ext/cidr/cidr_contains_cidr_ipv4_string
+checked network_ext/cidr/cidr_contains_cidr_ipv6_object
+parse-only network_ext/cidr/cidr_contains_cidr_ipv6_object
+checked network_ext/cidr/cidr_contains_ip_ipv4_object
+parse-only network_ext/cidr/cidr_contains_ip_ipv4_object
+checked network_ext/cidr/cidr_contains_ip_ipv4_string
+parse-only network_ext/cidr/cidr_contains_ip_ipv4_string
+checked network_ext/cidr/cidr_contains_ip_ipv6_object
+parse-only network_ext/cidr/cidr_contains_ip_ipv6_object
+checked network_ext/cidr/cidr_does_not_contain_ip_ipv4_object
+parse-only network_ext/cidr/cidr_does_not_contain_ip_ipv4_object
+checked network_ext/cidr/cidr_does_not_contain_ip_ipv4_string
+parse-only network_ext/cidr/cidr_does_not_contain_ip_ipv4_string
+checked network_ext/cidr/cidr_equals
+parse-only network_ext/cidr/cidr_equals
+checked network_ext/cidr/cidr_get_ip_ipv4
+parse-only network_ext/cidr/cidr_get_ip_ipv4
+checked network_ext/cidr/cidr_get_ip_ipv6
+parse-only network_ext/cidr/cidr_get_ip_ipv6
+checked network_ext/cidr/cidr_ipv4_not_contains_ip_ipv6_object
+parse-only network_ext/cidr/cidr_ipv4_not_contains_ip_ipv6_object
+checked network_ext/cidr/cidr_ipv6_not_contains_ip_ipv4_object
+parse-only network_ext/cidr/cidr_ipv6_not_contains_ip_ipv4_object
+checked network_ext/cidr/cidr_masked_ipv4
+parse-only network_ext/cidr/cidr_masked_ipv4
+checked network_ext/cidr/cidr_not_contains_cidr_ipv4_object
+parse-only network_ext/cidr/cidr_not_contains_cidr_ipv4_object
+checked network_ext/cidr/cidr_not_equals
+parse-only network_ext/cidr/cidr_not_equals
+checked network_ext/cidr/cidr_not_equals_ipv4_ipv6
+parse-only network_ext/cidr/cidr_not_equals_ipv4_ipv6
+checked network_ext/cidr/cidr_prefix_length_ipv4
+parse-only network_ext/cidr/cidr_prefix_length_ipv4
+checked network_ext/cidr/cidr_prefix_length_ipv6
+parse-only network_ext/cidr/cidr_prefix_length_ipv6
+checked network_ext/cidr/cidr_to_string
+parse-only network_ext/cidr/cidr_to_string
+checked network_ext/cidr/cidr_type
+parse-only network_ext/cidr/cidr_type
+checked network_ext/cidr/parse_cidr_ipv4
+parse-only network_ext/cidr/parse_cidr_ipv4
+checked network_ext/cidr/parse_cidr_ipv6
+parse-only network_ext/cidr/parse_cidr_ipv6
+checked network_ext/cidr/parse_invalid_cidr_ipv4
 parse-only network_ext/cidr/parse_invalid_cidr_ipv4
+checked network_ext/cidr/parse_invalid_cidr_ipv4_in_ipv6
 parse-only network_ext/cidr/parse_invalid_cidr_ipv4_in_ipv6
+checked network_ext/cidr/parse_invalid_cidr_with_zone
 parse-only network_ext/cidr/parse_invalid_cidr_with_zone
+checked network_ext/ip_type/ip_is_canonical_invalid_ipv4
 parse-only network_ext/ip_type/ip_is_canonical_invalid_ipv4
+checked network_ext/ip_type/ip_is_canonical_non_canonical_ipv6
+parse-only network_ext/ip_type/ip_is_canonical_non_canonical_ipv6
+checked network_ext/ip_type/ip_is_canonical_valid_ipv4
+parse-only network_ext/ip_type/ip_is_canonical_valid_ipv4
+checked network_ext/ip_type/ip_to_string
+parse-only network_ext/ip_type/ip_to_string
+checked network_ext/ip_type/ip_type
+parse-only network_ext/ip_type/ip_type
 parse-only network_ext/ip_type/is_ip_cidr_compile_error
+checked network_ext/ip_type/is_ip_invalid_ipv4
+parse-only network_ext/ip_type/is_ip_invalid_ipv4
+checked network_ext/ip_type/is_ip_valid_ipv4
+parse-only network_ext/ip_type/is_ip_valid_ipv4
+checked network_ext/ip_type/parse_invalid_ipv4
 parse-only network_ext/ip_type/parse_invalid_ipv4
+checked network_ext/ip_type/parse_invalid_ipv4_in_ipv6
 parse-only network_ext/ip_type/parse_invalid_ipv4_in_ipv6
+checked network_ext/ip_type/parse_invalid_ipv6
 parse-only network_ext/ip_type/parse_invalid_ipv6
+checked network_ext/ip_type/parse_invalid_ipv6_with_zone
 parse-only network_ext/ip_type/parse_invalid_ipv6_with_zone
+checked network_ext/ip_type/parse_ipv4
+parse-only network_ext/ip_type/parse_ipv4
+checked network_ext/ip_type/parse_ipv6
+parse-only network_ext/ip_type/parse_ipv6
+checked network_ext/ipv4/ipv4_equals
+parse-only network_ext/ipv4/ipv4_equals
+checked network_ext/ipv4/ipv4_family
+parse-only network_ext/ipv4/ipv4_family
+checked network_ext/ipv4/ipv4_is_global_unicast_false
+parse-only network_ext/ipv4/ipv4_is_global_unicast_false
+checked network_ext/ipv4/ipv4_is_global_unicast_true
+parse-only network_ext/ipv4/ipv4_is_global_unicast_true
+checked network_ext/ipv4/ipv4_is_loopback_false
+parse-only network_ext/ipv4/ipv4_is_loopback_false
+checked network_ext/ipv4/ipv4_is_loopback_true
+parse-only network_ext/ipv4/ipv4_is_loopback_true
+checked network_ext/ipv4/ipv4_is_unspecified_false
+parse-only network_ext/ipv4/ipv4_is_unspecified_false
+checked network_ext/ipv4/ipv4_is_unspecified_true
+parse-only network_ext/ipv4/ipv4_is_unspecified_true
+checked network_ext/ipv4/ipv4_not_equals
+parse-only network_ext/ipv4/ipv4_not_equals
+checked network_ext/ipv4/is_link_local_multicast_false
+parse-only network_ext/ipv4/is_link_local_multicast_false
+checked network_ext/ipv4/is_link_local_multicast_true
+parse-only network_ext/ipv4/is_link_local_multicast_true
+checked network_ext/ipv4/is_link_local_unicast_false
+parse-only network_ext/ipv4/is_link_local_unicast_false
+checked network_ext/ipv4/is_link_local_unicast_true
+parse-only network_ext/ipv4/is_link_local_unicast_true
+checked network_ext/ipv6/family
+parse-only network_ext/ipv6/family
+checked network_ext/ipv6/ipv6_equals
+parse-only network_ext/ipv6/ipv6_equals
+checked network_ext/ipv6/ipv6_not_equals
+parse-only network_ext/ipv6/ipv6_not_equals
+checked network_ext/ipv6/is_global_unicast_false
+parse-only network_ext/ipv6/is_global_unicast_false
+checked network_ext/ipv6/is_global_unicast_true
+parse-only network_ext/ipv6/is_global_unicast_true
+checked network_ext/ipv6/is_link_local_multicast_false
+parse-only network_ext/ipv6/is_link_local_multicast_false
+checked network_ext/ipv6/is_link_local_multicast_true
+parse-only network_ext/ipv6/is_link_local_multicast_true
+checked network_ext/ipv6/is_link_local_unicast_false
+parse-only network_ext/ipv6/is_link_local_unicast_false
+checked network_ext/ipv6/is_link_local_unicast_true
+parse-only network_ext/ipv6/is_link_local_unicast_true
+checked network_ext/ipv6/is_loopback_true
+parse-only network_ext/ipv6/is_loopback_true
+checked network_ext/ipv6/is_unspecified_true
+parse-only network_ext/ipv6/is_unspecified_true
 checked optionals/optionals/empty_list_optindex_hasValue
 parse-only optionals/optionals/empty_list_optindex_hasValue
 checked optionals/optionals/empty_map_optFlatMap_hasValue
@@ -3009,6 +3790,42 @@ checked proto2/singular_bind/int32
 parse-only proto2/singular_bind/int32
 checked proto2/singular_bind/int64
 parse-only proto2/singular_bind/int64
+checked proto2_ext/get_ext/message_scoped_int64
+parse-only proto2_ext/get_ext/message_scoped_int64
+checked proto2_ext/get_ext/message_scoped_nested_enum_ext
+parse-only proto2_ext/get_ext/message_scoped_nested_enum_ext
+checked proto2_ext/get_ext/message_scoped_nested_ext
+parse-only proto2_ext/get_ext/message_scoped_nested_ext
+checked proto2_ext/get_ext/message_scoped_repeated_test_all_types
+parse-only proto2_ext/get_ext/message_scoped_repeated_test_all_types
+checked proto2_ext/get_ext/package_scoped_int32
+parse-only proto2_ext/get_ext/package_scoped_int32
+checked proto2_ext/get_ext/package_scoped_nested_ext
+parse-only proto2_ext/get_ext/package_scoped_nested_ext
+checked proto2_ext/get_ext/package_scoped_repeated_test_all_types
+parse-only proto2_ext/get_ext/package_scoped_repeated_test_all_types
+checked proto2_ext/get_ext/package_scoped_test_all_types_ext
+parse-only proto2_ext/get_ext/package_scoped_test_all_types_ext
+checked proto2_ext/get_ext/package_scoped_test_all_types_nested_enum_ext
+parse-only proto2_ext/get_ext/package_scoped_test_all_types_nested_enum_ext
+checked proto2_ext/has_ext/message_scoped_int64
+parse-only proto2_ext/has_ext/message_scoped_int64
+checked proto2_ext/has_ext/message_scoped_nested_enum_ext
+parse-only proto2_ext/has_ext/message_scoped_nested_enum_ext
+checked proto2_ext/has_ext/message_scoped_nested_ext
+parse-only proto2_ext/has_ext/message_scoped_nested_ext
+checked proto2_ext/has_ext/message_scoped_repeated_test_all_types
+parse-only proto2_ext/has_ext/message_scoped_repeated_test_all_types
+checked proto2_ext/has_ext/package_scoped_int32
+parse-only proto2_ext/has_ext/package_scoped_int32
+checked proto2_ext/has_ext/package_scoped_nested_ext
+parse-only proto2_ext/has_ext/package_scoped_nested_ext
+checked proto2_ext/has_ext/package_scoped_repeated_test_all_types
+parse-only proto2_ext/has_ext/package_scoped_repeated_test_all_types
+checked proto2_ext/has_ext/package_scoped_test_all_types_ext
+parse-only proto2_ext/has_ext/package_scoped_test_all_types_ext
+checked proto2_ext/has_ext/package_scoped_test_all_types_nested_enum_ext
+parse-only proto2_ext/has_ext/package_scoped_test_all_types_nested_enum_ext
 checked proto3/empty_field/map
 parse-only proto3/empty_field/map
 checked proto3/empty_field/nested_message
@@ -3275,6 +4092,182 @@ checked string/starts_with/unicode
 parse-only string/starts_with/unicode
 checked string/starts_with/unicode_smp
 parse-only string/starts_with/unicode_smp
+checked string_ext/ascii_casing/lowerascii
+parse-only string_ext/ascii_casing/lowerascii
+checked string_ext/ascii_casing/lowerascii_unicode
+parse-only string_ext/ascii_casing/lowerascii_unicode
+checked string_ext/ascii_casing/lowerascii_unicode_with_space
+parse-only string_ext/ascii_casing/lowerascii_unicode_with_space
+checked string_ext/ascii_casing/upperascii
+parse-only string_ext/ascii_casing/upperascii
+checked string_ext/ascii_casing/upperascii_unicode
+parse-only string_ext/ascii_casing/upperascii_unicode
+checked string_ext/ascii_casing/upperascii_unicode_with_space
+parse-only string_ext/ascii_casing/upperascii_unicode_with_space
+checked string_ext/char_at/end_index
+parse-only string_ext/char_at/end_index
+checked string_ext/char_at/middle_index
+parse-only string_ext/char_at/middle_index
+checked string_ext/char_at/multiple
+parse-only string_ext/char_at/multiple
+checked string_ext/format/NaN support for decimal
+parse-only string_ext/format/NaN support for decimal
+checked string_ext/format/NaN support for fixed-point
+parse-only string_ext/format/NaN support for fixed-point
+checked string_ext/format/NaN support for scientific notation
+parse-only string_ext/format/NaN support for scientific notation
+checked string_ext/format/binary formatting clause
+parse-only string_ext/format/binary formatting clause
+checked string_ext/format/binary formatting clause in a string variable
+parse-only string_ext/format/binary formatting clause in a string variable
+checked string_ext/format/bool support for binary formatting
+parse-only string_ext/format/bool support for binary formatting
+checked string_ext/format/boolean support for %s
+parse-only string_ext/format/boolean support for %s
+checked string_ext/format/byte support with hexadecimal formatting clause
+parse-only string_ext/format/byte support with hexadecimal formatting clause
+checked string_ext/format/byte support with uppercase hexadecimal formatting clause
+parse-only string_ext/format/byte support with uppercase hexadecimal formatting clause
+checked string_ext/format/bytes support for string
+parse-only string_ext/format/bytes support for string
+checked string_ext/format/default precision for fixed-point clause
+parse-only string_ext/format/default precision for fixed-point clause
+checked string_ext/format/default precision for fixed-point clause in a string variable
+parse-only string_ext/format/default precision for fixed-point clause in a string variable
+checked string_ext/format/default precision for fixed-point clause with int
+parse-only string_ext/format/default precision for fixed-point clause with int
+checked string_ext/format/default precision for fixed-point clause with uint
+parse-only string_ext/format/default precision for fixed-point clause with uint
+checked string_ext/format/default precision for scientific notation
+parse-only string_ext/format/default precision for scientific notation
+checked string_ext/format/default precision for scientific notation with int
+parse-only string_ext/format/default precision for scientific notation with int
+checked string_ext/format/default precision for scientific notation with uint
+parse-only string_ext/format/default precision for scientific notation with uint
+checked string_ext/format/duration support for string
+parse-only string_ext/format/duration support for string
+checked string_ext/format/dyntype NaN/infinity support
+parse-only string_ext/format/dyntype NaN/infinity support
+checked string_ext/format/dyntype support for duration
+parse-only string_ext/format/dyntype support for duration
+checked string_ext/format/dyntype support for fixed-point formatting clause
+parse-only string_ext/format/dyntype support for fixed-point formatting clause
+checked string_ext/format/dyntype support for hex formatting clause
+parse-only string_ext/format/dyntype support for hex formatting clause
+checked string_ext/format/dyntype support for hex formatting clause (uppercase)
+parse-only string_ext/format/dyntype support for hex formatting clause (uppercase)
+checked string_ext/format/dyntype support for integer formatting clause
+parse-only string_ext/format/dyntype support for integer formatting clause
+checked string_ext/format/dyntype support for integer formatting clause (unsigned)
+parse-only string_ext/format/dyntype support for integer formatting clause (unsigned)
+checked string_ext/format/dyntype support for lists
+parse-only string_ext/format/dyntype support for lists
+checked string_ext/format/dyntype support for maps
+parse-only string_ext/format/dyntype support for maps
+checked string_ext/format/dyntype support for numbers with string formatting clause
+parse-only string_ext/format/dyntype support for numbers with string formatting clause
+checked string_ext/format/dyntype support for scientific notation
+parse-only string_ext/format/dyntype support for scientific notation
+checked string_ext/format/dyntype support for string formatting clause
+parse-only string_ext/format/dyntype support for string formatting clause
+checked string_ext/format/dyntype support for timestamp
+parse-only string_ext/format/dyntype support for timestamp
+checked string_ext/format/dyntype support for unsigned hex formatting clause
+parse-only string_ext/format/dyntype support for unsigned hex formatting clause
+checked string_ext/format/fixed point formatting clause
+parse-only string_ext/format/fixed point formatting clause
+checked string_ext/format/fixed point formatting clause in a string variable
+parse-only string_ext/format/fixed point formatting clause in a string variable
+checked string_ext/format/format_%f_halfway_round_up_to_nearest_even
+parse-only string_ext/format/format_%f_halfway_round_up_to_nearest_even
+checked string_ext/format/format_%f_halfway_truncate_to_nearest_even
+parse-only string_ext/format/format_%f_halfway_truncate_to_nearest_even
+checked string_ext/format/format_%f_insignificant_zeroes_removed
+parse-only string_ext/format/format_%f_insignificant_zeroes_removed
+checked string_ext/format/format_%f_negative_round_down
+parse-only string_ext/format/format_%f_negative_round_down
+checked string_ext/format/format_%f_negative_round_up
+parse-only string_ext/format/format_%f_negative_round_up
+checked string_ext/format/format_%f_negative_truncate_to_whole_number
+parse-only string_ext/format/format_%f_negative_truncate_to_whole_number
+checked string_ext/format/format_%f_positive_round_down
+parse-only string_ext/format/format_%f_positive_round_down
+checked string_ext/format/format_%f_positive_round_to_whole_number
+parse-only string_ext/format/format_%f_positive_round_to_whole_number
+checked string_ext/format/format_%f_positive_round_up
+parse-only string_ext/format/format_%f_positive_round_up
+checked string_ext/format/format_%f_zero_padding
+parse-only string_ext/format/format_%f_zero_padding
+checked string_ext/format/int support for string
+parse-only string_ext/format/int support for string
+checked string_ext/format/list support for string
+parse-only string_ext/format/list support for string
+checked string_ext/format/lowercase hexadecimal formatting clause
+parse-only string_ext/format/lowercase hexadecimal formatting clause
+checked string_ext/format/map support (all key types)
+parse-only string_ext/format/map support (all key types)
+checked string_ext/format/map support for string
+parse-only string_ext/format/map support for string
+checked string_ext/format/mid-string substitution
+parse-only string_ext/format/mid-string substitution
+checked string_ext/format/multiple substitutions
+parse-only string_ext/format/multiple substitutions
+checked string_ext/format/multiple substitutions in a string variable
+parse-only string_ext/format/multiple substitutions in a string variable
+checked string_ext/format/negative infinity support for decimal
+parse-only string_ext/format/negative infinity support for decimal
+checked string_ext/format/negative infinity support for fixed-point
+parse-only string_ext/format/negative infinity support for fixed-point
+checked string_ext/format/negative infinity support for scientific notation
+parse-only string_ext/format/negative infinity support for scientific notation
+checked string_ext/format/no-op
+parse-only string_ext/format/no-op
+checked string_ext/format/null support for string
+parse-only string_ext/format/null support for string
+checked string_ext/format/octal formatting clause
+parse-only string_ext/format/octal formatting clause
+checked string_ext/format/percent escaping
+parse-only string_ext/format/percent escaping
+checked string_ext/format/percent sign escape sequence support
+parse-only string_ext/format/percent sign escape sequence support
+checked string_ext/format/positive infinity support for decimal
+parse-only string_ext/format/positive infinity support for decimal
+checked string_ext/format/positive infinity support for fixed-point
+parse-only string_ext/format/positive infinity support for fixed-point
+checked string_ext/format/positive infinity support for scientific notation
+parse-only string_ext/format/positive infinity support for scientific notation
+checked string_ext/format/scientific notation formatting clause
+parse-only string_ext/format/scientific notation formatting clause
+checked string_ext/format/scientific notation formatting clause in a string variable
+parse-only string_ext/format/scientific notation formatting clause in a string variable
+checked string_ext/format/string substitution in a string variable
+parse-only string_ext/format/string substitution in a string variable
+checked string_ext/format/string support with hexadecimal formatting clause
+parse-only string_ext/format/string support with hexadecimal formatting clause
+checked string_ext/format/string support with uppercase hexadecimal formatting clause
+parse-only string_ext/format/string support with uppercase hexadecimal formatting clause
+checked string_ext/format/substitution inside escaped percent signs
+parse-only string_ext/format/substitution inside escaped percent signs
+checked string_ext/format/substitution inside escaped percent signs in a string variable
+parse-only string_ext/format/substitution inside escaped percent signs in a string variable
+checked string_ext/format/substitution with one escaped percent sign on the left
+parse-only string_ext/format/substitution with one escaped percent sign on the left
+checked string_ext/format/substitution with one escaped percent sign on the right
+parse-only string_ext/format/substitution with one escaped percent sign on the right
+checked string_ext/format/timestamp support for string
+parse-only string_ext/format/timestamp support for string
+checked string_ext/format/type() support for string
+parse-only string_ext/format/type() support for string
+checked string_ext/format/uint support for binary formatting
+parse-only string_ext/format/uint support for binary formatting
+checked string_ext/format/uint support for decimal clause
+parse-only string_ext/format/uint support for decimal clause
+checked string_ext/format/uint support for octal formatting clause
+parse-only string_ext/format/uint support for octal formatting clause
+checked string_ext/format/unsigned support for hexadecimal formatting clause
+parse-only string_ext/format/unsigned support for hexadecimal formatting clause
+checked string_ext/format/uppercase hexadecimal formatting clause
+parse-only string_ext/format/uppercase hexadecimal formatting clause
 checked string_ext/format_errors/double substitution not allowed with hex clause
 checked string_ext/format_errors/duration substitution not allowed with decimal clause
 checked string_ext/format_errors/null not allowed for %X
@@ -3292,6 +4285,156 @@ checked string_ext/format_errors/string substitution is not allowed with binary 
 checked string_ext/format_errors/string substitution not allowed with octal clause
 checked string_ext/format_errors/unrecognized formatting clause
 checked string_ext/format_errors/uppercase not allowed for scientific clause
+checked string_ext/index_of/char_index
+parse-only string_ext/index_of/char_index
+checked string_ext/index_of/char_index#01
+parse-only string_ext/index_of/char_index#01
+checked string_ext/index_of/empty_index
+parse-only string_ext/index_of/empty_index
+checked string_ext/index_of/empty_index#01
+parse-only string_ext/index_of/empty_index#01
+checked string_ext/index_of/nomatch
+parse-only string_ext/index_of/nomatch
+checked string_ext/index_of/string_index
+parse-only string_ext/index_of/string_index
+checked string_ext/index_of/string_index#01
+parse-only string_ext/index_of/string_index#01
+checked string_ext/index_of/string_nomatch_index
+parse-only string_ext/index_of/string_nomatch_index
+checked string_ext/index_of/string_with_space_fullmatch
+parse-only string_ext/index_of/string_with_space_fullmatch
+checked string_ext/index_of/string_with_space_index
+parse-only string_ext/index_of/string_with_space_index
+checked string_ext/index_of/unicode_char
+parse-only string_ext/index_of/unicode_char
+checked string_ext/index_of/unicode_char_index
+parse-only string_ext/index_of/unicode_char_index
+checked string_ext/index_of/unicode_string_index
+parse-only string_ext/index_of/unicode_string_index
+checked string_ext/index_of/unicode_string_nomatch_index
+parse-only string_ext/index_of/unicode_string_nomatch_index
+checked string_ext/join/dash_separator
+parse-only string_ext/join/dash_separator
+checked string_ext/join/empty_separator
+parse-only string_ext/join/empty_separator
+checked string_ext/join/empty_string_dash_separator
+parse-only string_ext/join/empty_string_dash_separator
+checked string_ext/join/empty_string_empty_separator
+parse-only string_ext/join/empty_string_empty_separator
+checked string_ext/last_index_of/char_index
+parse-only string_ext/last_index_of/char_index
+checked string_ext/last_index_of/empty_argument
+parse-only string_ext/last_index_of/empty_argument
+checked string_ext/last_index_of/empty_index
+parse-only string_ext/last_index_of/empty_index
+checked string_ext/last_index_of/empty_string
+parse-only string_ext/last_index_of/empty_string
+checked string_ext/last_index_of/repeated_string
+parse-only string_ext/last_index_of/repeated_string
+checked string_ext/last_index_of/string
+parse-only string_ext/last_index_of/string
+checked string_ext/last_index_of/string_nomatch
+parse-only string_ext/last_index_of/string_nomatch
+checked string_ext/last_index_of/string_with_space_fullmatch
+parse-only string_ext/last_index_of/string_with_space_fullmatch
+checked string_ext/last_index_of/string_with_space_string_index
+parse-only string_ext/last_index_of/string_with_space_string_index
+checked string_ext/last_index_of/string_with_space_string_nomatch
+parse-only string_ext/last_index_of/string_with_space_string_nomatch
+checked string_ext/last_index_of/string_with_space_string_with_space_nomatch
+parse-only string_ext/last_index_of/string_with_space_string_with_space_nomatch
+checked string_ext/last_index_of/unicode_char
+parse-only string_ext/last_index_of/unicode_char
+checked string_ext/last_index_of/unicode_char_index
+parse-only string_ext/last_index_of/unicode_char_index
+checked string_ext/last_index_of/unicode_string_index
+parse-only string_ext/last_index_of/unicode_string_index
+checked string_ext/quote/backspace
+parse-only string_ext/quote/backspace
+checked string_ext/quote/carriage_return
+parse-only string_ext/quote/carriage_return
+checked string_ext/quote/double_slash
+parse-only string_ext/quote/double_slash
+checked string_ext/quote/empty_quote
+parse-only string_ext/quote/empty_quote
+checked string_ext/quote/ends_with
+parse-only string_ext/quote/ends_with
+checked string_ext/quote/escaped
+parse-only string_ext/quote/escaped
+checked string_ext/quote/form_feed
+parse-only string_ext/quote/form_feed
+checked string_ext/quote/horizontal_tab
+parse-only string_ext/quote/horizontal_tab
+checked string_ext/quote/mid_string_quote
+parse-only string_ext/quote/mid_string_quote
+checked string_ext/quote/multiline
+parse-only string_ext/quote/multiline
+checked string_ext/quote/printable_unicode
+parse-only string_ext/quote/printable_unicode
+checked string_ext/quote/single_quote_with_double_quote
+parse-only string_ext/quote/single_quote_with_double_quote
+checked string_ext/quote/size_unicode_char
+parse-only string_ext/quote/size_unicode_char
+checked string_ext/quote/size_unicode_string
+parse-only string_ext/quote/size_unicode_string
+checked string_ext/quote/starts_with
+parse-only string_ext/quote/starts_with
+checked string_ext/quote/two_escape_sequences
+parse-only string_ext/quote/two_escape_sequences
+checked string_ext/quote/unicode
+parse-only string_ext/quote/unicode
+checked string_ext/quote/unicode_2
+parse-only string_ext/quote/unicode_2
+checked string_ext/quote/unicode_code_points
+parse-only string_ext/quote/unicode_code_points
+checked string_ext/quote/verbatim
+parse-only string_ext/quote/verbatim
+checked string_ext/quote/vertical_tab
+parse-only string_ext/quote/vertical_tab
+checked string_ext/replace/basic
+parse-only string_ext/replace/basic
+checked string_ext/replace/chained
+parse-only string_ext/replace/chained
+checked string_ext/replace/no_placeholder
+parse-only string_ext/replace/no_placeholder
+checked string_ext/replace/unicode
+parse-only string_ext/replace/unicode
+checked string_ext/reverse/empty
+parse-only string_ext/reverse/empty
+checked string_ext/reverse/multiple
+parse-only string_ext/reverse/multiple
+checked string_ext/reverse/single_character
+parse-only string_ext/reverse/single_character
+checked string_ext/split/empty
+parse-only string_ext/split/empty
+checked string_ext/split/one_limit
+parse-only string_ext/split/one_limit
+checked string_ext/split/unicode_negative_limit
+parse-only string_ext/split/unicode_negative_limit
+checked string_ext/split/zero_limit
+parse-only string_ext/split/zero_limit
+checked string_ext/substring/start
+parse-only string_ext/substring/start
+checked string_ext/substring/start_and_end
+parse-only string_ext/substring/start_and_end
+checked string_ext/substring/start_and_end_equal_value
+parse-only string_ext/substring/start_and_end_equal_value
+checked string_ext/substring/start_with_max_length
+parse-only string_ext/substring/start_with_max_length
+checked string_ext/substring/unicode_start_and_end
+parse-only string_ext/substring/unicode_start_and_end
+checked string_ext/substring/unicode_start_and_end_equal_value
+parse-only string_ext/substring/unicode_start_and_end_equal_value
+checked string_ext/trim/blank_spaces_escaped_chars
+parse-only string_ext/trim/blank_spaces_escaped_chars
+checked string_ext/trim/unicode_no_trim
+parse-only string_ext/trim/unicode_no_trim
+checked string_ext/trim/unicode_space_chars_1
+parse-only string_ext/trim/unicode_space_chars_1
+checked string_ext/trim/unicode_space_chars_2
+parse-only string_ext/trim/unicode_space_chars_2
+checked string_ext/trim/unicode_space_chars_3
+parse-only string_ext/trim/unicode_space_chars_3
 checked string_ext/type_errors/charat_invalid_argument
 checked string_ext/type_errors/charat_invalid_type
 checked string_ext/type_errors/indexof_binary_both_invalid_arguments
@@ -3319,14 +4462,19 @@ checked string_ext/type_errors/substring_binary_invalid_argument
 checked string_ext/type_errors/substring_binary_invalid_argument_2
 checked string_ext/type_errors/substring_binary_invalid_type
 checked string_ext/type_errors/substring_ternary_invalid_argument
+checked string_ext/value_errors/charat_out_of_range
 parse-only string_ext/value_errors/charat_out_of_range
-parse-only string_ext/value_errors/indexof_out_of_range
+checked string_ext/value_errors/lastindexof_negative_index
 parse-only string_ext/value_errors/lastindexof_negative_index
-parse-only string_ext/value_errors/lastindexof_out_of_range
+checked string_ext/value_errors/substring_begin_index_out_of_range
 parse-only string_ext/value_errors/substring_begin_index_out_of_range
+checked string_ext/value_errors/substring_end_index_greater_than_begin_index
 parse-only string_ext/value_errors/substring_end_index_greater_than_begin_index
+checked string_ext/value_errors/substring_end_index_out_of_range
 parse-only string_ext/value_errors/substring_end_index_out_of_range
+checked string_ext/value_errors/substring_negative_index
 parse-only string_ext/value_errors/substring_negative_index
+checked string_ext/value_errors/substring_out_of_range
 parse-only string_ext/value_errors/substring_out_of_range
 checked timestamps/comparisons/geq_duration_false
 parse-only timestamps/comparisons/geq_duration_false

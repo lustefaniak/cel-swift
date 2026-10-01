@@ -8,6 +8,7 @@
 // yet (extensions) report `notImplemented` or fail.
 
 import CEL
+import CELExtensions
 import CELProtobuf
 import CELSpecProtos
 import Foundation
@@ -35,15 +36,45 @@ struct CELConformanceRunner: ConformanceRunner {
       parserOptions: [.enableOptionalSyntax(true), .enableIdentEscapeSyntax(true)],
       errorOnBadPresenceTest: true)
     env.decorators = [OptionalLibrary.decorator]
+    // cel-go clears the macros, installs the libraries, then adds the standard macros back.
+    env.macros = OptionalLibrary.macros()
+    for library in extensionLibraries {
+      try? env.install(library)
+    }
+    env.macros += Macro.allMacros
     return env
+  }()
+
+  /// cel-go does not run network_ext (its conformance environment lacks the network library); these
+  /// tests run with the base environment plus `ext.Network()`, as the oracle's `network` extension does.
+  static let networkEnvironment: ProgramEnvironment = {
+    var env = baseEnvironment
+    try? env.install(.network)
+    return env
+  }()
+
+  /// The extension libraries of cel-go's conformance environment, in its order.
+  static let extensionLibraries: [Library] = [
+    .bindings, .encoders, .lists, .math, .protos, .strings, .twoVarComprehensions,
+    .celBlockConformance,
+  ]
+
+  /// The macros with `disable_macros`: the optional and library macros, without the standard ones.
+  static let macrosWithoutStandard: [Macro] = {
+    var env = baseEnvironment
+    env.macros = OptionalLibrary.macros()
+    for library in extensionLibraries {
+      env.macros += library.macros
+    }
+    return env.macros
   }()
 
   func run(_ request: ConformanceRequest) -> ConformanceOutcome {
     let test = request.test
-    var env = Self.baseEnvironment
+    var env = request.name.hasPrefix("network_ext/") ? Self.networkEnvironment : Self.baseEnvironment
     if test.disableMacros {
       // cel-go clears the macros before adding the libraries, so library macros stay.
-      env.macros = OptionalLibrary.macros()
+      env.macros = Self.macrosWithoutStandard
     }
     var ast: AST
     do {
