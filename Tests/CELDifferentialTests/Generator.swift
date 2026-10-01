@@ -180,6 +180,11 @@ enum KnownGaps {
   /// rejects `proto2.TestAllTypes{standalone_enum: 10}` (`invalid enum value 10 for NestedEnum`) where
   /// cel-go stores 10. Message literals give proto2 enum fields declared values only.
   static let closedEnums = true
+
+  /// A `google.protobuf.NullValue` field holding a number other than 0 converts to that number in a JSON
+  /// `Value` (SwiftProtobuf's JSON encoding) where cel-go writes null (regression nullvalue-json-0).
+  /// Message literals give NullValue fields 0 only.
+  static let nullValueNumbers = true
 }
 
 struct Generator {
@@ -422,7 +427,10 @@ struct Generator {
         let value: Node
         if name.contains(".proto2.") && f.name.contains("enum") {
           // KnownGaps.closedEnums: only declared values for proto2 enums.
-          value = closedEnumLiteral(f.type)
+          value = closedEnumLiteral(f.type, max: 2)
+        } else if f.name.contains("null_value") && f.type != .null {
+          // KnownGaps.nullValueNumbers: NULL_VALUE (0) only.
+          value = closedEnumLiteral(f.type, max: 0)
         } else if (f.isWrapper || f.type == .null) && rng.chance(25) {
           value = Node("null", [], .null)
         } else if case .message = f.type, depth <= 0 {
@@ -443,18 +451,17 @@ struct Generator {
     }
   }
 
-  /// A literal holding only declared values (0, 1, 2) of a proto2 enum, for an enum, list of enums or map of
-  /// enums field.
-  mutating func closedEnumLiteral(_ t: GType) -> Node {
+  /// A literal holding only enum numbers 0...max, for an enum, list of enums or map of enums field.
+  mutating func closedEnumLiteral(_ t: GType, max: Int) -> Node {
     switch t {
     case .list:
-      return Node("[" + (0..<rng.range(0, 2)).map { _ in "\(rng.range(0, 2))" }.joined(separator: ", ") + "]", [], t)
+      return Node("[" + (0..<rng.range(0, 2)).map { _ in "\(rng.range(0, max))" }.joined(separator: ", ") + "]", [], t)
     case .map(let k, _):
       if rng.chance(30) { return Node("{}", [], t) }
       let (key, _) = keyLiteral(k)
-      return Node("{$0: \(rng.range(0, 2))}", [key], t)
+      return Node("{$0: \(rng.range(0, max))}", [key], t)
     default:
-      return Node("\(rng.range(0, 2))", [], t)
+      return Node("\(rng.range(0, max))", [], t)
     }
   }
 

@@ -9,7 +9,7 @@
 //   CEL_DIFF_MINIMIZE=N                                  failures to minimise, one per category signature (default 10)
 //   CEL_DIFF_RECORD=0                                    do not append minimised failures to regressions.jsonl
 //   CEL_DIFF_REPORT=path                                 every mismatch as JSON lines (default .build/differential/mismatches.jsonl)
-//   CEL_DIFF_EXTENSION_COSTS=1                           also compare costs of extension function calls
+//   CEL_DIFF_EXTENSION_COSTS=0                           leave costs of extension function calls out
 //   CEL_DIFF_ORACLE=path                                 use a prebuilt oracle binary
 //
 // regressions.jsonl holds minimised failures with cel-go's answer, so it runs without Go. An entry with

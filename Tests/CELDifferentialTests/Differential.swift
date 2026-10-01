@@ -4,11 +4,10 @@ import CEL
 import CELExtensions
 import Foundation
 
-/// Whether to compare static and runtime costs of expressions that call extension library functions.
-///
-/// cel-swift does not port cel-go's per-library cost estimators and trackers yet (`docs/status.md`), so
-/// those costs differ by design until it does. `CEL_DIFF_EXTENSION_COSTS=1` turns the comparison on.
-let compareExtensionCosts = ProcessInfo.processInfo.environment["CEL_DIFF_EXTENSION_COSTS"] == "1"
+/// Whether to compare static and runtime costs of expressions that call extension library functions
+/// (cel-swift ports cel-go's per-library cost estimators and trackers). `CEL_DIFF_EXTENSION_COSTS=0` leaves
+/// them out, for work on the extension costs.
+let compareExtensionCosts = ProcessInfo.processInfo.environment["CEL_DIFF_EXTENSION_COSTS"] != "0"
 
 /// One generated case.
 struct DiffCase: Sendable {
@@ -226,7 +225,43 @@ struct Mismatch: Sendable, CustomStringConvertible {
     // cel-go panics (recovered as `internal error: interface conversion ...`) in the runtime cost trackers of
     // ext/lists.go `distinct` and `sort`, which cast their argument to a list without checking for an error.
     ("cel-go panics", { o, _ in o.evalError?.hasPrefix("internal error: ") ?? false }),
+    // cel-go sets message literal fields from a Go map, in random order, so which of two bad fields is reported
+    // varies; reruns rarely find cel-swift's (declaration) order.
+    (
+      "message field order",
+      { o, s in
+        let prefix = "field type conversion error for "
+        return (o.evalError?.hasPrefix(prefix) ?? false) && (s.evalError?.hasPrefix(prefix) ?? false)
+      }
+    ),
+    // A null read from an unset wrapper field is a structpb.NullValue in cel-go, a types.Null when written as a
+    // literal; cel-swift has one null and names it types.Null in error messages.
+    (
+      "null from a wrapper field",
+      { o, s in
+        guard let e = o.evalError, e.contains("structpb.NullValue") else { return false }
+        return s.evalError == e.replacingOccurrences(of: "structpb.NullValue", with: "types.Null")
+      }
+    ),
   ]
+
+  /// Checked types equal up to the documented join of null and wrapper element types (docs/divergences.md:
+  /// cel-swift joins `[1, msg.single_int64_wrapper]` to `list(wrapper(int))` and `[msg, null]` to `msg`'s type,
+  /// where cel-go's `mostGeneral` picks the primitive or `null`).
+  static func typesEquivalent(_ o: String?, _ s: String?) -> Bool {
+    guard let o, let s else { return o == s }
+    if o == s { return true }
+    func unwrapped(_ t: String) -> String {
+      var t = t
+      while let r = t.range(of: "wrapper(") {
+        guard let close = t[r.upperBound...].firstIndex(of: ")") else { break }
+        t.replaceSubrange(close...close, with: "")
+        t.replaceSubrange(r, with: "")
+      }
+      return t
+    }
+    return unwrapped(o) == unwrapped(s) || o.contains("null")
+  }
 
   static func divergence(_ o: Outcome, _ s: Outcome) -> String? {
     divergences.first { $0.matches(o, s) }?.reason
@@ -243,7 +278,7 @@ struct Mismatch: Sendable, CustomStringConvertible {
       return [Mismatch(category: .compile, oracle: show(o.compileError), swift: show(s.compileError))]
     }
     if o.compileError != nil { return [] }
-    if o.type != s.type {
+    if !typesEquivalent(o.type, s.type) {
       out.append(Mismatch(category: .type, oracle: show(o.type), swift: show(s.type)))
     }
     let costs = compareExtensionCosts || !usesExtensions

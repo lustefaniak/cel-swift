@@ -142,12 +142,24 @@ enum Messages {
       } else if trimmed == "}" {
         _ = blocks.popLast()
       }
+      let indent = line.prefix { $0 == " " }
       let parts = trimmed.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-      if parts.count == 2, Int64(parts[1]) != nil,
-        parts[0].hasSuffix("null_value") || (parts[0] == "value" && (blocks.last ?? "").hasSuffix("null_value"))
+      guard parts.count == 2 else {
+        out.append(String(line))
+        continue
+      }
+      let (key, value) = (parts[0], parts[1])
+      if key.hasSuffix("null_value") && !key.hasPrefix("repeated") {
+        // A singular NullValue field: protojson's `null` reads back as unset, whatever was stored.
+        continue
+      }
+      if key.hasSuffix("null_value") && value.hasPrefix("[") {
+        let count = value.split(separator: ",").count
+        out.append("\(indent)\(key): [" + Array(repeating: "NULL_VALUE", count: count).joined(separator: ", ") + "]")
+      } else if Int64(value) != nil,
+        key.hasSuffix("null_value") || (key == "value" && (blocks.last ?? "").hasSuffix("null_value"))
       {
-        let indent = line.prefix { $0 == " " }
-        out.append("\(indent)\(parts[0]): NULL_VALUE")
+        out.append("\(indent)\(key): NULL_VALUE")
       } else {
         out.append(String(line))
       }
