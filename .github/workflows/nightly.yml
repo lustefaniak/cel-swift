@@ -8,6 +8,12 @@ on:
       fuzz_seconds:
         description: Seconds per fuzzer
         default: "1800"
+      diff_seeds:
+        description: Random seeds for the differential suite
+        default: "20"
+      diff_cases:
+        description: Differential cases per seed
+        default: "2500"
 
 jobs:
   fuzz:
@@ -46,6 +52,37 @@ jobs:
             .build-fuzz-work/*.log
           if-no-files-found: ignore
 
-  # differential: reserved for the cel-go differential suite with fresh seeds
-  # (CEL_DIFF_SEEDS=random swift test --filter CELDifferentialTests); the M4 differential-suite
-  # work fills in this job.
+  # The cel-go differential suite (Tests/CELDifferentialTests) with fresh random seeds. The seeds are
+  # printed at the start of the test output; rerun one locally with CEL_DIFF_SEEDS=<seed>
+  # CEL_DIFF_CASES=<cases>. Minimised failures are appended to regressions.jsonl and uploaded.
+  differential:
+    runs-on: ubuntu-latest
+    container: swift:6.0-noble
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install time zone data
+        run: apt-get update && apt-get install -y --no-install-recommends tzdata tzdata-legacy
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/oracle/go.mod
+          cache-dependency-path: tools/oracle/go.sum
+      - name: Build
+        run: swift build --build-tests
+      - name: Differential suite with fresh seeds
+        env:
+          CEL_DIFF_SEEDS: random:${{ github.event.inputs.diff_seeds || '20' }}
+          CEL_DIFF_CASES: ${{ github.event.inputs.diff_cases || '2500' }}
+          CEL_DIFF_MINIMIZE: "20"
+        run: swift test --skip-build --filter CELDifferentialTests
+      - name: Upload mismatches and new regressions
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: differential-failures
+          path: |
+            .build/differential/mismatches.jsonl
+            Tests/CELDifferentialTests/regressions.jsonl
+          if-no-files-found: ignore
