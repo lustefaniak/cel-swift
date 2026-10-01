@@ -1,3 +1,6 @@
 [submodule "third_party/cel-spec"]
 	path = third_party/cel-spec
 	url = https://github.com/google/cel-spec
+[submodule "third_party/cel-go"]
+	path = third_party/cel-go
+	url = https://github.com/cel-expr/cel-go
