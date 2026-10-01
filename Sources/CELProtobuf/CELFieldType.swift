@@ -1,4 +1,4 @@
-// FieldType is also a SwiftProtobuf name; this file imports only CEL so the alias is unambiguous.
+// FieldType is also a SwiftProtobuf name; this file imports only CEL so the alias is unambiguous. Not a ported file.
 
 import CEL
 

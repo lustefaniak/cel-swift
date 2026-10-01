@@ -1,4 +1,4 @@
-// The cel-swift command line tool: subcommands and a small argument parser.
+// The cel-swift command line tool: subcommands and a small argument parser. Not a ported file.
 //
 // Each subcommand is a `Command` value registered in `Command.all`; adding one (for example
 // `policy`) means writing its file and appending it to that list. Arguments are parsed with

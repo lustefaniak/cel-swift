@@ -1,4 +1,4 @@
-// The policy subcommand; `policy test` is implemented in CELCommandLine (PolicyTestCommand).
+// The policy subcommand; `policy test` is implemented in CELCommandLine (PolicyTestCommand). Not a ported file.
 
 import CELCommandLine
 

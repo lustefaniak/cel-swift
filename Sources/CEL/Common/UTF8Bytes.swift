@@ -1,4 +1,4 @@
-// Byte-wise string operations on the UTF-8 storage of Swift strings.
+// Byte-wise string operations on the UTF-8 storage of Swift strings. Not a ported file.
 //
 // Go strings are byte slices, so cel-go compares, hashes and searches them byte by byte. Swift's
 // `String` operators use canonical equivalence and are wrong for CEL; iterating `utf8` views is

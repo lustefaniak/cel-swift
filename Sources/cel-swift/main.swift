@@ -1,4 +1,4 @@
-// Entry point of the cel-swift command line tool: dispatches to the subcommands in Command.all.
+// Entry point of the cel-swift command line tool: dispatches to the subcommands in Command.all. Not a ported file.
 
 #if canImport(Darwin)
   import Darwin

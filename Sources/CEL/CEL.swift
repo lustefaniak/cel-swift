@@ -1,3 +1,5 @@
+// The module's namespace enum. Not a ported file.
+
 /// Common Expression Language for Swift.
 ///
 /// See `docs/plan.md` for the implementation plan and milestones.

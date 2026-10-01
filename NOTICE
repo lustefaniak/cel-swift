@@ -49,7 +49,10 @@ Parts of Go's standard library that the CELExtensions target needs are ported
 there under the same Go BSD notice: Sources/CELExtensions/GoStrings.swift
 (strings, unicode.IsSpace), GoFloat.swift (strconv float formatting),
 NetIP.swift (net/netip) and the Base64 codec in Encoders.swift
-(encoding/base64).
+(encoding/base64). In the CEL target, Sources/CEL/Values/GoFormat.swift and
+GoParse.swift port Go's strconv float formatting and parsing, and
+Sources/CEL/Stdlib/TZif.swift ports the TZif reader of Go's time package
+(zoneinfo_read.go), under the same notice.
 
 Sources/CEL/Parser/ANTLR ports the parts of the ANTLR 4 Go runtime
 (https://github.com/antlr4-go/antlr, v4.13.1) that cel-go's generated parser

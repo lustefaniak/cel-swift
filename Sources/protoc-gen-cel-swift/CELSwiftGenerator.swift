@@ -1,4 +1,4 @@
-// protoc-gen-cel-swift: a protoc plugin that emits CEL message adapters for swift-protobuf types.
+// protoc-gen-cel-swift: a protoc plugin that emits CEL message adapters for swift-protobuf types. Not a ported file.
 //
 // For every `foo/bar.proto` it writes `foo/bar.cel.swift` (or `foo_bar.cel.swift` with
 // FileNaming=PathToUnderscores) holding one `ProtobufFile` constant, `<Prefix><Base>_CELFile`,

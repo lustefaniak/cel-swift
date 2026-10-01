@@ -1,5 +1,5 @@
 // Hand-written companion to the generated cel-spec protos (everything else in this directory comes from
-// tools/gen-protos.sh and must not be edited).
+// tools/gen-protos.sh and must not be edited). Not a ported file.
 
 import SwiftProtobuf
 

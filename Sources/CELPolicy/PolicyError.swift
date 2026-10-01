@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // The issue set cel-go's policy parser returns (`*cel.Issues` built with
-// `cel.NewIssuesWithSourceInfo`), on top of the core `CELErrors` and `SourceInfo`.
+// `cel.NewIssuesWithSourceInfo` in policy/parser.go and policy/compiler.go), on top of the core `CELErrors` and `SourceInfo`.
 
 import CEL
 
