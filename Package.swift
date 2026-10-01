@@ -61,5 +61,15 @@ let package = Package(
       dependencies: ["CELTest", "CELPolicy"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
+    .target(
+      name: "CELRegex",
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .testTarget(
+      name: "CELRegexTests",
+      dependencies: ["CELRegex"],
+      resources: [.copy("Resources")],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
   ]
 )
