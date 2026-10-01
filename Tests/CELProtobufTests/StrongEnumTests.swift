@@ -59,10 +59,20 @@ struct StrongEnumTests {
     #expect(try evaluate("TestAllTypes.NestedEnum(-7)", in: env) == .object(EnumValue(typeName: Self.nestedEnum, number: -7)))
     #expect(try evaluate("GlobalEnum('GAZ')", in: env) == .object(EnumValue(typeName: Self.globalEnum, number: 2)))
     #expect(try evaluateUnchecked("TestAllTypes.NestedEnum('BAZ')", in: env) == .object(EnumValue(typeName: Self.nestedEnum, number: 2)))
-    let tooBig = #expect(throws: EvalError.self) { try evaluate("GlobalEnum(2147483648)", in: env) }
-    #expect(tooBig?.message.contains("range") == true)
-    let badName = #expect(throws: EvalError.self) { try evaluate("GlobalEnum('NOPE')", in: env) }
-    #expect(badName?.message == "invalid enum value name 'NOPE' for enum \(Self.globalEnum)")
+    // `#expect(throws:)` returns the error only from Swift 6.1 on.
+    #expect(evaluationError("GlobalEnum(2147483648)", in: env)?.contains("range") == true)
+    #expect(evaluationError("GlobalEnum('NOPE')", in: env) == "invalid enum value name 'NOPE' for enum \(Self.globalEnum)")
+  }
+
+  func evaluationError(_ expression: String, in env: Environment) -> String? {
+    do {
+      _ = try evaluate(expression, in: env)
+      return nil
+    } catch let error as EvalError {
+      return error.message
+    } catch {
+      return "\(error)"
+    }
   }
 
   @Test func messageFields() throws {
