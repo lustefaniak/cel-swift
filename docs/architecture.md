@@ -297,7 +297,13 @@ swift-protobuf has no dynamic messages, so the descriptor walk cel-go does at ru
   `Any` unpacking). Field access unwraps well-known types (unset wrappers / `Any` / `Value` read as `null`);
   equality is `pb.Equal` (NaN unequal, `Any` unpacked, unknown fields grouped by number).
 - `ProtobufTypes.value(of:)` converts a host message to a CEL value; `message(from:as:)` converts back
-  (cel-go `ConvertToNative` to a proto type, including packing into `Any`).
+  (cel-go `ConvertToNative` to a proto type, including packing into `Any`). Converting a message to JSON
+  (`google.protobuf.Value`) encodes it with swift-protobuf, then each field's `patchJSON` corrects the
+  places where protojson differs (NullValue is always `null`, undeclared proto2 enum numbers).
+- Enums: `.enumeration("pkg.Enum")` carries the enum's name, so with strong enums
+  (`Environment.Option.strongEnums`, which switches the provider via the package `StrongEnumProvider`
+  protocol) fields read and accept `EnumValue`s. Fields of closed (proto2) enums keep undeclared numbers
+  in the message's unknown fields (`ClosedEnumFields.swift`), as cel-go keeps any int32.
 - `CELSpecProtos` holds the conformance messages with their adapters, `CELSpecProtos.protobufTypes`, and
   `Cel_Expr_Value` / `Cel_Expr_ExprValue` conversions (cel-go `cel/io.go`). `CELGoTestProtos` holds cel-go's
   `test/proto{2,3}pb` messages for ported tests. `tools/gen-protos.sh` regenerates all of them.
