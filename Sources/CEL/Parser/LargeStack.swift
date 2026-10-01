@@ -1,4 +1,4 @@
-// Running deeply recursive work on a thread with a large stack.
+// Running deeply recursive work on a thread with a large stack. Not a ported file.
 //
 // cel-go's recursive-descent parser relies on Go's growable goroutine stacks; Swift threads have fixed
 // stacks (512 KiB for secondary threads on Darwin, often less in debug builds than the recursion needs).
@@ -79,6 +79,21 @@ enum LargeStack {
         let rc = pthread_create(
           &thread, &attr,
           { raw in
+            let work = Unmanaged<Work>.fromOpaque(raw).takeRetainedValue()
+            work.body()
+            return nil
+          }, arg)
+        if rc == 0, let thread {
+          pthread_join(thread, nil)
+          return
+        }
+      #elseif canImport(Musl)
+        // musl's pthread_t is a pointer, as on Darwin, but the start routine takes an optional.
+        var thread: pthread_t? = nil
+        let rc = pthread_create(
+          &thread, &attr,
+          { raw in
+            guard let raw else { return nil }
             let work = Unmanaged<Work>.fromOpaque(raw).takeRetainedValue()
             work.body()
             return nil
