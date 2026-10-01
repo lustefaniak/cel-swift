@@ -198,10 +198,15 @@ extension Syntax.Inst: CustomStringConvertible {
   /// If so, MatchRunePos returns the index of the matching rune pair
   /// (or, when len(i.Rune) == 1, rune singleton).
   /// If not, MatchRunePos returns -1.
-  /// MatchRunePos should only be called when i.Op == InstRune.
   package func matchRunePos(_ r: Rune) -> Int {
-    let rune = self.rune
+    let foldCase = Syntax.Flags(rawValue: UInt16(truncatingIfNeeded: arg)).contains(.foldCase)
+    return rune.withUnsafeBufferPointer { Syntax.Inst.matchRunePos($0, foldCase: foldCase, r) }
+  }
 
+  /// The body of MatchRunePos over the instruction's runes; the Pike VM calls it with the
+  /// program's flattened rune storage.
+  @inline(__always)
+  static func matchRunePos(_ rune: UnsafeBufferPointer<Rune>, foldCase: Bool, _ r: Rune) -> Int {
     switch rune.count {
     case 0:
       return Syntax.Inst.noMatch
@@ -212,7 +217,7 @@ extension Syntax.Inst: CustomStringConvertible {
       if r == r0 {
         return 0
       }
-      if Syntax.Flags(rawValue: UInt16(truncatingIfNeeded: arg)).contains(.foldCase) {
+      if foldCase {
         var r1 = UnicodeTables.simpleFold(r0)
         while r1 != r0 {
           if r == r1 {

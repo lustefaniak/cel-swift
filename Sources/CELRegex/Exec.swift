@@ -141,17 +141,27 @@ struct LazyFlag {
 /// See https://research.swtch.com/2008/03/using-uninitialized-memory-for-fun-and.html
 ///
 /// Each dense entry holds the instruction pc and the thread (-1 for none). Some queue entries are
-/// just place holders so that the machine knows it has considered that pc.
+/// just place holders so that the machine knows it has considered that pc. The storage belongs to
+/// the Machine.
 struct Queue {
-  var sparse: [UInt32]
-  var densePC: [UInt32]
-  var denseT: [Int32]
+  let sparse: UnsafeMutablePointer<UInt32>
+  let densePC: UnsafeMutablePointer<UInt32>
+  let denseT: UnsafeMutablePointer<Int32>
   var count = 0
 
   init(_ n: Int) {
-    sparse = [UInt32](repeating: 0, count: n)
-    densePC = [UInt32](repeating: 0, count: n)
-    denseT = [Int32](repeating: -1, count: n)
+    sparse = .allocate(capacity: Swift.max(n, 1))
+    sparse.initialize(repeating: 0, count: Swift.max(n, 1))
+    densePC = .allocate(capacity: Swift.max(n, 1))
+    densePC.initialize(repeating: 0, count: Swift.max(n, 1))
+    denseT = .allocate(capacity: Swift.max(n, 1))
+    denseT.initialize(repeating: -1, count: Swift.max(n, 1))
+  }
+
+  func deallocate() {
+    sparse.deallocate()
+    densePC.deallocate()
+    denseT.deallocate()
   }
 
   @inline(__always)
@@ -161,7 +171,65 @@ struct Queue {
   }
 }
 
+/// The program's instruction fields as flat arrays, built once per Regexp, so that the Pike VM's
+/// inner loops read plain memory instead of copying `Syntax.Inst` values (and retaining their rune
+/// arrays) per thread step.
+struct FlatProg: Sendable {
+  var ops: [Syntax.InstOp]
+  var outs: [UInt32]
+  var args: [UInt32]
+  var runeOff: [Int]  // instruction pc's runes are runes[runeOff[pc] ..< runeOff[pc + 1]]
+  var runes: [Rune]
+  var fold: [Bool]  // FoldCase flag of InstRune instructions
+
+  init(_ p: Syntax.Prog) {
+    ops = p.inst.map(\.op)
+    outs = p.inst.map(\.out)
+    args = p.inst.map(\.arg)
+    fold = p.inst.map { Syntax.Flags(rawValue: UInt16(truncatingIfNeeded: $0.arg)).contains(.foldCase) }
+    runeOff = [0]
+    runes = []
+    for inst in p.inst {
+      runes.append(contentsOf: inst.rune)
+      runeOff.append(runes.count)
+    }
+  }
+
+  struct Pointers {
+    let ops: UnsafeBufferPointer<Syntax.InstOp>
+    let outs: UnsafeBufferPointer<UInt32>
+    let args: UnsafeBufferPointer<UInt32>
+    let runeOff: UnsafeBufferPointer<Int>
+    let runes: UnsafeBufferPointer<Rune>
+    let fold: UnsafeBufferPointer<Bool>
+
+    @inline(__always)
+    func runes(_ pc: Int) -> UnsafeBufferPointer<Rune> {
+      UnsafeBufferPointer(rebasing: runes[runeOff[pc]..<runeOff[pc + 1]])
+    }
+  }
+
+  func withPointers<R>(_ body: (Pointers) -> R) -> R {
+    ops.withUnsafeBufferPointer { ops in
+      outs.withUnsafeBufferPointer { outs in
+        args.withUnsafeBufferPointer { args in
+          runeOff.withUnsafeBufferPointer { runeOff in
+            runes.withUnsafeBufferPointer { runes in
+              fold.withUnsafeBufferPointer { fold in
+                body(Pointers(ops: ops, outs: outs, args: args, runeOff: runeOff, runes: runes, fold: fold))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 /// A machine holds all the state during an NFA simulation for p.
+///
+/// It lives for one doExecute call, which deallocates its manually allocated buffers: the inner
+/// loops then do no copy-on-write or dynamic exclusivity checks.
 struct Machine {
   private enum Work {
     case explore(UInt32)
@@ -169,50 +237,83 @@ struct Machine {
   }
 
   let re: Regexp  // corresponding Regexp
-  let prog: [Syntax.Inst]  // compiled program
+  let n: Int  // number of instructions
+  // The compiled program, flattened.
+  private let p: FlatProg.Pointers
+  private let q0: Queue
+  private let q1: Queue
   let ncap: Int
   /// Capture slots of all threads; thread t owns caps[t*ncap ..< (t+1)*ncap].
-  /// Thread 0 is the machine's matchcap and is never pooled.
-  var caps: [Int]
-  var nthreads = 1
-  var pool: [Int32] = []  // pool of available threads
+  /// Thread 0 is the machine's matchcap and is never pooled. At most 2n threads are alive at
+  /// once (one per entry of the two queues), so 2n+1 threads never need to grow.
+  private let caps: UnsafeMutablePointer<Int>
+  private let maxThreads: Int
+  private var nthreads = 1
+  private let pool: UnsafeMutablePointer<Int32>  // pool of available threads
+  private var poolCount = 0
   var matched = false  // whether a match was found
-  private var work: [Work] = []
+  // Explicit stack for add. Each push accompanies a newly queued pc, so n entries suffice.
+  private let work: UnsafeMutablePointer<Work>
+  private var workCount = 0
 
-  init(_ re: Regexp, ncap: Int) {
+  /// The pointers must stay valid for the machine's lifetime (doExecute holds them).
+  init(_ re: Regexp, _ p: FlatProg.Pointers, ncap: Int) {
     self.re = re
-    self.prog = re.prog.inst
+    self.p = p
+    n = p.ops.count
+    q0 = Queue(n)
+    q1 = Queue(n)
     self.ncap = ncap
-    caps = [Int](repeating: -1, count: ncap)
+    maxThreads = 2 * n + 2
+    caps = .allocate(capacity: Swift.max(maxThreads * ncap, 1))
+    caps.initialize(repeating: -1, count: Swift.max(maxThreads * ncap, 1))
+    pool = .allocate(capacity: maxThreads)
+    work = .allocate(capacity: n + 1)
   }
 
-  var matchcap: ArraySlice<Int> { caps[0..<ncap] }
+  func deallocate() {
+    work.deallocate()
+    q0.deallocate()
+    q1.deallocate()
+    caps.deallocate()
+    pool.deallocate()
+  }
+
+  var matchcap: [Int] { Array(UnsafeBufferPointer(start: caps, count: ncap)) }
+
+  @inline(__always)
+  private mutating func free(_ t: Int32) {
+    pool[poolCount] = t
+    poolCount += 1
+  }
+
+  @inline(__always)
+  private mutating func push(_ w: Work) {
+    precondition(workCount <= n, "regexp: work stack bound exceeded")
+    (work + workCount).initialize(to: w)
+    workCount += 1
+  }
 
   /// alloc allocates a new thread.
   /// It uses the free pool if possible.
   @inline(__always)
-  mutating func alloc() -> Int32 {
-    if let t = pool.popLast() {
-      return t
+  private mutating func alloc() -> Int32 {
+    if poolCount > 0 {
+      poolCount -= 1
+      return pool[poolCount]
     }
+    precondition(nthreads < maxThreads, "regexp: thread bound exceeded")
     let t = Int32(nthreads)
     nthreads += 1
-    if ncap > 0 {
-      caps.append(contentsOf: repeatElement(0, count: ncap))
-    }
     return t
   }
 
   @inline(__always)
-  mutating func copyCaps(to dst: Int32, from src: Int32) {
+  private func copyCaps(to dst: Int32, from src: Int32) {
     if ncap == 0 || dst == src {
       return
     }
-    let d = Int(dst) * ncap
-    let s = Int(src) * ncap
-    for k in 0..<ncap {
-      caps[d + k] = caps[s + k]
-    }
+    (caps + Int(dst) * ncap).update(from: caps + Int(src) * ncap, count: ncap)
   }
 
   /// match runs the machine over the input starting at pos.
@@ -228,8 +329,8 @@ struct Machine {
     for k in 0..<ncap {
       caps[k] = -1
     }
-    var runq = Queue(prog.count)
-    var nextq = Queue(prog.count)
+    var runq = q0
+    var nextq = q1
     var r = endOfText
     var r1 = endOfText
     var width = 0
@@ -308,13 +409,13 @@ struct Machine {
         continue
       }
       if longest && matched && ncap > 0 && caps[0] < caps[Int(t) * ncap] {
-        pool.append(t)
+        free(t)
         j += 1
         continue
       }
-      let pc = runq.densePC[j]
+      let pc = Int(runq.densePC[j])
       var add = false
-      switch prog[Int(pc)].op {
+      switch p.ops[pc] {
       case .match:
         if ncap > 0 && (!longest || !matched || caps[1] < pos) {
           caps[Int(t) * ncap + 1] = pos
@@ -322,17 +423,21 @@ struct Machine {
         }
         if !longest {
           // First-match mode: cut off all lower-priority threads.
-          for k in (j + 1)..<Swift.max(j + 1, runq.count) where runq.denseT[k] >= 0 {
-            pool.append(runq.denseT[k])
+          var k = j + 1
+          while k < runq.count {
+            if runq.denseT[k] >= 0 {
+              free(runq.denseT[k])
+            }
+            k += 1
           }
           runq.count = 0
         }
         matched = true
 
       case .rune:
-        add = prog[Int(pc)].matchRune(c)
+        add = Syntax.Inst.matchRunePos(p.runes(pc), foldCase: p.fold[pc], c) != Syntax.Inst.noMatch
       case .rune1:
-        add = c == prog[Int(pc)].rune[0]
+        add = c == p.runes[p.runeOff[pc]]
       case .runeAny:
         add = true
       case .runeAnyNotNL:
@@ -341,10 +446,10 @@ struct Machine {
         preconditionFailure("bad inst")
       }
       if add {
-        t = self.add(&nextq, prog[Int(pc)].out, nextPos, capRef: t, nextCond, spare: t)
+        t = self.add(&nextq, p.outs[pc], nextPos, capRef: t, nextCond, spare: t)
       }
       if t >= 0 {
-        pool.append(t)
+        free(t)
       }
       j += 1
     }
@@ -370,10 +475,11 @@ struct Machine {
         pc = n
         next = nil
       } else {
-        guard let w = work.popLast() else {
+        if workCount == 0 {
           break
         }
-        switch w {
+        workCount -= 1
+        switch work[workCount] {
         case .restore(let arg, let opos):
           caps[Int(capRef) * ncap + Int(arg)] = opos
           pendingRestores -= 1
@@ -397,15 +503,14 @@ struct Machine {
         q.sparse[Int(pc)] = UInt32(j)
 
         let ipc = Int(pc)
-        let iop = prog[ipc].op
-        let iout = prog[ipc].out
-        let iarg = prog[ipc].arg
-        switch iop {
+        let iout = p.outs[ipc]
+        let iarg = p.args[ipc]
+        switch p.ops[ipc] {
         case .fail:
           // nothing
           break again
         case .alt, .altMatch:
-          work.append(.explore(iarg))
+          push(.explore(iarg))
           pc = iout
           continue again
         case .emptyWidth:
@@ -422,14 +527,11 @@ struct Machine {
             let slot = Int(capRef) * ncap + Int(iarg)
             let opos = caps[slot]
             caps[slot] = pos
-            work.append(.restore(iarg, opos))
+            push(.restore(iarg, opos))
             pendingRestores += 1
-            pc = iout
-            continue again
-          } else {
-            pc = iout
-            continue again
           }
+          pc = iout
+          continue again
         case .match, .rune, .rune1, .runeAny, .runeAnyNotNL:
           // Inside a capture's subtree Go passes no spare thread, so the spare
           // (whose slots may be the ones being temporarily modified) is never consumed there.
@@ -569,10 +671,13 @@ extension Regexp {
       return backtrack(i, pos, ncap)
     }
 
-    var m = Machine(self, ncap: ncap)
-    if !m.match(i, pos) {
-      return nil
+    return flat.withPointers { p in
+      var m = Machine(self, p, ncap: ncap)
+      defer { m.deallocate() }
+      if !m.match(i, pos) {
+        return nil
+      }
+      return m.matchcap
     }
-    return Array(m.matchcap)
   }
 }

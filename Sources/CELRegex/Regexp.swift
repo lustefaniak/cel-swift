@@ -43,6 +43,7 @@ package struct Regexp: Sendable, CustomStringConvertible {
   let prefixComplete: Bool  // prefix is the entire regexp
   let cond: Syntax.EmptyOp  // empty-width conditions required at start of match
   let minInputLen: Int  // minimum length of the input in bytes
+  let flat: FlatProg  // prog flattened for the Pike VM
 
   /// Whether searches prefer the leftmost-longest match (Go's `Longest()`), instead of
   /// leftmost-first.
@@ -86,6 +87,7 @@ package struct Regexp: Sendable, CustomStringConvertible {
     let prog = Syntax.compile(re)
     self.expr = expr
     self.prog = prog
+    self.flat = FlatProg(prog)
     self.onepass = compileOnePass(prog)
     self.numSubexp = maxCap
     self.subexpNames = capNames
