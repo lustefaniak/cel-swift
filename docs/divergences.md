@@ -51,3 +51,31 @@ surface and in mechanics that do not change results:
 - **`machine.add` uses an explicit work stack** instead of recursion, so very large programs cannot
   overflow the (fixed-size) native stack. Threads are added in the same order, so match priority
   is unchanged.
+
+## Values, types, declarations and the standard library
+
+Results, error messages and Go formatting (`string(double)`, durations, RFC 3339) are cel-go's and pinned
+by fixtures generated from cel-go (`tools/value-fixtures`). The differences:
+
+- **No `ConvertToNative` and no reflection-based adaptation.** Host data becomes CEL values through the
+  `ListValue` / `MapValue` / `ObjectValue` protocols (lazy) or `TypeRegistry.nativeToValue` (scalars, and
+  arrays and dictionaries converted eagerly, since `Any` is not `Sendable`). Go struct reflection
+  (`NativeTypes`) is replaced by conformances, later by a macro.
+- **List concatenation materializes** an `ArrayList` instead of cel-go's `concatList` view; results are the
+  same. Maps iterate in insertion order (`OrderedMap`) instead of Go's randomized map order.
+- **`CELType` has no trait mask.** Built-in traits are derived from the kind; objects report their own
+  through `ObjectValue.traits`. `TypeRegistry.register` therefore only detects conflicts by type
+  equivalence, not cel-go's "type registered with conflicting traits".
+- **`TypeRegistry` has no protobuf database.** Message types are registered as `StructTypeDescriptor`s and
+  enum values by name (`registerEnumValue`); `CELProtobuf` supplies both.
+- **No async bindings and no `Documentation()` / exprpb conversions.** `LateFunctionBinding` is kept as
+  `.lateBinding` with cel-go's validation; `AsyncBinding` is not ported. Declaration doc strings are
+  stored but not rendered into cel-go's `common.Doc` signatures yet.
+- **`size_calc.go` (aggregate value sizes for cost tracking) is not ported** with the value layer; it
+  belongs to the cost work (M4).
+- **Time zones** are read from the system tz database (`/usr/share/zoneinfo` and Go's other Unix
+  locations) like Go's `time.LoadLocation`. Go's embedded `time/tzdata` has no counterpart, so on a system
+  without tzdata IANA names report `unknown time zone`. On Darwin, Foundation's `TimeZone` is a fallback
+  when the directory is unreadable (iOS sandboxes). FoundationEssentials alone cannot resolve zone names on
+  Linux, which is why Foundation is not used there. Zones are not cached: each accessor call with a zone
+  name reads the TZif file.
