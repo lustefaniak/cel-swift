@@ -24,48 +24,34 @@ import CELRegex
 func stringContains(_ s: Value, _ sub: Value) -> Value {
   guard case .string(let str) = s else { return Value.maybeNoSuchOverload(s) }
   guard case .string(let subStr) = sub else { return Value.maybeNoSuchOverload(sub) }
-  return .bool(utf8Contains(Array(str.utf8), Array(subStr.utf8)))
+  return .bool(
+    withUTF8Bytes(str) { haystack in
+      withUTF8Bytes(subStr) { needle in bytesIndex(haystack, needle) != nil }
+    })
 }
 
 /// `endsWith`: whether the string ends with the suffix. Port of cel-go `StringEndsWith`.
 func stringEndsWith(_ s: Value, _ suffix: Value) -> Value {
   guard case .string(let str) = s else { return Value.maybeNoSuchOverload(s) }
   guard case .string(let suf) = suffix else { return Value.maybeNoSuchOverload(suffix) }
-  let a = Array(str.utf8)
-  let b = Array(suf.utf8)
-  return .bool(a.count >= b.count && a[(a.count - b.count)...].elementsEqual(b))
+  return .bool(
+    withUTF8Bytes(str) { a in
+      withUTF8Bytes(suf) { b in
+        a.count >= b.count && bytesEqual(UnsafeBufferPointer(rebasing: a[(a.count - b.count)...]), b)
+      }
+    })
 }
 
 /// `startsWith`: whether the string starts with the prefix. Port of cel-go `StringStartsWith`.
 func stringStartsWith(_ s: Value, _ prefix: Value) -> Value {
   guard case .string(let str) = s else { return Value.maybeNoSuchOverload(s) }
   guard case .string(let pre) = prefix else { return Value.maybeNoSuchOverload(prefix) }
-  return .bool(str.utf8.starts(with: pre.utf8))
-}
-
-/// Byte-wise substring search, as Go `strings.Contains`.
-func utf8Contains(_ haystack: [UInt8], _ needle: [UInt8]) -> Bool {
-  utf8Index(haystack, needle) != nil
-}
-
-/// The byte offset of the first occurrence of `needle` in `haystack`, as Go `strings.Index`.
-func utf8Index(_ haystack: [UInt8], _ needle: [UInt8]) -> Int? {
-  if needle.isEmpty {
-    return 0
-  }
-  if needle.count > haystack.count {
-    return nil
-  }
-  let first = needle[0]
-  var i = 0
-  let last = haystack.count - needle.count
-  while i <= last {
-    if haystack[i] == first && haystack[i..<(i + needle.count)].elementsEqual(needle) {
-      return i
-    }
-    i += 1
-  }
-  return nil
+  return .bool(
+    withUTF8Bytes(str) { a in
+      withUTF8Bytes(pre) { b in
+        a.count >= b.count && bytesEqual(UnsafeBufferPointer(rebasing: a[..<b.count]), b)
+      }
+    })
 }
 
 extension Value {

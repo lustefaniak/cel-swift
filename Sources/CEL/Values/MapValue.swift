@@ -60,7 +60,7 @@ public enum MapKey: Sendable, Hashable, CustomStringConvertible {
     case (.bool(let a), .bool(let b)): return a == b
     case (.int(let a), .int(let b)): return a == b
     case (.uint(let a), .uint(let b)): return a == b
-    case (.string(let a), .string(let b)): return a.utf8.elementsEqual(b.utf8)
+    case (.string(let a), .string(let b)): return utf8Equal(a, b)
     default: return false
     }
   }
@@ -79,9 +79,7 @@ public enum MapKey: Sendable, Hashable, CustomStringConvertible {
       hasher.combine(u)
     case .string(let s):
       hasher.combine(3)
-      for byte in s.utf8 {
-        hasher.combine(byte)
-      }
+      withUTF8Bytes(s) { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
       hasher.combine(0xFF as UInt8)
     }
   }

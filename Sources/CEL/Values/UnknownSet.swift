@@ -32,7 +32,7 @@ public enum AttributeQualifier: Sendable, Hashable, CustomStringConvertible {
     case (.int(let i), .uint(let u)), (.uint(let u), .int(let i)):
       return i >= 0 && UInt64(i) == u
     case (.string(let a), .string(let b)):
-      return a.utf8.elementsEqual(b.utf8)
+      return utf8Equal(a, b)
     default:
       return self == other
     }

@@ -192,7 +192,7 @@ extension Value: Equatable {
     case (.int(let a), .int(let b)): return a == b
     case (.uint(let a), .uint(let b)): return a == b
     case (.double(let a), .double(let b)): return a == b
-    case (.string(let a), .string(let b)): return a.utf8.elementsEqual(b.utf8)
+    case (.string(let a), .string(let b)): return utf8Equal(a, b)
     case (.bytes(let a), .bytes(let b)): return a == b
     case (.list(let a), .list(let b)):
       guard a.count == b.count else { return false }

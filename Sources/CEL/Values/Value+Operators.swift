@@ -218,7 +218,7 @@ extension Value {
       default: break
       }
     case .string(let a):
-      if case .string(let b) = other { return .bool(a.utf8.elementsEqual(b.utf8)) }
+      if case .string(let b) = other { return .bool(utf8Equal(a, b)) }
     case .bytes(let a):
       if case .bytes(let b) = other { return .bool(a == b) }
     case .list(let a):
@@ -320,15 +320,9 @@ func compareIntUint(_ i: Int64, _ u: UInt64) -> Int64 {
 
 /// Byte-wise comparison of the UTF-8 encodings, as Go `strings.Compare`.
 func compareUTF8(_ a: String, _ b: String) -> Int64 {
-  var ia = a.utf8.makeIterator()
-  var ib = b.utf8.makeIterator()
-  while true {
-    switch (ia.next(), ib.next()) {
-    case (nil, nil): return 0
-    case (nil, _): return -1
-    case (_, nil): return 1
-    case (let x?, let y?):
-      if x != y { return x < y ? -1 : 1 }
+  withUTF8Bytes(a) { x in
+    withUTF8Bytes(b) { y in
+      compareByteBuffers(x, y)
     }
   }
 }

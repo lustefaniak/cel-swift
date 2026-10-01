@@ -76,7 +76,7 @@ def table(left, right, left_name, right_name):
     for name in names:
         for phase in PHASES:
             a, b = left.get((name, phase)), right.get((name, phase))
-            if a is None and b is None:
+            if a is None:
                 continue
             ratio = f"{a / b:.2f}×" if a and b else "-"
             print(f"| {name} | {phase} | {fmt(a)} | {fmt(b)} | {ratio} |")
@@ -87,13 +87,18 @@ def main():
     p.add_argument("--rounds", type=int, default=5)
     p.add_argument("--round-ms", type=int, default=100)
     p.add_argument("--filter")
-    p.add_argument("--phase", choices=PHASES)
+    p.add_argument("--phase", help="only this phase; a unique prefix is enough (pa, ch, pl, ev)")
     p.add_argument("--swift-only", action="store_true")
     p.add_argument("--no-build", action="store_true", help="use the existing release build")
     p.add_argument("--save", help="write the Swift results to this TSV file")
     p.add_argument("--baseline", help="compare against a saved Swift TSV instead of cel-go")
     p.add_argument("--go-results", help="use a saved cel-go TSV instead of running the Go driver")
     args = p.parse_args()
+    if args.phase:
+        matches = [phase for phase in PHASES if phase.startswith(args.phase)]
+        if len(matches) != 1:
+            p.error(f"--phase {args.phase}: expected one of {', '.join(PHASES)}")
+        args.phase = matches[0]
 
     swift_out = run_swift(args)
     if args.save:

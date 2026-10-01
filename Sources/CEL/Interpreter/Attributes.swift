@@ -614,7 +614,7 @@ final class ValueQualifier: ConstantQualifier, QualifierValueEquator {
   func qualifierValueEquals(_ pattern: AttributeQualifier) -> Bool {
     switch (value, pattern) {
     case (.string(let s), .string(let p)):
-      return s.utf8.elementsEqual(p.utf8)
+      return utf8Equal(s, p)
     case (.bool(let b), .bool(let p)):
       return b == p
     case (.int, _), (.uint, _), (.double, _):
@@ -696,7 +696,7 @@ final class FieldQualifier: ConstantQualifier, QualifierValueEquator {
 
   func qualifierValueEquals(_ pattern: AttributeQualifier) -> Bool {
     if case .string(let p) = pattern {
-      return name.utf8.elementsEqual(p.utf8)
+      return utf8Equal(name, p)
     }
     return false
   }

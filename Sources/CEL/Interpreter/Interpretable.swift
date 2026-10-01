@@ -930,7 +930,7 @@ final class TestOnlyQualifier: ConstantQualifier, QualifierValueEquator {
 
   func qualifierValueEquals(_ pattern: AttributeQualifier) -> Bool {
     if case .string(let s) = inner.value, case .string(let p) = pattern {
-      return s.utf8.elementsEqual(p.utf8)
+      return utf8Equal(s, p)
     }
     return false
   }
