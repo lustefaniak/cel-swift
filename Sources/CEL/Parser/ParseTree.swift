@@ -228,8 +228,9 @@ final class RecognitionException {
   var kind: Kind
   /// The parser state when the exception was created.
   var offendingState: Int
-  /// The rule context when the exception was created.
-  var ctx: ParserRuleContext?
+  /// The rule context when the exception was created. Weak: the context keeps its exception
+  /// (`ParserRuleContext.exception`), and the tree owns the context while errors are reported.
+  weak var ctx: ParserRuleContext?
 
   init(kind: Kind, offendingState: Int, ctx: ParserRuleContext?) {
     self.kind = kind
