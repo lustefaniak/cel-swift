@@ -1228,7 +1228,11 @@ private func observeQualifyIfPresent(
     }
     return (out, present)
   } catch {
-    observer(vars, id, step, .error(error.evalError.labelled(with: id)))
+    // cel-go records a failed qualification only for presence tests: the error comes back with
+    // `present == false`, and the observer is called when `present || presenceOnly`.
+    if presenceOnly {
+      observer(vars, id, step, .error(error.evalError.labelled(with: id)))
+    }
     throw error
   }
 }
