@@ -570,6 +570,15 @@ struct TypeChecker {
       return current
     }
     if isAssignable(previous, current) {
+      // The spec joins `null` into the nullable type it is assigned to ([msg, null] is list(msg)) and a
+      // primitive into its wrapper ([1, wrapper(int)] is list(wrapper(int))). cel-go's mostGeneral deduces
+      // list(null_type) and list(int) for these (docs/divergences.md).
+      if current == .null {
+        return previous
+      }
+      if case .wrapper(let wrapped) = current, previous == wrapped {
+        return current
+      }
       return mostGeneral(previous, current)
     }
     if env.aggLitElemType == .dyn {

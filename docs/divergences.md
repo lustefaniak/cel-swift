@@ -120,6 +120,12 @@ differences:
   exists` and `unsupported optional field selection: <expr>` print a Go struct with `%v` in cel-go; neither
   can be produced by parsed input.
 - **`TestCheckInvalidLiteral` has no counterpart**: `Constant` cannot hold a duration literal.
+- **List and map literal element types join `null` and wrappers as the spec does.** When an element is
+  `null` and the earlier elements have a nullable type (message, duration, timestamp, wrapper, optional),
+  the joined type stays the nullable one: `[msg, null][0]` is `msg`'s type and `[optional.of(1), null]` is
+  `list(optional_type(int))`. A primitive joined with its wrapper gives the wrapper in either order:
+  `[1, msg.single_int64_wrapper]` is `list(wrapper(int))`. cel-go's `mostGeneral` deduces `null_type` and
+  `list(int)` for these and skips the five `type_deductions` tests that cover them; cel-cpp passes them.
 
 ## Parser, AST and unparser
 
