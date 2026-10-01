@@ -480,6 +480,21 @@ struct TypedProgramTests {
         """)
   }
 
+  /// A global call is recorded at its opening parenthesis, as cel-go records it; the text and
+  /// position of a condition or term that starts with one must still include the function name.
+  @Test func explainsConditionsThatStartWithAFunctionCall() throws {
+    let program = try TypedProgram<SelectFacts, Bool>(
+      expression: "size(pr.labels) > 0 && !pr.draft", environment: Environment())
+    let explanation = try program.explain(.sample)
+    let condition = try #require(explanation.conditions.first)
+    #expect(condition.text == "size(pr.labels) > 0 && !pr.draft")
+    #expect(condition.column == 1)
+    #expect(condition.terms.map(\.text) == ["size(pr.labels) > 0", "pr.draft"])
+
+    let call = try TypedProgram<SelectFacts, Bool>(expression: "size(pr.labels) > 0", environment: Environment())
+    #expect(try call.explain(.sample).conditions.first?.text == "size(pr.labels) > 0")
+  }
+
   @Test func explanationKeepsEvaluationErrors() throws {
     let program = try TypedProgram<SelectFacts, Bool>(
       expression: "pr.deletions > 0 && pr.additions / (pr.deletions - 30) > 1", environment: Environment())
