@@ -155,21 +155,38 @@ struct YAMLLimitsTests {
     _ = try time(100)  // warm up
     let small = try time(1_000)
     let large = try time(8_000)
-    withKnownIssue("every pair of keys is compared") {
-      #expect(large < small * 20 + .milliseconds(50), "1000 keys: \(small), 8000 keys: \(large)")
-    }
+    #expect(large < small * 20 + .milliseconds(50), "1000 keys: \(small), 8000 keys: \(large)")
   }
 
-  /// A key repeated n times is n(n-1)/2 pairs, each an error in go-yaml's message.
+  /// A key repeated n times is n(n-1)/2 pairs, each an error in go-yaml's message; the first
+  /// 1000 of them are reported here, in go-yaml's order.
   @Test func duplicateKeyErrorsAreBounded() throws {
     let text = String(repeating: "a: 1\n", count: 1_000)
     let document = try #require(try YAMLNode.parseDocument(text))
     let message = Self.decodeError(document) ?? ""
-    #expect(message.hasPrefix("yaml: unmarshal errors:\n  line 2: mapping key \"a\" already defined at line 1\n"))
-    let lines = message.utf8.split(separator: UInt8(ascii: "\n")).count
-    withKnownIssue("every pair is reported") {
-      #expect(lines <= 1_001)
-    }
+    let lines = message.split(separator: "\n")
+    #expect(lines.count == 1_001)
+    #expect(lines.first == "yaml: unmarshal errors:")
+    #expect(lines.dropFirst().first == "  line 2: mapping key \"a\" already defined at line 1")
+    #expect(lines.last == "  line 3: mapping key \"a\" already defined at line 2")
+  }
+
+  /// go-yaml's order: for each key, every later equal key (go-yaml v3.0.4 output).
+  @Test func duplicateKeyErrorsInGoYAMLOrder() throws {
+    let text = "a: 1\nb: 2\na: 3\nb: 4\na: 5\n'a': 6\n[x]: 7\n[y]: 8\n"
+    let document = try #require(try YAMLNode.parseDocument(text))
+    #expect(
+      Self.decodeError(document) == """
+        yaml: unmarshal errors:
+          line 3: mapping key "a" already defined at line 1
+          line 5: mapping key "a" already defined at line 1
+          line 6: mapping key "a" already defined at line 1
+          line 4: mapping key "b" already defined at line 2
+          line 5: mapping key "a" already defined at line 3
+          line 6: mapping key "a" already defined at line 3
+          line 6: mapping key "a" already defined at line 5
+          line 8: mapping key "" already defined at line 7
+        """)
   }
 
   /// A policy whose rules nest `depth` levels, each through a match with a nested rule.

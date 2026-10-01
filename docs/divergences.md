@@ -27,6 +27,10 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
   1000`). go-yaml has no decoding limit, and aliases can splice anchored trees into each other so that
   a value nests deeper than its document; the limit keeps decoded values shallow enough to compare and
   release on any thread. Documents without aliases never reach it.
+- **At most 1000 duplicate-key errors per mapping.** go-yaml reports every pair of equal keys, so a
+  key repeated n times yields n(n-1)/2 messages (half a million for 1000 repeats); the first 1000 are
+  reported, in go-yaml's order. Keys are grouped by hashing rather than compared pairwise, which
+  gives the same errors.
 - **The recursive passes run on a large stack.** Decoding, the policy parser and the policy compiler
   recurse once per nesting level, as go-yaml and cel-go do; Swift threads have fixed stacks, so for
   deep documents these passes run on a temporary thread sized for the depth (as the CEL parser does,

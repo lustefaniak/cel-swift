@@ -488,22 +488,49 @@ package struct YAMLDecoder {
     return false
   }
 
+  /// The most duplicate-key errors reported for one mapping. go-yaml reports every pair of equal
+  /// keys, n(n-1)/2 errors for a key repeated n times; these are the first of them.
+  static let maxDuplicateKeyErrors = 1000
+
+  private struct KeyIdentity: Hashable {
+    var kind: YAMLNode.Kind
+    var value: String
+  }
+
+  /// go-yaml's `checkUniqueKeys`: reports each key equal (same kind and text) to an earlier one,
+  /// for every earlier one, ordered by the earlier key. go-yaml compares every pair of keys; the
+  /// keys are grouped by hashing here, so a mapping without duplicates is checked in linear time.
   private mutating func checkUniqueKeys(_ n: YAMLNode) -> Bool {
-    let before = errors.count
+    var groups: [KeyIdentity: [Int]] = [:]
+    var hasDuplicates = false
     var i = 0
     while i < n.content.count {
+      let key = KeyIdentity(kind: n.content[i].kind, value: n.content[i].value)
+      let count = groups[key, default: []].count
+      groups[key, default: []].append(i)
+      hasDuplicates = hasDuplicates || count > 0
+      i += 2
+    }
+    guard hasDuplicates else { return true }
+    var seen: [KeyIdentity: Int] = [:]
+    var reported = 0
+    i = 0
+    while i < n.content.count && reported < Self.maxDuplicateKeyErrors {
       let ni = n.content[i]
-      var j = i + 2
-      while j < n.content.count {
-        let nj = n.content[j]
-        if ni.kind == nj.kind && ni.value == nj.value {
+      let key = KeyIdentity(kind: ni.kind, value: ni.value)
+      let position = seen[key, default: 0]
+      seen[key] = position + 1
+      if let indices = groups[key] {
+        for j in indices[(position + 1)...] {
+          guard reported < Self.maxDuplicateKeyErrors else { break }
+          let nj = n.content[j]
           errors.append("line \(nj.line): mapping key \(goQuote(nj.value)) already defined at line \(ni.line)")
+          reported += 1
         }
-        j += 2
       }
       i += 2
     }
-    return errors.count == before
+    return false
   }
 }
 
