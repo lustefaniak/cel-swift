@@ -72,7 +72,7 @@ This is a library other packages depend on, so the public surface is the product
 ## Builds
 
 - **Run every `swift build` / `swift test` / `swift run` through `tools/build-guard/swiftlock`**, e.g.
-  `tools/build-guard/swiftlock swift build --build-tests -j 4`. It serialises builds machine-wide (parallel agent
+  `tools/build-guard/swiftlock swift build --build-tests -j 4`. It allows two builds at a time machine-wide (parallel agent
   worktrees each do a full build) and starts `swiftguard.sh`, which kills any swift-frontend over 8 GB. macOS
   ignores `ulimit -v`/`-d`, and an unbounded frontend has already exhausted 64 GB and panicked the machine.
 - **No big generated Swift literals.** Fixture data goes into resource files (JSON lines, text) read at test time;

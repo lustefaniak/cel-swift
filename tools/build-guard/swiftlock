@@ -5,7 +5,7 @@
 #
 #   tools/build-guard/swiftlock swift build --build-tests -j 4
 #
-# SWIFTLOCK_SLOTS (default 1) sets how many guarded commands may run at once.
+# SWIFTLOCK_SLOTS (default 2) sets how many guarded commands may run at once.
 import fcntl, os, subprocess, sys, time
 
 here = os.path.dirname(os.path.realpath(__file__))
@@ -26,7 +26,7 @@ def ensure_guard():
     open(pidfile, "w").write(str(p.pid))
 
 ensure_guard()
-slots = int(os.environ.get("SWIFTLOCK_SLOTS", "1"))
+slots = int(os.environ.get("SWIFTLOCK_SLOTS", "2"))
 fds = [open(os.path.join(state, f"slot{i}"), "w") for i in range(slots)]
 held, waited = None, False
 while held is None:

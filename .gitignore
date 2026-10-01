@@ -8,3 +8,4 @@ DerivedData/
 .netrc
 /tools/oracle/oracle
 /Package.resolved
+.claude/worktrees/
