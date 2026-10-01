@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - run: swift --version
+      - run: swift build --build-tests
+      - run: swift test --skip-build
+
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        swift: ["6.0", "6.1"]
+    container: swift:${{ matrix.swift }}-noble
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: swift --version
+      - run: swift build --build-tests
+      - run: swift test --skip-build
