@@ -21,4 +21,17 @@ struct FuzzRegressionTests {
     }
     #expect(released == nil)
   }
+
+  /// With the DFA fixed, inputs with syntax errors still leaked their parse tree: the rule context
+  /// records its exception, and the exception pointed back at the context.
+  @Test func syntaxErrorReleasesItsParseTree() {
+    weak var released: ParserRuleContext?
+    do {
+      let ctx = ParserRuleContext(parent: nil, invokingState: -1, ruleIndex: 0, label: .start)
+      let token = Token(type: 1, channel: 0, start: 0, stop: 0, line: 1, column: 0, tokenIndex: 0, text: "x")
+      ctx.exception = RecognitionException(kind: .inputMismatch(offendingToken: token), offendingState: 0, ctx: ctx)
+      released = ctx
+    }
+    #expect(released == nil)
+  }
 }
