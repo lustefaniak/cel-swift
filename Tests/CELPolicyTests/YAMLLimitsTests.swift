@@ -97,6 +97,39 @@ struct YAMLLimitsTests {
     }
   }
 
+  // MARK: Type nesting in environment configs
+
+  /// A list type nested `depth` levels as a type specifier: `list<list<...<int>...>>`.
+  static func nestedListSpecifier(_ depth: Int) -> String {
+    String(repeating: "list<", count: depth) + "int" + String(repeating: ">", count: depth)
+  }
+
+  /// A config declaring `x` as a list type nested `depth` levels through `params`, in flow style:
+  /// each level is a mapping and a sequence, so the YAML nests `2 * depth` levels.
+  static func nestedParamsConfig(_ depth: Int) -> String {
+    "variables:\n- name: x\n  type: "
+      + String(repeating: "{type_name: list, params: [", count: depth) + "{type_name: int}"
+      + String(repeating: "]}", count: depth) + "\n"
+  }
+
+  /// cel-go parses a type specifier of any depth (its parser recurses on a growable stack).
+  @Test(.disabled("overflows the stack: TypeDescriptorParser recurses once per level"))
+  func deepTypeSpecifierIsAnError() throws {
+    let yaml = "variables:\n- name: x\n  type: '\(Self.nestedListSpecifier(1_000))'\n"
+    #expect(throws: (any Error).self) { try EnvironmentConfig(yaml: yaml) }
+    #expect(throws: (any Error).self) {
+      try EnvironmentConfig.TypeDescriptor(parsing: Self.nestedListSpecifier(1_000))
+    }
+  }
+
+  /// Types nested through `params` decode within the YAML depth limit; cel-go builds an
+  /// environment from them at any depth.
+  @Test(.disabled("overflows the stack: type conversion and validation recurse once per level"))
+  func deepTypeParamsAreAnError() throws {
+    let config = try EnvironmentConfig(yaml: Self.nestedParamsConfig(300))
+    #expect(throws: (any Error).self) { try Environment(.environmentConfig(config)) }
+  }
+
   // MARK: Alias expansion
 
   /// The billion laughs document: `levels` anchors, each a list of `fanout` aliases of the
