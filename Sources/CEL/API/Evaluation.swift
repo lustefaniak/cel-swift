@@ -57,7 +57,11 @@ public struct Program: Sendable {
   /// - Throws: ``EvalError`` when evaluation produces an error, unless the program was created
   ///   with ``Option/errorsAsValues``.
   public func evaluate(_ variables: Variables) throws(EvalError) -> EvaluationResult {
-    let result = run(variables.makeActivation())
+    var activation = variables.makeActivation()
+    if !settings.globals.isEmpty {
+      activation = HierarchicalActivation(parent: MapActivation(settings.globals), child: activation)
+    }
+    let result = run(activation)
     if !settings.errorsAsValues, case .error(let error) = result.value {
       throw error
     }
@@ -147,6 +151,7 @@ extension Program {
     package var timeLimit: Duration?
     package var errorsAsValues = false
     package var decorators: [ProgramDecorator] = []
+    package var globals: [String: Value] = [:]
 
     package init() {}
 
@@ -225,6 +230,12 @@ extension Program {
     /// throwing them, so cost and state stay available.
     public static var errorsAsValues: Option {
       Option { $0.errorsAsValues = true }
+    }
+
+    /// Default values for variables, used when the variables passed to `evaluate` do not bind
+    /// them (cel-go `Globals`). Later globals options override earlier ones by name.
+    public static func globals(_ values: [String: Value]) -> Option {
+      Option { $0.globals.merge(values) { _, new in new } }
     }
   }
 }
