@@ -1,0 +1,17 @@
+{"id":"parse_macro","kind":"parse","expr":"a.b[1].exists(x, x > 2u) && !c","parser":{}}
+{"id":"parse_error","kind":"parse","expr":"1 + ","parser":{}}
+{"id":"parse_optional","kind":"parse","expr":"m.?x.orValue(1)","parser":{"optional_syntax":true}}
+{"id":"parse_env","kind":"parse","expr":"[1, 2].all(x, x > 0)","config":{"features":[{"name":"cel.feature.macro_call_tracking","enabled":true}]}}
+{"id":"check_int","kind":"check","expr":"x + 1","config":{"variables":[{"name":"x","type_name":"int"}]}}
+{"id":"check_error","kind":"check","expr":"x + 1u","config":{"variables":[{"name":"x","type_name":"int"}]}}
+{"id":"check_decls_proto","kind":"check","expr":"x[0]","decls_proto":[{"name":"x","ident":{"type":{"list_type":{"elem_type":{"primitive":"STRING"}}}}}]}
+{"id":"eval_values","kind":"eval","expr":"{1: x, 2u: [b'ab', 1.5, -0.0, duration('1.5s'), timestamp('2020-01-01T00:00:00.123Z'), int, optional.of(1), optional.none(), null, 'é']}","config":{"variables":[{"name":"x","type_name":"double"}],"extensions":[{"name":"optional"}]},"bindings":{"x":{"double":"NaN"}}}
+{"id":"eval_error","kind":"eval","expr":"1/0"}
+{"id":"eval_unknown","kind":"eval","expr":"x.f && true","config":{"variables":[{"name":"x","type_name":"map","params":[{"type_name":"string"},{"type_name":"bool"}]}]},"unknowns":[{"variable":"x","path":[{"string":"f"}]}]}
+{"id":"eval_cost","kind":"eval","expr":"l.map(x, x * 2).size()","config":{"variables":[{"name":"l","type_name":"list","params":[{"type_name":"int"}]}]},"bindings":{"l":{"list":[{"int":1},{"int":"2"}]}},"size_hints":{"l":{"min":0,"max":10}}}
+{"id":"eval_cost_limit","kind":"eval","expr":"l.map(x, x * 2).size()","config":{"variables":[{"name":"l","type_name":"list","params":[{"type_name":"int"}]}]},"bindings":{"l":{"list":[{"int":1},{"int":"2"}]}},"cost_limit":2}
+{"id":"eval_message","kind":"eval","expr":"TestAllTypes{single_int64: 1}","profile":"conformance","container":"cel.expr.conformance.proto3"}
+{"id":"eval_message_binding","kind":"eval","expr":"x.single_int32","check":false,"bindings":{"x":{"message":{"type":"cel.expr.conformance.proto3.TestAllTypes","value":{"single_int32":5}}}},"test_types":true}
+{"id":"eval_block","kind":"eval","expr":"cel.block([1], cel.index(0) + 1)","profile":"conformance"}
+{"id":"eval_uint_key_map","kind":"eval","expr":"m[1u] + m[2u]","config":{"variables":[{"name":"m","type_name":"map","params":[{"type_name":"uint"},{"type_name":"int"}]}]},"bindings":{"m":{"map":[{"key":{"uint":"1"},"value":{"int":"9223372036854775806"}},{"key":{"uint":"2"},"value":{"int":"1"}}]}}}
+{"id":"bad_kind","kind":"frobnicate","expr":"1"}

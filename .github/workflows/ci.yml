@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
       - name: Select latest Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
       - run: swift --version
@@ -33,7 +33,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
       - run: swift --version
       - run: swift build --build-tests
       - run: swift test --skip-build
+
+  oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/oracle/go.mod
+          cache-dependency-path: tools/oracle/go.sum
+      - name: Build and test the cel-go oracle
+        working-directory: tools/oracle
+        run: |
+          go vet ./...
+          go build .
+          go test ./...
