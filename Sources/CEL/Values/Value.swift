@@ -42,9 +42,9 @@ public enum Value: Sendable {
   /// A `bytes` value.
   case bytes([UInt8])
   /// A list value.
-  case list(any ListValue)
+  indirect case list(any ListValue)
   /// A map value.
-  case map(any MapValue)
+  indirect case map(any MapValue)
   /// A type value, such as the result of `type(1)`.
   case type(CELType)
   /// A `google.protobuf.Duration` value.
@@ -54,9 +54,9 @@ public enum Value: Sendable {
   /// An optional value: `optional.of(x)` holds `x`, `optional.none()` holds `nil`.
   indirect case optional(Value?)
   /// A message, native object or abstract value.
-  case object(any ObjectValue)
+  indirect case object(any ObjectValue)
   /// An evaluation error.
-  case error(EvalError)
+  indirect case error(EvalError)
   /// An unknown value from partial evaluation.
   case unknown(UnknownSet)
 }
