@@ -160,9 +160,13 @@ cel-go reflects over protobuf descriptors (`pb.Db`, `dynamicpb`); swift-protobuf
   `protoc-gen-cel-swift` and registered (`ProtobufTypes(files:)`); there is no `RegisterDescriptor` for a
   runtime `FileDescriptorSet`. The well-known types are always registered, including `FieldMask` (cel-go
   only has it when a registered file imports it).
-- **Closed (proto2) enums reject undeclared numbers.** cel-go stores any int32 in a proto2 enum field; a
-  swift-protobuf closed enum cannot hold an undeclared value, so assigning one is an `invalid enum value`
-  error. Open (proto3) enums keep unknown numbers as in cel-go.
+- **Undeclared numbers in closed (proto2) enum fields live in the unknown fields.** cel-go stores any
+  int32 in a proto2 enum field; a swift-protobuf closed enum cannot hold an undeclared value, so such a
+  field keeps it in the message's unknown fields, in the field's wire format (where swift-protobuf puts
+  it when decoding). Reads, `has()`, equality, binary and JSON encoding see the number as cel-go does. A
+  list with an undeclared number is stored entirely in the unknown fields to keep its order; a message
+  decoded from bytes holds the declared numbers of a list in the typed field and the others in unknown
+  fields, so reading it lists the declared ones first.
 - **Extension equality covers registered extensions only.** `pb.Equal` ranges over every set field; here
   extension fields take part in equality when their file is registered. Unknown fields are compared as
   cel-go does (bytes, then grouped by field number).

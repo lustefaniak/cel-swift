@@ -50,6 +50,9 @@ public struct ProtobufValueKind<V: Sendable>: Sendable {
   /// The fully qualified name of an enum kind's type, which values of this kind have when strong
   /// enums are enabled (``ProtobufTypes/usesStrongEnums``).
   var enumTypeName: String? = nil
+  /// The number conversions of an enum kind whose Swift enum is closed (proto2), whose fields keep
+  /// undeclared numbers in the unknown fields; `nil` for every other kind.
+  var closedEnum: ClosedEnumNumbers<V>? = nil
 
   /// The CEL type of a value of this kind with or without strong enums.
   func celType(strongEnums: Bool) -> CELType {
@@ -299,26 +302,37 @@ extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
   }
 
   private static func makeEnumeration(typeName: String?) -> Self {
-    Self(
+    let toCEL: @Sendable (Int32, ProtobufTypes) -> Value = { number, types in
+      if let typeName, types.usesStrongEnums {
+        return .object(EnumValue(typeName: typeName, number: number))
+      }
+      return .int(Int64(number))
+    }
+    let toNumber: @Sendable (Value) -> Result<Int32, EvalError> = { value in
+      let i: Int64
+      switch value {
+      case .int(let number):
+        i = number
+      case .object(let object as EnumValue) where object.typeName == typeName:
+        i = Int64(object.number)
+      default:
+        return .failure(
+          EvalError("unsupported type conversion from '\(value.runtimeTypeName)' to int32"))
+      }
+      guard let narrowed = Int32(exactly: i) else { return .failure(.intOverflow) }
+      return .success(narrowed)
+    }
+    // Open (proto3) Swift enums map every number to a case; closed (proto2) ones only the declared.
+    let isClosed = V(rawValue: Int(Int32.min)) == nil || V(rawValue: Int(Int32.max)) == nil
+    return Self(
       celType: .int,
-      toValue: { v, types in
-        if let typeName, types.usesStrongEnums {
-          return .object(EnumValue(typeName: typeName, number: Int32(truncatingIfNeeded: v.rawValue)))
-        }
-        return .int(Int64(v.rawValue))
-      },
+      toValue: { v, types in toCEL(Int32(truncatingIfNeeded: v.rawValue), types) },
       fromValue: { value, _ in
-        let i: Int64
-        switch value {
-        case .int(let number):
-          i = number
-        case .object(let object as EnumValue) where object.typeName == typeName:
-          i = Int64(object.number)
-        default:
-          return .failure(
-            EvalError("unsupported type conversion from '\(value.runtimeTypeName)' to int32"))
+        let narrowed: Int32
+        switch toNumber(value) {
+        case .success(let n): narrowed = n
+        case .failure(let error): return .failure(error)
         }
-        guard let narrowed = Int32(exactly: i) else { return .failure(.intOverflow) }
         guard let e = V(rawValue: Int(narrowed)) else {
           return .failure(EvalError("invalid enum value \(narrowed) for \(String(describing: V.self))"))
         }
@@ -332,7 +346,16 @@ extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
       // protojson writes every NullValue as `null`; swift-protobuf writes the number of a map
       // value other than NULL_VALUE.
       patchJSON: V.self == Google_Protobuf_NullValue.self ? nullJSON : nil,
-      enumTypeName: typeName
+      enumTypeName: typeName,
+      closedEnum: isClosed
+        ? ClosedEnumNumbers(
+          declared: { V(rawValue: Int($0)) },
+          number: { Int32(truncatingIfNeeded: $0.rawValue) },
+          placeholder: V(),
+          enumTypeName: typeName,
+          fromValue: toNumber,
+          toValue: toCEL)
+        : nil
     )
   }
 }

@@ -41,6 +41,9 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
   let isSet: @Sendable (M) -> Bool
   let set: @Sendable (inout M, Value, ProtobufTypes) -> EvalError?
   let equal: @Sendable (M, M, ProtobufTypes) -> Bool
+  /// Whether the field keeps undeclared numbers of a closed enum in the unknown fields, which its
+  /// ``equal`` then compares instead of the message's unknown fields.
+  var holdsUndeclaredEnumNumbers = false
   /// Corrects the field's JSON as swift-protobuf wrote it (`nil` when the field was left out) to
   /// protojson's; `nil` when the two always agree. See ``ProtobufValueKind/patchJSON``.
   var patchJSON: (@Sendable (M, inout Google_Protobuf_Value?, ProtobufTypes) -> Void)? = nil
@@ -81,6 +84,9 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
       isSet = { m in m[keyPath: hasKeyPath] }
     case .oneof(let test):
       isSet = test
+    }
+    if let closed = kind.closedEnum {
+      return closedEnumSingular(name, number: number, jsonName: jsonName, keyPath, kind, closed, isTypedSet: isSet)
     }
     let unsetValue = kind.unsetValue
     return ProtobufField(
@@ -133,7 +139,10 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
     _ keyPath: WritableKeyPath<M, [V]> & Sendable,
     _ kind: ProtobufValueKind<V>
   ) -> ProtobufField<M> {
-    ProtobufField(
+    if let closed = kind.closedEnum {
+      return closedEnumRepeated(name, number: number, jsonName: jsonName, keyPath, kind, closed)
+    }
+    return ProtobufField(
       name: name,
       jsonName: jsonName ?? defaultJSONName(name),
       number: number,
@@ -189,7 +198,10 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
     key: ProtobufValueKind<K>,
     value: ProtobufValueKind<V>
   ) -> ProtobufField<M> {
-    ProtobufField(
+    if let closed = value.closedEnum {
+      return closedEnumMap(name, number: number, jsonName: jsonName, keyPath, key: key, value: value, closed)
+    }
+    return ProtobufField(
       name: name,
       jsonName: jsonName ?? defaultJSONName(name),
       number: number,

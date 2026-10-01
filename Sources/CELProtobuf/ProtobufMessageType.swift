@@ -79,6 +79,8 @@ public struct ProtobufMessageType: Sendable {
       }
       return .success(m)
     }
+    // The unknown records of these fields are values of the fields, compared by them.
+    let fieldNumbersInUnknown = fields.filter(\.holdsUndeclaredEnumNumbers).map(\.number)
     equal = { x, y, types in
       guard let a = x as? M, let b = y as? M else { return false }
       for field in fields where !field.equal(a, b, types) {
@@ -90,7 +92,12 @@ public struct ProtobufMessageType: Sendable {
           return false
         }
       }
-      return equalUnknown(Array(a.unknownFields.data), Array(b.unknownFields.data))
+      if fieldNumbersInUnknown.isEmpty {
+        return equalUnknown(Array(a.unknownFields.data), Array(b.unknownFields.data))
+      }
+      return equalUnknown(
+        removingUnknownFields(a.unknownFields, fieldNumbersInUnknown),
+        removingUnknownFields(b.unknownFields, fieldNumbersInUnknown))
     }
   }
 
@@ -246,7 +253,7 @@ private func groupUnknownFields(_ bytes: [UInt8]) -> [UInt64: [UInt8]]? {
 }
 
 /// Consumes one wire-format record and returns its field number and the index after it.
-private func consumeField(_ bytes: [UInt8], at start: Int) -> (UInt64, Int)? {
+func consumeField(_ bytes: [UInt8], at start: Int) -> (UInt64, Int)? {
   guard let (tag, afterTag) = consumeVarint(bytes, at: start) else { return nil }
   let fieldNumber = tag >> 3
   guard let end = consumeFieldValue(bytes, at: afterTag, fieldNumber: fieldNumber, wireType: tag & 7)
@@ -287,7 +294,7 @@ private func consumeFieldValue(_ bytes: [UInt8], at index: Int, fieldNumber: UIn
   }
 }
 
-private func consumeVarint(_ bytes: [UInt8], at start: Int) -> (UInt64, Int)? {
+func consumeVarint(_ bytes: [UInt8], at start: Int) -> (UInt64, Int)? {
   var result: UInt64 = 0
   var shift: UInt64 = 0
   var index = start

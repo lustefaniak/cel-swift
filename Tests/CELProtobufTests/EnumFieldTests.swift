@@ -78,6 +78,12 @@ struct EnumFieldTests {
     // Bytes from elsewhere: field 24 (standalone_enum) holding 10.
     let decoded = try Cel_Expr_Conformance_Proto2_TestAllTypes(serializedBytes: [0xC0, 0x01, 0x0A] as [UInt8])
     #expect(types.value(of: decoded).protobufObject?.field("standalone_enum") == 10)
+    // Decoding puts declared numbers in the typed field and the others in unknown fields, unlike a
+    // literal; equality compares the field values.
+    let list = try Cel_Expr_Conformance_Proto2_TestAllTypes(
+      serializedBytes: [0xA0, 0x03, 0x01, 0xA0, 0x03, 0x0A] as [UInt8])
+    #expect(types.value(of: list).protobufObject?.field("repeated_nested_enum") == [1, 10])
+    #expect(types.value(of: list).celEquals(types.newValue(proto2, fields: ["repeated_nested_enum": [1, 10]])) == true)
   }
 
   /// protojson writes undeclared enum numbers as numbers and declared ones as names.

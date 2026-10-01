@@ -81,7 +81,7 @@ func TestValueRoundTrip(t *testing.T) {
 		`{"optional":{"list":[]}}`,
 		`{"list":[{"int":"1"},{"string":"x"}]}`,
 		`{"map":[{"key":{"bool":false},"value":{"int":"1"}},{"key":{"int":"1"},"value":{"uint":"2"}},{"key":{"string":"k"},"value":{"null":null}},{"key":{"uint":"3"},"value":{"double":2}}]}`,
-		`{"message":{"type":"cel.expr.conformance.proto3.TestAllTypes","value":{"single_int32":5}}}`,
+		`{"message":{"binary":"CAU=","type":"cel.expr.conformance.proto3.TestAllTypes","value":{"single_int32":5}}}`,
 	}
 	for _, v := range values {
 		resp := run(t, `{"kind":"eval","expr":"x","check":false,"test_types":true,"config":{"extensions":[{"name":"optional"}]},"bindings":{"x":`+v+`}}`)

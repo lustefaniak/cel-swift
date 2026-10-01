@@ -104,11 +104,20 @@ enum Messages {
     return types.value(of: message)
   }
 
-  /// Canonical text of a message from the oracle: its text format as SwiftProtobuf writes it.
+  /// Canonical text of a message from the oracle: its text format as SwiftProtobuf writes it after decoding
+  /// the wire format (`binary`), or the proto JSON (`value`) of a regression recorded without it. The wire
+  /// format carries what proto JSON cannot into SwiftProtobuf: undeclared numbers in proto2 enum fields,
+  /// which decode into unknown fields.
   static func canonical(json payload: JSON) -> String {
-    guard let name = payload["type"]?.stringValue, let swiftType = swiftType(name), let json = payload["value"],
-      let message = try? swiftType.init(jsonString: json.rendered)
-    else {
+    guard let name = payload["type"]?.stringValue, let swiftType = swiftType(name) else {
+      return "message:?\(payload.rendered)"
+    }
+    if let binary = payload["binary"]?.stringValue, let data = Data(base64Encoded: binary),
+      let message = try? swiftType.init(serializedBytes: data, extensions: types.extensionMap, partial: true)
+    {
+      return "message:\(name){\(normalisingNullValues(message.textFormatString()))}"
+    }
+    guard let json = payload["value"], let message = try? swiftType.init(jsonString: json.rendered) else {
       return "message:?\(payload.rendered)"
     }
     return "message:\(name){\(normalisingNullValues(message.textFormatString()))}"
@@ -123,10 +132,17 @@ enum Messages {
     return "message:\(name){\(text)}"
   }
 
-  /// The message's text format with NullValue numbers normalised (see ``normalisingNullValues(_:)``).
+  /// The message's text format with NullValue numbers normalised (see ``normalisingNullValues(_:)``), after a
+  /// round trip through the deterministic wire format, as the oracle's message is decoded: undeclared proto2
+  /// enum numbers, which cel-swift keeps in unknown fields, then sit where decoding puts them.
   private static func textFormat<M: SwiftProtobuf.Message>(_ type: M.Type, _ value: Value) -> String? {
     guard let message = try? types.message(from: value, as: type) else { return nil }
-    return normalisingNullValues(message.textFormatString())
+    var options = BinaryEncodingOptions()
+    options.useDeterministicOrdering = true
+    guard let bytes: [UInt8] = try? message.serializedBytes(partial: true, options: options),
+      let decoded = try? M(serializedBytes: bytes, extensions: types.extensionMap, partial: true)
+    else { return nil }
+    return normalisingNullValues(decoded.textFormatString())
   }
 
   /// Text format with every number in a `google.protobuf.NullValue` field (`*null_value`, or the `value` of

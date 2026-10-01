@@ -36,6 +36,9 @@ type mapEntry struct {
 type messageValue struct {
 	Type  string          `json:"type"`
 	Value json.RawMessage `json:"value"`
+	// Binary is the deterministic wire format, base64: it keeps what proto JSON cannot carry into
+	// another implementation, such as an undeclared number in a proto2 (closed) enum field.
+	Binary string `json:"binary,omitempty"`
 }
 
 func marshal(v any) json.RawMessage {
@@ -201,9 +204,14 @@ func encodeValue(v ref.Val) (json.RawMessage, error) {
 		if err != nil {
 			return nil, err
 		}
+		wire, err := proto.MarshalOptions{Deterministic: true, AllowPartial: true}.Marshal(msg)
+		if err != nil {
+			return nil, err
+		}
 		return marshal(map[string]any{"message": messageValue{
-			Type:  string(msg.ProtoReflect().Descriptor().FullName()),
-			Value: compactJSON(b),
+			Type:   string(msg.ProtoReflect().Descriptor().FullName()),
+			Value:  compactJSON(b),
+			Binary: base64.StdEncoding.EncodeToString(wire),
 		}}), nil
 	}
 	return nil, fmt.Errorf("unsupported value type %T (%v)", v, v.Type())

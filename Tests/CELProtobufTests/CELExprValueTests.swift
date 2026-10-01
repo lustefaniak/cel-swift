@@ -68,9 +68,9 @@ struct CELExprValueTests {
     // proto3 enums are open: unknown numbers are kept.
     let proto3 = types.newValue("cel.expr.conformance.proto3.TestAllTypes", fields: ["standalone_enum": 99])
     #expect(proto3.protobufObject?.field("standalone_enum") == 99)
-    // proto2 enums are closed in swift-protobuf.
+    // proto2 enums are closed in swift-protobuf, but as in cel-go the field holds the number.
     let proto2 = types.newValue("cel.expr.conformance.proto2.TestAllTypes", fields: ["standalone_enum": 99])
-    #expect(proto2.isError)
+    #expect(proto2.protobufObject?.field("standalone_enum") == 99)
     let tooBig = types.newValue(
       "cel.expr.conformance.proto2.TestAllTypes", fields: ["standalone_enum": .int(5_000_000_000)])
     #expect(tooBig.isError)

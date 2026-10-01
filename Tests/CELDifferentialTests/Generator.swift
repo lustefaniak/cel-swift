@@ -175,11 +175,6 @@ enum Profile: String, Sendable {
 /// `docs/status.md`. Remove an entry when its bug is fixed.
 enum KnownGaps {
   static let disabled: Set<String> = []
-
-  /// Proto2 enums are closed in SwiftProtobuf: a field cannot hold an undeclared number, so cel-swift
-  /// rejects `proto2.TestAllTypes{standalone_enum: 10}` (`invalid enum value 10 for NestedEnum`) where
-  /// cel-go stores 10. Message literals give proto2 enum fields declared values only.
-  static let closedEnums = true
 }
 
 struct Generator {
@@ -443,9 +438,9 @@ struct Generator {
         if used.contains(f.name) { continue }
         used.append(f.name)
         let value: Node
-        if name.contains(".proto2.") && f.name.contains("enum") {
-          // KnownGaps.closedEnums: only declared values for proto2 enums.
-          value = closedEnumLiteral(f.type, max: 2)
+        if name.contains(".proto2.") && f.name.contains("enum") && rng.chance(50) {
+          // Undeclared numbers too: cel-swift keeps them in unknown fields, as cel-go keeps any int32.
+          value = closedEnumLiteral(f.type, max: 12)
         } else if f.name.contains("null_value") && f.type != .null {
           // Numbers other than NULL_VALUE (0) too: protojson writes each as null.
           value = closedEnumLiteral(f.type, max: 5)

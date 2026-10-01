@@ -43,6 +43,8 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
     let enumValues: [String: Int32]
     /// The enum types except `google.protobuf.NullValue`, with their values: the strong enum types.
     let enumTypes: [String: [String: Int32]]
+    /// The value names of every enum type by number, the first name of aliased numbers.
+    let enumValueNames: [String: [Int32: String]]
     let extensions: [String: [ErasedField]]
     let extensionsByName: [String: [String: ErasedField]]
     let extensionMap: SimpleExtensionMap
@@ -66,6 +68,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       var byMetatype: [ObjectIdentifier: ProtobufMessageType] = [:]
       var enumValues: [String: Int32] = [:]
       var enumTypes: [String: [String: Int32]] = [:]
+      var enumValueNames: [String: [Int32: String]] = [:]
       var extensions: [String: [ErasedField]] = [:]
       var extensionsByName: [String: [String: ErasedField]] = [:]
       var extensionMap = SimpleExtensionMap()
@@ -78,6 +81,8 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
           for value in enumType.values {
             enumValues[enumType.name + "." + value.name] = value.number
           }
+          enumValueNames[enumType.name] = Dictionary(
+            enumType.values.map { ($0.number, $0.name) }, uniquingKeysWith: { first, _ in first })
           if enumType.name != "google.protobuf.NullValue" {
             enumTypes[enumType.name] = Dictionary(
               enumType.values.map { ($0.name, $0.number) }, uniquingKeysWith: { first, _ in first })
@@ -96,6 +101,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       self.messageTypesByMetatype = byMetatype
       self.enumValues = enumValues
       self.enumTypes = enumTypes
+      self.enumValueNames = enumValueNames
       self.extensions = extensions
       self.extensionsByName = extensionsByName
       self.extensionMap = extensionMap
@@ -274,6 +280,11 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       return enumConstant(name, number)
     }
     return .error(EvalError("unknown enum name '\(enumName)'"))
+  }
+
+  /// The name of an enum type's value with the given number, if it declares one.
+  func enumValueName(_ enumTypeName: String, _ number: Int32) -> String? {
+    storage.enumValueNames[enumTypeName]?[number]
   }
 
   /// An enum constant: an `int`, or with strong enums a value of its enum type.

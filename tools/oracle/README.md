@@ -104,7 +104,7 @@ Every value is a JSON object with exactly one key naming its CEL kind, so `1`, `
 | `google.protobuf.Timestamp` | `{"timestamp": "2020-01-01T00:00:00.123Z"}`: RFC 3339 in UTC, fractional seconds trimmed |
 | `type` | `{"type": "int"}`: the runtime type name (`list`, `map`, `null_type`, `google.protobuf.Duration`, a message name, ...) |
 | `optional` | `{"optional": null}` is `optional.none()`, `{"optional": V}` is `optional.of(V)` |
-| message | `{"message": {"type": "cel.expr.conformance.proto3.TestAllTypes", "value": {...}}}`: `value` is the message in proto JSON with proto field names |
+| message | `{"message": {"type": "cel.expr.conformance.proto3.TestAllTypes", "value": {...}}}`: `value` is the message in proto JSON with proto field names, `binary` (results only) its deterministic wire format in base64 |
 
 Results never contain errors or unknowns inside a value; those are the `error` and `unknown` result kinds.
 Wrapper types, `google.protobuf.Struct`/`Value`/`ListValue` and `Any` reach CEL as the values cel-go

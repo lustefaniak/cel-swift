@@ -75,9 +75,6 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
 Found by the differential suite and not fixed; the generator steers around them (`KnownGaps` in
 `Tests/CELDifferentialTests/Generator.swift`), and the regression file keeps a reproducer where one applies.
 
-- **Proto2 enums are closed in SwiftProtobuf.** `proto2.TestAllTypes{standalone_enum: 10}` (and enum lists and map
-  values) fails with `invalid enum value 10 for NestedEnum`; cel-go stores the number. Needs proto2 enum fields to
-  carry unknown numbers (generated adapters or a raw-value path), or a documented divergence.
 - **Error naming of a null read from a wrapper field**: cel-go says `structpb.NullValue`, cel-swift `types.Null`
   (`invalid qualifier type: ...`); cel-swift has one null value. Excused in the comparison.
 - **cel-go bug, not ours**: the runtime cost trackers of `ext/lists.go` `distinct` and `sort` cast their argument to a
