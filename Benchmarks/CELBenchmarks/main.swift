@@ -66,7 +66,7 @@ func now() -> UInt64 { DispatchTime.now().uptimeNanoseconds }
 
 /// The nanoseconds per call of `body` in the fastest of `rounds` rounds of about `roundMilliseconds`
 /// each: the round least disturbed by other load on the machine.
-func measure(_ options: Options, _ body: () -> Void) -> Double {
+func measure(_ options: Options, _ body: @Sendable () -> Void) -> Double {
   let target = UInt64(options.roundMilliseconds) * 1_000_000
   var n = 1
   while true {
@@ -83,10 +83,9 @@ func measure(_ options: Options, _ body: () -> Void) -> Double {
   for _ in 0..<options.rounds {
     let start = now()
     if options.threads > 1 {
-      withoutActuallyEscaping(body) { body in
-        DispatchQueue.concurrentPerform(iterations: options.threads) { _ in
-          for _ in 0..<n { body() }
-        }
+      let iterations = n
+      DispatchQueue.concurrentPerform(iterations: options.threads) { _ in
+        for _ in 0..<iterations { body() }
       }
     } else {
       for _ in 0..<n { body() }
@@ -125,7 +124,7 @@ do {
       fail("\(benchCase.name): unexpected result \(result)")
     }
 
-    func report(_ phase: String, _ body: () -> Void) {
+    func report(_ phase: String, _ body: @Sendable () -> Void) {
       guard options.phase == nil || options.phase == phase else { return }
       let ns = measure(options, body)
       print("\(benchCase.name)\t\(phase)\t\((ns * 10).rounded() / 10)")
