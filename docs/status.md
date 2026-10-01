@@ -38,8 +38,9 @@ toward the spec, each recorded in `docs/divergences.md` (plan: cpp parity is the
 | Regex | `Sources/CELRegex` | Go regexp port, Go test tables |
 | Protobuf | `Sources/CELProtobuf`, `protoc-gen-cel-swift` | generated adapters, WKTs, proto2/3, extensions |
 | Policy (M7) | `Sources/CELPolicy`, `Sources/CELTest`, `Sources/CELCommandLine` | YAML parser, env configs, compiler + composer, celtest runner, `cel-swift policy test`; every cel-go policy and celtest suite passes, and `tools/celtest-go/compare.sh` shows cel-go celtest and `cel-swift policy test` agree on all of them. Not ported: textproto suites, checked-expression and descriptor-set files, coverage |
+| Unknowns and state tracking (M5) | `Sources/CEL/Interpreter`, `Sources/CEL/API` | partial evaluation, unknown sets, residuals (`Environment.residual(of:state:)`), state tracking and exhaustive evaluation, end to end through the public API. Ported and passing: every `interpreter_test.go` testData case except `literal_pb3_msg` (no generated `v1alpha1.Expr` types), all 83 `prune_test.go` cases, `attribute_patterns_test.go`, `TestAttributeStateTracking` and the other unknown/qualifier tests of `attributes_test.go`, `unknown_test.go`, the partial/residual tests of `cel_test.go` and `ext/comprehensions_test.go` (`TestTwoVarComprehensionsResidualAST`). `tools/partial-fixtures` pins 208 more cases (value, error, unknown ids and attribute trails, residual text; checked and parse-only) to cel-go through the oracle's `residual` flag; all match, so no divergences |
 | Fuzzing | `Fuzz/`, `Sources/cel-fuzz-*` (only with `CEL_FUZZ=1`) | CI job 60 s per target, nightly workflow |
-| Tooling | `tools/oracle`, `tools/dashboard`, `tools/build-guard` | cel-go oracle, dashboard, build memory guard |
+| Tooling | `tools/oracle`, `tools/dashboard`, `tools/build-guard`, `tools/*-fixtures` | cel-go oracle (parse/check/eval, unknowns, residuals), dashboard, build memory guard, fixture generators |
 
 ## Next, in order
 
@@ -59,10 +60,8 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    custom macros, custom optimizers and decorators, proto AST conversion and the cel-go tests that need them
    (listed in the headers of `Tests/CELTests/API*Tests.swift`). The public `enum CEL` (only `specVersion`) shares
    the module's name, which breaks `CEL.Environment`-style qualification for clients; rename or drop it before 1.0.
-5. **Unknowns and state tracking (M5)** — interpreter pieces exist (attribute patterns, prune, eval state); port the
-   remaining cel-go unknowns tests end to end through the public API.
-6. **Parity gap** — the spec-over-cel-go cases listed under Conformance; decide each, fix, record the divergence.
-7. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
+5. **Parity gap** — the spec-over-cel-go cases listed under Conformance; decide each, fix, record the divergence.
+6. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
    existential list/map/object payloads dominate. Parser rebuilds the ANTLR prediction cache per parse (~0.5 ms);
    sharing it needs a lock in an `@unchecked Sendable` class (CLAUDE.md asks to raise that first).
 
