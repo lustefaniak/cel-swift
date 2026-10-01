@@ -11,7 +11,9 @@ Swift/Go ratio.
   tools/bench/bench.py --go-results go.tsv   # reuse a saved cel-go run
   tools/bench/bench.py --swift-results a.tsv --baseline b.tsv   # compare two saved Swift runs
 
-Options --rounds, --round-ms, --filter and --phase are passed to both drivers.
+Options --rounds, --round-ms, --filter and --phase are passed to both drivers. --threads n runs each phase on n
+threads at once in the Swift driver (wall time per operation); the cel-go driver has no such mode, so use it with
+--swift-only or --baseline.
 """
 import argparse
 import os
@@ -43,6 +45,8 @@ def run_swift(args):
     cmd = [os.path.join(ROOT, ".build/release/CELBenchmarks"), "--cases", "tools/bench/cases.json"] + driver_args(args)
     if args.phase:
         cmd += ["--phase", args.phase]
+    if args.threads > 1:
+        cmd += ["--threads", str(args.threads)]
     return subprocess.run(cmd, cwd=ROOT, check=True, capture_output=True, text=True).stdout
 
 
@@ -89,6 +93,7 @@ def main():
     p.add_argument("--round-ms", type=int, default=100)
     p.add_argument("--filter")
     p.add_argument("--phase", help="only this phase; a unique prefix is enough (pa, ch, pl, ev)")
+    p.add_argument("--threads", type=int, default=1, help="Swift driver only: run each phase on this many threads")
     p.add_argument("--swift-only", action="store_true")
     p.add_argument("--no-build", action="store_true", help="use the existing release build")
     p.add_argument("--save", help="write the Swift results to this TSV file")
@@ -115,7 +120,7 @@ def main():
         with open(args.baseline) as f:
             table(swift, parse_tsv(f.read()), "after", "before")
         return
-    if args.swift_only:
+    if args.swift_only or args.threads > 1:
         table(swift, {}, "cel-swift", "-")
         return
     if args.go_results:
