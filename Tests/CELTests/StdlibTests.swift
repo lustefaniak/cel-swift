@@ -217,8 +217,14 @@ struct StdlibTests {
     #expect(Value.int(1).receive(function: "getHours", overload: "", args: []) == .noSuchOverload)
   }
 
-  @Test func matchesHook() throws {
-    #expect(try call("matches", "abc", "a.c").isError)
+  @Test func matches() throws {
+    #expect(try call("matches", "abc", "^a.c$") == true)
+    #expect(try call("matches", "xabcx", "b") == true)
+    #expect(try call("matches", "abc", "^b") == false)
+    #expect(try call("matches", "\u{1F600}", "^.$") == true)
+    #expect(
+      try call("matches", "abc", "a(")
+        == .error(EvalError("error parsing regexp: missing closing ): `a(`")))
     #expect(try call("matches", 1, "a") == .error(EvalError("no such overload: matches")))
   }
 }

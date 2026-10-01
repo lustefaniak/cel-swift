@@ -18,6 +18,8 @@
 // Go compares strings as UTF-8 bytes; Swift's `String.contains` / `hasPrefix` use canonical
 // equivalence on `Character`s, so every operation here works on the UTF-8 view.
 
+import CELRegex
+
 /// `contains`: whether the string contains the substring. Port of cel-go `StringContains`.
 func stringContains(_ s: Value, _ sub: Value) -> Value {
   guard case .string(let str) = s else { return Value.maybeNoSuchOverload(s) }
@@ -67,24 +69,17 @@ func utf8Index(_ haystack: [UInt8], _ needle: [UInt8]) -> Int? {
 }
 
 extension Value {
-  /// `matches`: whether the string matches an RE2 pattern. Port of cel-go `String.Match`.
+  /// `matches`: whether the string contains a match of an RE2 pattern, as Go
+  /// `regexp.MatchString` (via `CELRegex`). Port of cel-go `String.Match`.
   ///
-  /// - Note: Regular expressions come from `CELRegex`, a port of Go's `regexp`. Until that target
-  ///   is wired in, this returns an error value for every call; see ``RegexHook``.
+  /// An invalid pattern is an error value with Go's message, starting `error parsing regexp:`.
   package func match(_ pattern: Value) -> Value {
     guard case .string(let str) = self else { return .noSuchOverload }
     guard case .string(let pat) = pattern else { return Value.maybeNoSuchOverload(pattern) }
-    return RegexHook.matchString(pattern: pat, in: str)
-  }
-}
-
-/// HOOK: the single place where `matches` reaches a regular expression engine.
-///
-/// TODO(CELRegex): replace the body with `CELRegex` (`Regexp.compile(pattern)` +
-/// `matchString`), returning `.error(EvalError(<Go regexp compile error message>))` on a compile
-/// error, once the `CELRegex` target is on `main` and `CEL` depends on it.
-enum RegexHook {
-  static func matchString(pattern: String, in text: String) -> Value {
-    .error(EvalError("matches is not supported: regular expressions require CELRegex"))
+    do {
+      return .bool(try Regexp.matchString(pat, str))
+    } catch {
+      return .error(EvalError(error.description))
+    }
   }
 }

@@ -17,6 +17,7 @@ let package = Package(
   targets: [
     .target(
       name: "CEL",
+      dependencies: ["CELRegex"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     // Generated from third_party/cel-spec by tools/gen-protos.sh. Not a product.
