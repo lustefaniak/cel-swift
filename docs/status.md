@@ -48,19 +48,16 @@ it raises for an unrelated reason); that is the whole remaining rust gap.
 
 Each item is sized for one fresh session. Read `CLAUDE.md` first; every build goes through `tools/build-guard/swiftlock`.
 
-1. **First release (M8)** — blocked on the maintainer: settle the questions in `docs/decisions.md` (package name,
-   the `enum CEL` module clash, public AST, proto conversion, accessor naming, `Value` payloads, strong enums, the
-   spec-over-cel-go options), apply the outcome, then fill in `CHANGELOG.md`, tag `0.1.0` and point PRBar at it. From
-   then on `tools/api-check/check-api.sh` compares against the tag. Custom macros, optimizers and decorators, proto AST
-   conversion and the cel-go tests that need them (headers of `Tests/CELTests/API*Tests.swift`) follow the public AST
-   decision.
+1. **First release (M8)** — the questions in `docs/decisions.md` are decided and applied except the two being
+   implemented (strong enums, shared parser cache); `CHANGELOG.md` has the 0.1.0 section. When those land: update
+   the changelog numbers, tag `0.1.0` and point PRBar at it. From then on `tools/api-check/check-api.sh` compares
+   against the tag. Custom macros, optimizers and decorators, proto AST conversion and the cel-go tests that need
+   them (headers of `Tests/CELTests/API*Tests.swift`) wait for a public AST facade (decision 3).
 2. **Performance** — baseline and method in `docs/performance.md` (`tools/bench/bench.py` runs the same
    expressions through cel-swift and cel-go, parse / check / plan / eval). On main: parse about 8× cel-go,
-   check 1.3–2×, plan about 3×, eval 2.5–5.5×. Two prototypes wait for maintainer decisions (below), each on a
-   pushed branch with numbers in its commit: `perf/class-payloads` (indirect list/map/object/error cases,
-   eval 1.4–2× faster, to 1.7–3× cel-go) and `perf/shared-parser-cache` (process-wide ANTLR prediction cache
-   behind a pthread mutex, parse 3–5× faster single-threaded, to 2–3× cel-go, but the coarse lock serializes
-   concurrent parses; port antlr-go's per-DFA locking before landing it); see `docs/decisions.md` §§ 6 and 9.
+   check 1.3–2×, plan about 3×, eval 1.6–3.3× (after the boxed `Value` payloads, decision 6). The shared ANTLR
+   prediction cache with antlr-go's per-DFA locking is being implemented (decision 9; the coarse-lock prototype
+   `perf/shared-parser-cache` made parse 3–5× faster single-threaded).
    Remaining without a decision: plan allocation, `Folder` exclusivity checks, `LargeStack`'s thread hop for
    long inputs.
 3. **Strong enums (optional, beyond cpp parity)** — the last 35 conformance tests (`enums/strong_proto2`,
@@ -98,6 +95,6 @@ Found by the differential suite and not fixed; the generator steers around them 
 - **Program creation errors**: cel-go's `Env.Program` returns a plain error (`no such overload: f()`), cel-swift a
   `CompileError` whose description renders it as `ERROR: <input>:-1:0: ...`; the suite compares the messages.
 
-## Open decisions for the maintainer
+## Decisions
 
-In `docs/decisions.md`, one section each with options, affected code and a recommendation.
+`docs/decisions.md` records what was decided before 0.1.0 and why.

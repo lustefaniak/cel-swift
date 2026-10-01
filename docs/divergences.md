@@ -244,6 +244,6 @@ messages, error node ids, observed ids and runtime cost). The differences:
   decisions. The optimized output of every ported `folding_test.go` and `inlining_test.go` row is the
   same.
 - **No public `OptimizeWithSource` and no custom `ASTOptimizer`s.** The optimizer context needs the
-  package-level AST, which is not public (an open API decision, `docs/decisions.md`), so clients get only
+  package-level AST, which stays `package` for 0.1 (`docs/decisions.md` § 3), so clients get only
   the built-in folding and inlining optimizers. The policy composer runs its passes through the same
   optimizer with a `package` entry point that takes a pass and a source override.
