@@ -25,7 +25,7 @@ struct Command: Sendable {
   var run: @Sendable ([String]) throws -> Int32
 
   /// Every subcommand, in the order `cel-swift help` lists them.
-  static let all: [Command] = [.eval, .check, .parse, .repl]
+  static let all: [Command] = [.eval, .check, .parse, .repl, .policy]
 }
 
 /// Exit statuses.

@@ -67,7 +67,7 @@ let package = Package(
     // The cel-swift command line tool: eval, check, parse, repl (see Sources/cel-swift/Command.swift).
     .executableTarget(
       name: "cel-swift",
-      dependencies: ["CEL", "CELExtensions"],
+      dependencies: ["CEL", "CELExtensions", "CELCommandLine"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     // Interpreter benchmarks: swift run -c release CELBenchmarks
@@ -110,7 +110,13 @@ let package = Package(
     ),
     .testTarget(
       name: "CELTestTests",
-      dependencies: ["CELTest", "CELPolicy"],
+      dependencies: ["CEL", "CELTest", "CELPolicy", "CELCommandLine"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    // `cel-swift policy test` and the cel-go test fixtures, shared with CELTestTests. Not a product.
+    .target(
+      name: "CELCommandLine",
+      dependencies: ["CEL", "CELPolicy", "CELTest", "CELProtobuf", "CELGoTestProtos"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .target(

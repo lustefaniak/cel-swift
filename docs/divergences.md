@@ -32,6 +32,12 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
 - **The static optimizer lives in `CELPolicy`** (`StaticOptimizer.swift`) and is internal: the composer is
   its only user until the core gets a public optimizer API. Swift expressions are values, so updates
   address nodes by id where cel-go mutates shared pointers.
+- **`CELTest` reads only YAML.** Textproto suites, checked-expression files (`.binarypb`, `.textproto`)
+  and file descriptor sets are not supported; message types come from an environment option (generated
+  `CELProtobuf` types). Coverage reporting is not ported.
+- **`cel-swift policy test` applies `--cel-go-test-fixtures` types before the configs.** celtest's flags
+  apply the configs before any other option, which works for cel-go only because the descriptor set flag
+  registers types first; `tools/celtest-go` runs cel-go with the same order as the Swift command.
 
 ## CELRegex (port of Go `regexp` and `regexp/syntax`, Go 1.26)
 
