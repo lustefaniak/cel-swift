@@ -1,0 +1,1 @@
+cel.block([{"b": 1}, {"e": cel.index(0)}], {"a": cel.index(0), "c": cel.index(0), "d": cel.index(1), "e": cel.index(1)})

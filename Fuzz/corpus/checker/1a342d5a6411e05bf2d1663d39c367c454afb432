@@ -1,0 +1,1 @@
+{'John': 'smart', 'Paul': 'cute', 'George': 'quiet', 'Ringo': 'funny'}.filter(key, key == 'Ringo') == ['Ringo']

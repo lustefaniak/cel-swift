@@ -1,0 +1,1 @@
+(has({}.x) ? optional.of({}.x) : optional.none()).hasValue()

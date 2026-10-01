@@ -1,0 +1,1 @@
+TestAllTypes{repeated_duration: [duration('1s'), null]}.repe`ed_duration == [duration('1s')]

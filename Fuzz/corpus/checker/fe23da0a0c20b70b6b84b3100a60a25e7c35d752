@@ -1,0 +1,1 @@
+FloatValue{value: -1.0} == dyn(UInt64Value{value: 18446744073709551615u})

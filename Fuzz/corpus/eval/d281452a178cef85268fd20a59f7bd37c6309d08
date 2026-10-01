@@ -1,0 +1,1 @@
+'hello wello'.indexOf('hello wello') == 0

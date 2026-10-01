@@ -1,0 +1,1 @@
+ip('224.0.1.1').isLinkLocalMulticast()

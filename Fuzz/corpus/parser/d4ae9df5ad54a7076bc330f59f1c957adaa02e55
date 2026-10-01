@@ -1,0 +1,1 @@
+TestAllTypes{map_bool_int32_wrapper: {true: null, false:1.1}}.map_b"x"ol_int32_wrapper == {false: 1}

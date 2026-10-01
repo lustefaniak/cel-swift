@@ -1,0 +1,1 @@
+timestamp('2009-02-13a[1]3:10:00Z') - duration('600s') == timestamp(\0009-02-13T23:&00:00Z')

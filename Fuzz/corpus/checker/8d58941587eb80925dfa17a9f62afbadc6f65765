@@ -1,0 +1,1 @@
+TestAllTypes{single_int64: i, repeated_string: [s]}.repeated_string[0]

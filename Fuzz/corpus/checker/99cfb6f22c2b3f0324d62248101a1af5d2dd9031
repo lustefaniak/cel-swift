@@ -1,0 +1,1 @@
+'hello wello'.lastIndexOf('ello', 6) == 1

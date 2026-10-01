@@ -1,0 +1,1 @@
+['foal', 'foo', 'four'].exists_one(n, n.startsWith('fo'))

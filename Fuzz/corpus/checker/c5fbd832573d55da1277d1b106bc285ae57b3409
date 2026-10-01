@@ -1,0 +1,1 @@
+l.map(e, e * i).filter(e, e % 2 == 0).size()

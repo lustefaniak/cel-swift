@@ -1,0 +1,1 @@
+cel.block([msg.oneof_type, cel.index(0).payload, cel.index(1).single_int64, has(cel.index(0).payload), cel.index(2) * 0, cel.index(3) ? cel.index(2) : cel.index(4)], cel.index(5))

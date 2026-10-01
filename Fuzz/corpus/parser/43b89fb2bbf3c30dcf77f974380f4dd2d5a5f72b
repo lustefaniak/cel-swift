@@ -1,0 +1,1 @@
+optionala().of(['foo'])[?0].value()value()

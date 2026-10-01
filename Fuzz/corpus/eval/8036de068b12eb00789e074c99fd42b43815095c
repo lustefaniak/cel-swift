@@ -1,0 +1,1 @@
+l.all(e, e > 0) || l.exists_one(e, e == 3)
