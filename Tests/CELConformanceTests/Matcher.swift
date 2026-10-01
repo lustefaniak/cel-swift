@@ -128,7 +128,15 @@ enum Matcher {
       let x = try? type.init(unpackingAny: a, extensions: CELSpecProtos.extensions),
       let y = try? type.init(unpackingAny: b, extensions: CELSpecProtos.extensions)
     else { return false }
-    return x.isEqualTo(message: y)
+    if x.isEqualTo(message: y) { return true }
+    // A nested Any compares unequal when one side holds a decoded message and the other its bytes;
+    // deterministic re-serialization puts both in the same form.
+    var options = BinaryEncodingOptions()
+    options.useDeterministicOrdering = true
+    guard let xb: [UInt8] = try? x.serializedBytes(partial: true, options: options),
+      let yb: [UInt8] = try? y.serializedBytes(partial: true, options: options)
+    else { return false }
+    return xb == yb
   }
 
   static func matcherKind(_ matcher: Cel_Expr_Conformance_Test_SimpleTest.OneOf_ResultMatcher?) -> String {
