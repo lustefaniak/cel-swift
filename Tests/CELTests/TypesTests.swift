@@ -310,3 +310,29 @@ struct TypeRegistryTests {
     #expect(TypeRegistry().nativeToValue(NonConvertible()).isError)
   }
 }
+
+/// A provider that only knows one identifier; everything else comes from the protocol's defaults.
+private struct ConstantsProvider: TypeProvider {
+  func findIdent(_ identName: String) -> Value? {
+    identName == "app.limit" ? .int(42) : nil
+  }
+}
+
+struct TypeProviderDefaultsTests {
+  @Test func defaultsAreMisses() {
+    let provider = ConstantsProvider()
+    #expect(provider.enumValue("app.Color.RED").isError)
+    #expect(provider.findStructType("app.Msg") == nil)
+    #expect(provider.findStructFieldNames("app.Msg") == nil)
+    #expect(provider.findStructFieldType("app.Msg", fieldName: "f") == nil)
+    #expect(provider.newValue("app.Msg", fields: [:]) == .error(message: "unknown type 'app.Msg'"))
+  }
+
+  @Test func composedUnderRegistry() throws {
+    let registry = TypeRegistry(composing: ConstantsProvider())
+    #expect(registry.findIdent("app.limit") == .int(42))
+    #expect(registry.findIdent("int") == .type(.int))
+    #expect(registry.newValue("app.Msg", fields: [:]) == .error(message: "unknown type 'app.Msg'"))
+    #expect(registry.enumValue("app.Color.RED") == .error(message: "unknown enum name 'app.Color.RED'"))
+  }
+}

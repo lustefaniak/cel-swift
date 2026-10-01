@@ -27,6 +27,7 @@ the new module can use the core's `package` declarations.
 | 11 | `OverloadDecl.Option.lateBinding` without a runtime half | `package` until a supply path exists | done |
 | 12 | Untyped `throws` on closed error sets | typed throws on declarations, containers, registry and protobuf conversion | done |
 | 13 | `MapValue.keys: [MapKey]` as the iteration requirement | `forEachKey(_:)` is the requirement, `keys` an extension | done |
+| 14 | Provider protocols without defaults | `TypeProvider` requirements default to misses | done |
 
 ## 1. Package name: keep `cel-swift`
 
@@ -160,3 +161,14 @@ protocol requirement ("cannot find type 'Failure' in scope"), so the requirement
 move to typed throws when the floor is raised. The benchmark expressions, with a new
 `comprehension-over-map` case, are unchanged within noise (`tools/bench/bench.py`, eval phase, 0.99 to
 1.02 times).
+
+## 14. `TypeProvider` defaults
+
+A provider composed under a `TypeRegistry` (`Environment.Option.typeProvider`) usually answers one kind
+of lookup, such as identifiers or a few struct types, but had to implement all six requirements. Each
+now has a default in a protocol extension that reports the miss `TypeRegistry` itself reports: `nil` for
+the lookups, `unknown enum name 'x'` from `enumValue` and `unknown type 'x'` from `newValue`. This is
+additive, and it gives requirements added later a place for a default, so adding one does not break
+conformers. `ObjectValue` and `PolicyTagVisitor` already had defaults; `StructTypeDescriptor` has none
+because every requirement describes the type, and `TypeAdapter` has a single requirement.
+

@@ -62,7 +62,9 @@ public protocol StructTypeDescriptor: Sendable {
 /// Resolves types, fields, enum values and identifiers for the checker and the interpreter, and
 /// constructs objects.
 ///
-/// ``TypeRegistry`` is the standard implementation; other providers can be composed underneath it.
+/// ``TypeRegistry`` is the standard implementation; other providers can be composed underneath it
+/// (``Environment/Option/typeProvider(_:)``). Every requirement has a default that reports a miss,
+/// so such a provider implements only the lookups it answers.
 public protocol TypeProvider: Sendable {
   /// The numeric value of a fully qualified enum value name, or an error value.
   func enumValue(_ enumName: String) -> Value
@@ -81,6 +83,40 @@ public protocol TypeProvider: Sendable {
 
   /// Creates an object of a struct type from field values, or an error value.
   func newValue(_ structType: String, fields: [String: Value]) -> Value
+}
+
+/// Neutral answers, so a provider composed under a ``TypeRegistry`` implements only the lookups it
+/// handles; each default is the miss ``TypeRegistry`` itself reports.
+extension TypeProvider {
+  /// Returns `unknown enum name 'x'`.
+  public func enumValue(_ enumName: String) -> Value {
+    .error(message: "unknown enum name '\(enumName)'")
+  }
+
+  /// Returns `nil`: no identifier is known.
+  public func findIdent(_ identName: String) -> Value? {
+    nil
+  }
+
+  /// Returns `nil`: no struct type is known.
+  public func findStructType(_ structType: String) -> CELType? {
+    nil
+  }
+
+  /// Returns `nil`: no struct type is known.
+  public func findStructFieldNames(_ structType: String) -> [String]? {
+    nil
+  }
+
+  /// Returns `nil`: no struct type is known.
+  public func findStructFieldType(_ structType: String, fieldName: String) -> StructFieldType? {
+    nil
+  }
+
+  /// Returns `unknown type 'x'`.
+  public func newValue(_ structType: String, fields: [String: Value]) -> Value {
+    .error(message: "unknown type '\(structType)'")
+  }
 }
 
 /// Converts host values to CEL values.
