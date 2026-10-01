@@ -132,7 +132,7 @@ if Context.environment["CEL_FUZZ"] == "1" {
       dependencies: ["CEL", "CELProtobuf", "CELSpecProtos", "CELFuzzDriver"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ))
-  for name in ["cel-fuzz-parser", "cel-fuzz-checker", "cel-fuzz-eval"] {
+  for name in ["cel-fuzz-parser", "cel-fuzz-checker", "cel-fuzz-evaluator"] {
     package.targets.append(
       .executableTarget(
         name: name,

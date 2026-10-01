@@ -88,7 +88,7 @@ def main():
     write("parser", sample(ENV_SEEDS + conf[:120] + sample(fuzz)[:90] + sample(parser_tests)[:90])[:LIMIT])
     semantic = sample(ENV_SEEDS + conf[: LIMIT - len(ENV_SEEDS)])
     write("checker", semantic)
-    write("eval", semantic)
+    write("evaluator", semantic)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,13 @@ public func fuzz(_ data: UnsafePointer<UInt8>?, _ size: Int) -> CInt {
   guard let parsed = try? env.parse(text, description: "<fuzz>") else {
     return 0
   }
-  let ast = (try? env.check(parsed, source: TextSource(text, description: "<fuzz>"))) ?? parsed
+  let ast: AST
+  if let checked = try? env.check(parsed, source: TextSource(text, description: "<fuzz>")) {
+    _ = Checker.estimateCost(checked)
+    ast = checked
+  } else {
+    ast = parsed
+  }
   for options in programOptions {
     guard let program = try? env.program(ast, options: options) else {
       continue
@@ -37,7 +43,7 @@ public func fuzz(_ data: UnsafePointer<UInt8>?, _ size: Int) -> CInt {
 }
 
 /// The entry point SwiftPM links as `main`.
-@_cdecl("cel_fuzz_eval_main")
+@_cdecl("cel_fuzz_evaluator_main")
 public func entry(_ argc: CInt, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?) -> CInt {
   FuzzSupport.runDriver(argc, argv, fuzz)
 }
