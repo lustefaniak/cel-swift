@@ -102,6 +102,48 @@ package struct ProgramEnvironment: Sendable {
     return ast
   }
 
+  /// Adds variable declarations, or function declarations merged into an existing function of the
+  /// same name (cel-go `Variable` / `Function` env options).
+  package mutating func declare(_ variables: [VariableDecl] = [], functions: [FunctionDecl] = []) throws {
+    self.variables += variables
+    for function in functions {
+      if let i = self.functions.firstIndex(where: { $0.name == function.name }) {
+        self.functions[i] = try self.functions[i].merging(function)
+      } else {
+        self.functions.append(function)
+      }
+    }
+  }
+
+  /// The checker environment for these declarations.
+  package func checkerEnv(options: [CheckerOption] = []) throws -> CheckerEnv {
+    var env = CheckerEnv(container: container, provider: provider, options: options)
+    try env.addIdents(StandardLibrary.types + variables)
+    try env.addFunctions(functions)
+    return env
+  }
+
+  /// Type-checks a parsed AST (cel-go `Env.Check`); the errors are cel-go's display string.
+  package func check(_ ast: AST, source: any Source, options: [CheckerOption] = []) throws(PlanError) -> AST {
+    let env: CheckerEnv
+    do {
+      env = try checkerEnv(options: options)
+    } catch {
+      throw PlanError("\(error)")
+    }
+    let (checked, errors) = Checker.check(ast, source: source, env: env)
+    if !errors.isEmpty {
+      throw PlanError(errors.toDisplayString())
+    }
+    return checked
+  }
+
+  /// Parses and type-checks an expression (cel-go `Env.Compile`).
+  package func compile(_ text: String, description: String = "<input>") throws(PlanError) -> AST {
+    let ast = try parse(text, description: description)
+    return try check(ast, source: TextSource(text, description: description))
+  }
+
   /// Plans a program for a checked or parse-only AST (cel-go `newProgram`).
   package func program(_ ast: AST, options: ProgramOptions = ProgramOptions()) throws -> Program {
     let dispatcher = try Dispatcher(functions: functions)

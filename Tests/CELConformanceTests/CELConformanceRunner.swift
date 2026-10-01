@@ -20,24 +20,36 @@ struct CELConformanceRunner: ConformanceRunner {
 
   func run(_ request: ConformanceRequest) -> ConformanceOutcome {
     let test = request.test
-    if request.runsChecker {
-      return .notImplemented("the type checker is not available yet")
-    }
     var env = ProgramEnvironment(
       macros: test.disableMacros ? [] : Macro.allMacros,
       parserOptions: [.enableOptionalSyntax(true), .enableIdentEscapeSyntax(true)],
       errorOnBadPresenceTest: true)
-    let ast: AST
+    var ast: AST
     do {
       ast = try env.parse(test.expr, description: test.name)
     } catch {
       return .parseError(error.message)
     }
-    if !test.container.isEmpty {
-      do {
+    do {
+      if !test.container.isEmpty {
         env.container = try Container(.name(test.container))
+      }
+      for decl in test.typeEnv {
+        try TypeConversion.declare(decl, in: &env)
+      }
+    } catch {
+      return .checkError("\(error)")
+    }
+    var deducedType: Cel_Expr_Type?
+    if request.runsChecker {
+      do {
+        ast = try env.check(ast, source: TextSource(test.expr, description: test.name))
       } catch {
-        return .checkError("\(error)")
+        return .checkError(error.message)
+      }
+      deducedType = TypeConversion.toProto(ast.type(of: ast.expr.id))
+      if request.checkOnly, let deducedType {
+        return .checked(deducedType: deducedType)
       }
     }
     var bindings: [String: Value] = [:]
@@ -58,11 +70,11 @@ struct CELConformanceRunner: ConformanceRunner {
       set.errors = [status]
       var result = Cel_Expr_ExprValue()
       result.error = set
-      return .evaluated(result: result, deducedType: nil)
+      return .evaluated(result: result, deducedType: deducedType)
     }
     let result = program.eval(bindings)
     switch ValueConversion.toExprValue(result.value) {
-    case .success(let ev): return .evaluated(result: ev, deducedType: nil)
+    case .success(let ev): return .evaluated(result: ev, deducedType: deducedType)
     case .failure(let reason): return .notImplemented(reason.message)
     }
   }
