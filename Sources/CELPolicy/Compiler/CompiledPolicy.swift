@@ -90,7 +90,7 @@ public struct PolicyCompiler: Sendable {
       throw result
     }
     return CompiledPolicy(
-      expression: CheckedExpression(ast: ast, source: policy.source), environment: env)
+      expression: CheckedExpression(ast: ast, source: policy.source), environment: env, rule: rule)
   }
 }
 
@@ -101,6 +101,10 @@ public struct CompiledPolicy: Sendable {
   /// The environment the policy was compiled in: the caller's environment with optional types
   /// and the bindings library.
   public let environment: Environment
+  /// The compiled rule tree before composition, with each condition's and output's checked AST
+  /// positioned in the policy file. `CELSwift` reads it to explain evaluations rule by rule and
+  /// to check outputs against a Swift type; `nil` for a policy composed elsewhere.
+  package var rule: CompiledRule? = nil
 
   /// The type the policy evaluates to: the output type, `optional_type(T)` when no match may
   /// apply, or `list(T)` for aggregate rules.
