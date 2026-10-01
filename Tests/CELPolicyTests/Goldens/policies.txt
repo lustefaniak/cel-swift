@@ -1,0 +1,867 @@
+=== Tests/CELPolicyTests/Goldens/cases/anchors.yaml
+name id=0 loc=-1:-1 off=0 value=""
+description id=0 loc=-1:-1 off=0 value=""
+rule id=4 loc=2:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=9 loc=4:12 off=40 value="a"
+var.expr id=11 loc=5:19 off=61 value="1"
+var.name id=0 loc=-1:-1 off=0 value=""
+var.expr id=0 loc=-1:-1 off=0 value=""
+match id=15 loc=8:6
+match.cond id=16 loc=-1:-1 off=0 value="true"
+match.output id=18 loc=8:15 off=97 value="1"
+=== Tests/CELPolicyTests/Goldens/cases/blocks.yaml
+name id=4 loc=1:6 off=6 value="test"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=3:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=4:12 off=42 value="a"
+var.expr id=13 loc=6:0 off=64 value="        1 +\n        2"
+match id=16 loc=9:6
+match.cond id=19 loc=10:0 off=114 value="        a"
+match.output id=21 loc=11:15 off=139 value="single"
+=== Tests/CELPolicyTests/Goldens/cases/bom.yaml
+name id=4 loc=1:6 off=6 value="a"
+description id=0 loc=-1:-1 off=0 value=""
+=== Tests/CELPolicyTests/Goldens/cases/complex.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/complex.yaml:2:3: unsupported policy tag: complex
+ | ? complex
+ | ..^
+=== Tests/CELPolicyTests/Goldens/cases/crlf.yaml
+name id=4 loc=1:6 off=6 value="a"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=3:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=4:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+match.output id=12 loc=5:0 off=43 value="        1 +\r\n        2\r"
+=== Tests/CELPolicyTests/Goldens/cases/dupe.yaml
+name id=6 loc=2:6 off=14 value="b"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=8 loc=4:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=11 loc=5:6
+match.cond id=12 loc=-1:-1 off=0 value="true"
+match.output id=14 loc=5:15 off=46 value="1"
+=== Tests/CELPolicyTests/Goldens/cases/e01.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/e01.yaml:2:3: got yaml node type tag:yaml.org,2002:map, wanted type(s) [tag:yaml.org,2002:str !txt]
+ |   illegal: yaml-type
+ | ..^
+=== Tests/CELPolicyTests/Goldens/cases/e02.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/e02.yaml:3:3: unsupported rule tag: custom
+ |   custom: yaml-type
+ | ..^
+=== Tests/CELPolicyTests/Goldens/cases/e03.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/e03.yaml:4:7: unsupported match tag: name
+ |     - name: "true"
+ | ......^
+ERROR: Tests/CELPolicyTests/Goldens/cases/e03.yaml:4:7: match does not specify a rule or output
+ |     - name: "true"
+ | ......^
+ERROR: Tests/CELPolicyTests/Goldens/cases/e03.yaml:5:7: unsupported match tag: alt_name
+ |       alt_name: "bool_true"
+ | ......^
+=== Tests/CELPolicyTests/Goldens/cases/e04.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/e04.yaml:2:1: got yaml node type tag:yaml.org,2002:seq, wanted type(s) [tag:yaml.org,2002:map]
+ | - rule:
+ | ^
+=== Tests/CELPolicyTests/Goldens/cases/empty.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/empty.yaml:-1:0: got yaml node of kind 0, wanted mapping node
+=== Tests/CELPolicyTests/Goldens/cases/flow.yaml
+name id=4 loc=1:7 off=7 value="x"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=1:16
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=1:25
+match.cond id=10 loc=-1:-1 off=0 value="true"
+match.output id=12 loc=1:35 off=35 value="'a'"
+=== Tests/CELPolicyTests/Goldens/cases/multidoc.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/multidoc.yaml:1:1: unsupported policy tag: a
+ | a: 1
+ | ^
+=== Tests/CELPolicyTests/Goldens/cases/scalarroot.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalarroot.yaml:1:1: got yaml node type tag:yaml.org,2002:str, wanted type(s) [tag:yaml.org,2002:map]
+ | just a string
+ | ^
+=== Tests/CELPolicyTests/Goldens/cases/scalars.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:1:1: unsupported policy tag: x
+ | x: [1, 0x1F, 0o17, 017, 0b101, -0b11, 1_000, 1.5, .5, 1e3, 1., .inf, -.Inf, .nan, true, True, yes, no, on, ~, null, "", 2006-01-02, 2006-1-2T15:04:05Z, 2001-12-14 21:59:43.10, 2001-12-14t21:59:43.10-05:00, 9223372036854775808, 18446744073709551616, -9223372036854775808, +12, 0x, 08, 1:30, 2006-13-01, 2006-02-30, 1e, -.5, +.5e-3, 0B1, 0X1f, -0x10]
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:2:1: unsupported policy tag: y
+ | y: !txt hello
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:3:1: unsupported policy tag: z
+ | z: !!str 12
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:4:1: unsupported policy tag: w
+ | w: !custom foo
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:5:1: unsupported policy tag: v
+ | v: !!int "3"
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:6:1: unsupported policy tag: u
+ | u: &a {k: v}
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:7:1: unsupported policy tag: t
+ | t: *a
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:8:1: unsupported policy tag: <<
+ | <<: x
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:9:1: unsupported policy tag: s
+ | s: ! 12
+ | ^
+ERROR: Tests/CELPolicyTests/Goldens/cases/scalars.yaml:10:1: unsupported policy tag: r
+ | r: !!binary aGVsbG8=
+ | ^
+=== Tests/CELPolicyTests/Goldens/cases/seqblock.yaml
+name id=0 loc=-1:-1 off=0 value=""
+description id=0 loc=-1:-1 off=0 value=""
+rule id=4 loc=2:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=7 loc=3:4
+match.cond id=12 loc=6:15 off=67 value="x"
+match.output id=10 loc=4:0 off=30 value="      long\n      text"
+=== Tests/CELPolicyTests/Goldens/cases/syn1.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn1.yaml:-1:0: yaml: line 1: did not find expected ',' or ']'
+=== Tests/CELPolicyTests/Goldens/cases/syn2.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn2.yaml:-1:0: yaml: mapping values are not allowed in this context
+=== Tests/CELPolicyTests/Goldens/cases/syn3.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn3.yaml:-1:0: yaml: line 2: did not find expected key
+=== Tests/CELPolicyTests/Goldens/cases/syn4.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn4.yaml:-1:0: yaml: line 2: found unexpected end of stream
+=== Tests/CELPolicyTests/Goldens/cases/syn5.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn5.yaml:-1:0: yaml: unknown anchor 'nope' referenced
+=== Tests/CELPolicyTests/Goldens/cases/syn6.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn6.yaml:-1:0: yaml: found character that cannot start any token
+=== Tests/CELPolicyTests/Goldens/cases/syn7.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn7.yaml:-1:0: yaml: line 2: did not find expected node content
+=== Tests/CELPolicyTests/Goldens/cases/syn8.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn8.yaml:-1:0: yaml: line 3: mapping values are not allowed in this context
+=== Tests/CELPolicyTests/Goldens/cases/syn9.yaml
+ERROR: Tests/CELPolicyTests/Goldens/cases/syn9.yaml:-1:0: yaml: line 4: found unexpected end of stream
+=== Tests/CELPolicyTests/Goldens/cases/tabs.yaml
+name id=4 loc=1:7 off=7 value="a\tb"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=3:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=4:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+match.output id=12 loc=4:15 off=42 value="x\ty +"
+=== Tests/CELPolicyTests/Goldens/cases/tagged.yaml
+name id=4 loc=1:6 off=6 value="foo\n"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=4:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=5:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+match.output id=12 loc=5:14 off=48 value="x\n"
+=== Tests/CELPolicyTests/Goldens/cases/unicode.yaml
+name id=4 loc=1:7 off=7 value="ünïcode"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=3:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=4:6
+match.cond id=14 loc=6:0 off=77 value="        a ==\n          b"
+match.output id=12 loc=4:15 off=46 value="\"ž\" + x"
+match id=15 loc=8:6
+match.cond id=16 loc=-1:-1 off=0 value="true"
+match.output id=18 loc=9:0 off=119 value="         indented"
+=== third_party/cel-go/common/env/testdata/context_env.yaml
+ERROR: third_party/cel-go/common/env/testdata/context_env.yaml:16:1: unsupported policy tag: container
+ | container: "google.expr"
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/context_env.yaml:19:1: unsupported policy tag: stdlib
+ | stdlib:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/context_env.yaml:30:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/context_env.yaml:35:1: unsupported policy tag: context_variable
+ | context_variable:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/context_env.yaml:37:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/common/env/testdata/extended_env.yaml
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:16:1: unsupported policy tag: container
+ | container: "google.expr"
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:17:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:22:1: unsupported policy tag: variables
+ | variables:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:33:1: unsupported policy tag: functions
+ | functions:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:84:1: unsupported policy tag: validators
+ | validators:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:91:1: unsupported policy tag: features
+ | features:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/extended_env.yaml:94:1: unsupported policy tag: limits
+ | limits:
+ | ^
+=== third_party/cel-go/common/env/testdata/json_env.json
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:3:4: unsupported policy tag: container
+ |   "container": "google.expr",
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:4:4: unsupported policy tag: extensions
+ |   "extensions": [
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:14:4: unsupported policy tag: variables
+ |   "variables": [
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:26:4: unsupported policy tag: functions
+ |   "functions": [
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:66:4: unsupported policy tag: validators
+ |   "validators": [
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:83:4: unsupported policy tag: features
+ |   "features": [
+ | ...^
+ERROR: third_party/cel-go/common/env/testdata/json_env.json:89:4: unsupported policy tag: limits
+ |   "limits": [
+ | ...^
+=== third_party/cel-go/common/env/testdata/subset_env.yaml
+ERROR: third_party/cel-go/common/env/testdata/subset_env.yaml:16:1: unsupported policy tag: stdlib
+ | stdlib:
+ | ^
+ERROR: third_party/cel-go/common/env/testdata/subset_env.yaml:33:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/agent_tool_execution_governance/config.yaml
+ERROR: third_party/cel-go/policy/testdata/agent_tool_execution_governance/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/agent_tool_execution_governance/config.yaml:28:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/policy/testdata/agent_tool_execution_governance/policy.yaml
+name id=4 loc=15:6 off=581 value="agent_tool_execution_governance"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=19:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+  rule id=12 loc=20:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=15 loc=21:12
+  match.cond id=18 loc=21:24 off=749 value="request.is_emergency"
+  match.output id=20 loc=22:21 off=792 value="'REQUIRE_VP_APPROVAL'"
+  match id=21 loc=23:12
+  match.cond id=24 loc=23:24 off=839 value="tool.is_mutation && request.env == 'prod'"
+  match.output id=26 loc=24:21 off=903 value="'REQUIRE_TECH_LEAD_2FA'"
+  match id=27 loc=25:12
+  match.cond id=30 loc=25:24 off=952 value="tool.is_mutation"
+  match.output id=32 loc=26:21 off=991 value="'REQUIRE_PEER_CONFIRMATION'"
+match id=33 loc=29:6
+match.cond id=34 loc=-1:-1 off=0 value="true"
+  rule id=36 loc=30:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=39 loc=31:12
+  match.cond id=42 loc=31:24 off=1132 value="hasCreditCard(tool.call.args)"
+  match.output id=44 loc=32:21 off=1184 value="'REDACT_PCI'"
+  match id=45 loc=33:12
+  match.cond id=48 loc=33:24 off=1222 value="hasEmailOrPhone(tool.call.args)"
+  match.output id=50 loc=34:21 off=1276 value="'REDACT_PII'"
+match id=51 loc=37:6
+match.cond id=52 loc=-1:-1 off=0 value="true"
+  rule id=54 loc=38:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=57 loc=39:12
+  match.cond id=60 loc=39:24 off=1406 value="tool.call.args.batch_size > 10000"
+  match.output id=62 loc=40:21 off=1462 value="'THROTTLE_TIER_3'"
+  match id=63 loc=41:12
+  match.cond id=66 loc=41:24 off=1505 value="tool.call.args.batch_size > 1000"
+  match.output id=68 loc=42:21 off=1560 value="'THROTTLE_TIER_2'"
+  match id=69 loc=43:12
+  match.cond id=72 loc=43:24 off=1603 value="tool.call.args.batch_size > 100"
+  match.output id=74 loc=44:21 off=1657 value="'THROTTLE_TIER_1'"
+=== third_party/cel-go/policy/testdata/agent_tool_execution_governance/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/agent_tool_execution_governance/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/aggregate_errors/config.yaml
+name id=4 loc=15:6 off=581 value="aggregate_errors"
+description id=0 loc=-1:-1 off=0 value=""
+=== third_party/cel-go/policy/testdata/aggregate_errors/policy.yaml
+name id=4 loc=15:6 off=581 value="aggregate_errors"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=12 loc=18:18 off=635 value="true"
+  rule id=14 loc=20:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=17 loc=21:12
+  match.cond id=20 loc=21:24 off=692 value="true"
+  match.output id=22 loc=22:21 off=719 value="optional.of('USER_PII')"
+  match id=23 loc=23:12
+  match.cond id=26 loc=23:24 off=768 value="true"
+  match.output id=28 loc=24:21 off=795 value="403"
+=== third_party/cel-go/policy/testdata/aggregate_list_errors/config.yaml
+name id=4 loc=15:6 off=581 value="aggregate_list_errors"
+description id=0 loc=-1:-1 off=0 value=""
+=== third_party/cel-go/policy/testdata/aggregate_list_errors/policy.yaml
+name id=4 loc=15:6 off=581 value="aggregate_list_errors"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=12 loc=18:18 off=640 value="true"
+  rule id=14 loc=20:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=17 loc=21:12
+  match.cond id=20 loc=21:24 off=697 value="true"
+  match.output id=22 loc=22:21 off=724 value="['tag1', 'tag2']"
+  match id=23 loc=23:12
+  match.cond id=26 loc=23:24 off=766 value="true"
+  match.output id=28 loc=24:21 off=793 value="403"
+=== third_party/cel-go/policy/testdata/aggregate_nested_mixed_semantics/config.yaml
+name id=4 loc=15:6 off=581 value="aggregate_nested_mixed_semantics"
+description id=0 loc=-1:-1 off=0 value=""
+=== third_party/cel-go/policy/testdata/aggregate_nested_mixed_semantics/policy.yaml
+name id=4 loc=15:6 off=581 value="aggregate_nested_mixed_semantics"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=12 loc=18:18 off=651 value="true"
+  rule id=14 loc=20:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=17 loc=21:12
+  match.cond id=20 loc=21:24 off=708 value="true"
+    rule id=22 loc=23:14
+    rule.id id=0 loc=-1:-1 off=0 value=""
+    rule.description id=0 loc=-1:-1 off=0 value=""
+    match id=25 loc=24:18
+    match.cond id=28 loc=24:30 off=787 value="true"
+    match.output id=30 loc=25:27 off=820 value="'foo'"
+=== third_party/cel-go/policy/testdata/errors/config.yaml
+ERROR: third_party/cel-go/policy/testdata/errors/config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/errors/config.yaml:19:1: unsupported policy tag: variables
+ | variables:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/errors/config.yaml:46:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/policy/testdata/errors/policy.yaml
+name id=4 loc=15:7 off=582 value="errors"
+description id=0 loc=-1:-1 off=0 value=""
+import id=9 loc=17:11 off=610 value=" untrimmed.Import1  "
+import id=12 loc=19:0 off=644 value="      punc.Import!"
+import id=15 loc=20:11 off=674 value="bad import"
+rule id=17 loc=22:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=22 loc=23:12 off=717 value="want"
+var.expr id=24 loc=24:18 off=740 value="spec.labels"
+var.name id=27 loc=25:12 off=764 value="want"
+var.expr id=29 loc=26:19 off=788 value="2"
+var.name id=32 loc=27:12 off=803 value="missing"
+var.expr id=34 loc=28:18 off=829 value="variables.want.filter(l, !(lin resource.labels))"
+var.name id=37 loc=29:12 off=890 value="bad_data"
+var.expr id=39 loc=30:19 off=918 value="{1:305 2:569}"
+var.name id=42 loc=31:12 off=945 value="invalid"
+var.expr id=44 loc=33:0 off=973 value="        resource.labels.filter(l,\n          l in variables.want && variables.want[l] != resource.labels[l])"
+match id=47 loc=36:6
+match.cond id=50 loc=36:17 off=1107 value="variables.missing.size() > 0"
+match.output id=52 loc=38:0 off=1152 value="        \"missing one or more required labels: %s\".format(variables.missing])"
+match id=53 loc=39:6
+match.cond id=56 loc=39:17 off=1246 value="variables.invalid.size() > 0"
+match.output id=58 loc=41:0 off=1291 value="        \"invalid values provided on one or more labels: %s\".format([variables.invalid])"
+match id=59 loc=42:6
+match.cond id=62 loc=42:18 off=1397 value="1 > 0"
+match.output id=64 loc=43:15 off=1419 value="true"
+match id=65 loc=44:6
+match.cond id=68 loc=44:18 off=1443 value="1 < 0"
+match.output id=70 loc=45:15 off=1465 value="'false'"
+=== third_party/cel-go/policy/testdata/errors_unreachable/config.yaml
+ERROR: third_party/cel-go/policy/testdata/errors_unreachable/config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/errors_unreachable/config.yaml:21:1: unsupported policy tag: variables
+ | variables:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/errors_unreachable/config.yaml:48:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/policy/testdata/errors_unreachable/policy.yaml
+name id=4 loc=15:7 off=582 value="errors_unreachable"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:12 off=633 value="want"
+var.expr id=13 loc=19:18 off=656 value="request.labels"
+var.name id=16 loc=20:12 off=683 value="missing"
+var.expr id=18 loc=21:18 off=709 value="variables.want.filter(l, !(l in resource.labels))"
+var.name id=21 loc=22:12 off=771 value="invalid"
+var.expr id=23 loc=24:0 off=799 value="        resource.labels.filter(l,\n          l in variables.want && variables.want[l] != resource.labels[l])"
+match id=26 loc=27:6
+match.cond id=27 loc=-1:-1 off=0 value="true"
+  rule id=29 loc=28:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=32 loc=29:12
+  match.cond id=33 loc=-1:-1 off=0 value="true"
+  match.output id=35 loc=29:21 off=964 value="''"
+match id=36 loc=30:6
+match.cond id=39 loc=30:17 off=985 value="variables.missing.size() > 0"
+match.output id=41 loc=32:0 off=1030 value="        \"missing one or more required labels: %s\".format([variables.missing])"
+match id=42 loc=33:6
+match.cond id=45 loc=33:17 off=1125 value="variables.invalid.size() > 0"
+  rule id=47 loc=35:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=50 loc=36:12
+  match.cond id=51 loc=-1:-1 off=0 value="true"
+  match.output id=53 loc=37:0 off=1203 value="              \"invalid values provided on one or more labels: %s\".format([variables.invalid])"
+  match id=54 loc=38:12
+  match.cond id=57 loc=38:24 off=1321 value="false"
+  match.output id=59 loc=39:21 off=1349 value="'unreachable'"
+=== third_party/cel-go/policy/testdata/k8s/config.yaml
+ERROR: third_party/cel-go/policy/testdata/k8s/config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/k8s/config.yaml:19:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/k8s/policy.yaml
+name id=4 loc=15:6 off=581 value="k8s"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=9 loc=20:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=17 loc=27:10 off=840 value="env"
+var.expr id=19 loc=28:17 off=861 value="resource.labels.?environment.orValue('prod')"
+var.name id=22 loc=29:10 off=917 value="break_glass"
+var.expr id=24 loc=30:17 off=946 value="resource.labels.?break_glass.orValue('false') == 'true'"
+match id=27 loc=32:4
+match.cond id=30 loc=33:0 off=1036 value="!(      variables.break_glass ||\n        resource.containers.all(c, c.startsWith(variables.env + '.')))"
+match.output id=32 loc=36:0 off=1162 value="      'only %s containers are allowed in namespace %s'\n        .format([variables.env, resource.namespace])"
+=== third_party/cel-go/policy/testdata/k8s/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/k8s/tests.yaml:15:1: unsupported policy tag: description
+ | description: K8s admission control tests
+ | ^
+ERROR: third_party/cel-go/policy/testdata/k8s/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/limits/config.yaml
+ERROR: third_party/cel-go/policy/testdata/limits/config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/limits/config.yaml:19:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/limits/policy.yaml
+name id=4 loc=15:7 off=582 value="limits"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:13 off=622 value="greeting"
+var.expr id=13 loc=19:19 off=651 value="'hello'"
+var.name id=16 loc=20:13 off=673 value="farewell"
+var.expr id=18 loc=21:19 off=702 value="'goodbye'"
+var.name id=21 loc=22:13 off=726 value="person"
+var.expr id=23 loc=23:19 off=753 value="'me'"
+var.name id=26 loc=24:13 off=772 value="message_fmt"
+var.expr id=28 loc=25:19 off=804 value="'%s, %s'"
+match id=31 loc=27:6
+match.cond id=34 loc=28:0 off=842 value="        now.getHours() >= 20"
+  rule id=36 loc=30:8
+  rule.id id=38 loc=30:13 off=896 value="farewells"
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  var.name id=43 loc=32:19 off=945 value="message"
+  var.expr id=45 loc=34:0 off=980 value="              variables.message_fmt.format([variables.farewell,\n                                            variables.person])"
+  match id=48 loc=37:12
+  match.cond id=51 loc=38:0 off=1147 value="              now.getHours() < 21"
+  match.output id=53 loc=39:20 off=1201 value="variables.message + \"!\""
+  match id=54 loc=40:12
+  match.cond id=57 loc=41:0 off=1250 value="              now.getHours() < 22"
+  match.output id=59 loc=42:20 off=1304 value="variables.message + \"!!\""
+  match id=60 loc=43:12
+  match.cond id=63 loc=44:0 off=1354 value="              now.getHours() < 24"
+  match.output id=65 loc=45:20 off=1408 value="variables.message + \"!!!\""
+match id=66 loc=46:6
+match.cond id=67 loc=-1:-1 off=0 value="true"
+match.output id=69 loc=47:0 off=1450 value="        variables.message_fmt.format([variables.greeting, variables.person])"
+=== third_party/cel-go/policy/testdata/limits/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/limits/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_incompatible_outputs/config.yaml
+name id=4 loc=15:7 off=582 value="nested_rule"
+description id=0 loc=-1:-1 off=0 value=""
+=== third_party/cel-go/policy/testdata/nested_incompatible_outputs/policy.yaml
+name id=4 loc=15:6 off=581 value="nested_incompatible_outputs"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=12 loc=18:18 off=642 value="1 < 0"
+match.output id=14 loc=19:15 off=664 value="true"
+match id=15 loc=20:6
+match.cond id=18 loc=20:18 off=688 value="1 > 0"
+  rule id=20 loc=22:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=23 loc=23:12
+  match.cond id=24 loc=-1:-1 off=0 value="true"
+  match.output id=26 loc=23:21 off=743 value="'false'"
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining/config.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining/policy.yaml
+name id=4 loc=15:6 off=581 value="nested_rules_unconditional_chaining"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+  rule id=12 loc=19:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  var.name id=17 loc=20:18 off=681 value="foo"
+  var.expr id=19 loc=21:25 off=710 value="3"
+  match id=22 loc=23:12
+  match.cond id=25 loc=23:24 off=752 value="x > variables.foo"
+  match.output id=27 loc=24:21 off=792 value="'a'"
+  match id=28 loc=25:12
+  match.cond id=31 loc=25:24 off=821 value="x == variables.foo"
+  match.output id=33 loc=26:21 off=862 value="'b'"
+match id=34 loc=27:6
+match.cond id=35 loc=-1:-1 off=0 value="true"
+match.output id=37 loc=27:15 off=882 value="'c'"
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining_optional/config.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining_optional/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining_optional/policy.yaml
+name id=4 loc=15:6 off=581 value="nested_rules_unconditional_chaining_optional"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=10 loc=-1:-1 off=0 value="true"
+  rule id=12 loc=19:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  var.name id=17 loc=20:18 off=690 value="foo"
+  var.expr id=19 loc=21:25 off=719 value="3"
+  match id=22 loc=23:12
+  match.cond id=25 loc=23:24 off=761 value="x > variables.foo"
+  match.output id=27 loc=24:21 off=801 value="'a'"
+  match id=28 loc=25:12
+  match.cond id=31 loc=25:24 off=830 value="x == variables.foo"
+  match.output id=33 loc=26:21 off=871 value="'b'"
+match id=34 loc=27:6
+match.cond id=37 loc=27:18 off=894 value="x == 1"
+match.output id=39 loc=28:15 off=917 value="'c'"
+=== third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining_optional/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unconditional_chaining_optional/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_unwrap_rewrap/config.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unwrap_rewrap/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_unwrap_rewrap/policy.yaml
+name id=4 loc=15:6 off=581 value="nested_rules_unwrap_rewrap"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=9 loc=18:6
+match.cond id=12 loc=18:18 off=641 value="x == 1"
+  rule id=14 loc=20:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=17 loc=21:12
+  match.cond id=18 loc=-1:-1 off=0 value="true"
+    rule id=20 loc=22:14
+    rule.id id=0 loc=-1:-1 off=0 value=""
+    rule.description id=0 loc=-1:-1 off=0 value=""
+    match id=23 loc=23:18
+    match.cond id=26 loc=23:30 off=745 value="y == 1"
+    match.output id=28 loc=24:27 off=780 value="'a'"
+  match id=29 loc=25:12
+  match.cond id=30 loc=-1:-1 off=0 value="true"
+  match.output id=32 loc=25:21 off=806 value="'b'"
+=== third_party/cel-go/policy/testdata/nested_rules_unwrap_rewrap/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_unwrap_rewrap/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_variable_shadowing/config.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_variable_shadowing/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/nested_rules_variable_shadowing/policy.yaml
+name id=4 loc=15:6 off=581 value="nested_rules_variable_shadowing"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:12 off=644 value="i"
+var.expr id=13 loc=19:19 off=665 value="1"
+var.name id=16 loc=20:12 off=680 value="j"
+var.expr id=18 loc=21:19 off=701 value="2"
+match id=21 loc=23:6
+match.cond id=24 loc=23:18 off=731 value="x == 1"
+  rule id=26 loc=25:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  var.name id=31 loc=26:18 off=788 value="i"
+  var.expr id=33 loc=27:25 off=815 value="5"
+  match id=36 loc=29:12
+  match.cond id=37 loc=-1:-1 off=0 value="true"
+  match.output id=39 loc=29:21 off=854 value="variables.i + variables.j"
+match id=40 loc=30:6
+match.cond id=43 loc=30:18 off=899 value="x == 2"
+  rule id=45 loc=32:8
+  rule.id id=0 loc=-1:-1 off=0 value=""
+  rule.description id=0 loc=-1:-1 off=0 value=""
+  match id=48 loc=33:12
+  match.cond id=49 loc=-1:-1 off=0 value="true"
+  match.output id=51 loc=33:21 off=955 value="variables.i + variables.j"
+match id=52 loc=34:6
+match.cond id=53 loc=-1:-1 off=0 value="true"
+match.output id=55 loc=34:15 off=997 value="variables.i + variables.j"
+=== third_party/cel-go/policy/testdata/nested_rules_variable_shadowing/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/nested_rules_variable_shadowing/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/pb/config.yaml
+ERROR: third_party/cel-go/policy/testdata/pb/config.yaml:16:1: unsupported policy tag: container
+ | container: "google.expr.proto3"
+ | ^
+ERROR: third_party/cel-go/policy/testdata/pb/config.yaml:17:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/pb/config.yaml:20:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/pb/policy.yaml
+name id=4 loc=15:7 off=582 value="pb"
+description id=0 loc=-1:-1 off=0 value=""
+import id=9 loc=18:11 off=607 value="google.expr.proto3.test.TestAllTypes"
+import id=12 loc=19:11 off=655 value="google.expr.proto3.test.TestAllTypes.NestedEnum"
+import id=15 loc=21:0 off=716 value="      google.expr.proto3.test.ImportedGlobalEnum"
+rule id=17 loc=24:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=20 loc=25:6
+match.cond id=23 loc=26:0 off=800 value="        spec.single_int32 > TestAllTypes{single_int64: 10}.single_int64"
+match.output id=25 loc=28:0 off=888 value="        \"invalid spec, got single_int32=%d, wanted <= 10\".format([spec.single_int32])"
+match id=26 loc=29:6
+match.cond id=29 loc=30:0 off=993 value="        spec.standalone_enum == NestedEnum.BAR ||\n        ImportedGlobalEnum.IMPORT_BAR in spec.imported_enums"
+match.output id=31 loc=33:0 off=1120 value="        \"invalid spec, neither nested nor imported enums may refer to BAR or IMPORT_BAR\""
+=== third_party/cel-go/policy/testdata/pb/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/pb/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/restricted_destinations/base_config.yaml
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/base_config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/base_config.yaml:19:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/restricted_destinations/config.yaml
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/config.yaml:16:1: unsupported policy tag: extensions
+ | extensions:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/config.yaml:19:1: unsupported policy tag: variables
+ | variables:
+ | ^
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/config.yaml:40:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/policy/testdata/restricted_destinations/partial_config.yaml
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/partial_config.yaml:16:1: unsupported policy tag: functions
+ | functions:
+ | ^
+=== third_party/cel-go/policy/testdata/restricted_destinations/policy.yaml
+name id=4 loc=15:7 off=582 value="restricted_destinations"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:12 off=638 value="matches_origin_ip"
+var.expr id=13 loc=20:0 off=676 value="        locationCode(origin.ip) == spec.origin"
+var.name id=16 loc=21:12 off=735 value="has_nationality"
+var.expr id=18 loc=23:0 off=771 value="        has(request.auth.claims.nationality)"
+var.name id=21 loc=24:12 off=828 value="matches_nationality"
+var.expr id=23 loc=26:0 off=868 value="        variables.has_nationality && request.auth.claims.nationality == spec.origin"
+var.name id=26 loc=27:12 off=964 value="matches_dest_ip"
+var.expr id=28 loc=29:0 off=1000 value="        locationCode(destination.ip) in spec.restricted_destinations"
+var.name id=31 loc=30:12 off=1081 value="matches_dest_label"
+var.expr id=33 loc=32:0 off=1120 value="        resource.labels.location in spec.restricted_destinations"
+var.name id=36 loc=33:12 off=1197 value="matches_dest"
+var.expr id=38 loc=35:0 off=1230 value="        variables.matches_dest_ip || variables.matches_dest_label"
+match id=41 loc=37:6
+match.cond id=44 loc=37:17 off=1322 value="variables.matches_nationality && variables.matches_dest"
+match.output id=46 loc=38:15 off=1393 value="true"
+match id=47 loc=39:6
+match.cond id=50 loc=40:0 off=1418 value="        !variables.has_nationality && variables.matches_origin_ip && variables.matches_dest"
+match.output id=52 loc=41:15 off=1525 value="true"
+match id=53 loc=42:6
+match.cond id=54 loc=-1:-1 off=0 value="true"
+match.output id=56 loc=42:15 off=1546 value="false"
+=== third_party/cel-go/policy/testdata/restricted_destinations/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/restricted_destinations/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/unnest/config.yaml
+ERROR: third_party/cel-go/policy/testdata/unnest/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/unnest/policy.yaml
+name id=4 loc=15:6 off=581 value="unnest"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:12 off=619 value="even_greater"
+var.expr id=13 loc=20:0 off=652 value="        values.filter(x, x > 2)"
+match id=16 loc=22:6
+match.cond id=19 loc=23:0 off=712 value="        variables.even_greater.size() == 0 ? false :\n        variables.even_greater.all(x, x % 2 == 0)"
+match.output id=21 loc=26:0 off=831 value="        \"some divisible by 2\""
+match id=22 loc=27:6
+match.cond id=25 loc=27:18 off=879 value="values.map(x, x * 3).exists(x, x % 4 == 0)"
+match.output id=27 loc=29:0 off=939 value="        \"at least one divisible by 4\""
+match id=28 loc=30:6
+match.cond id=31 loc=30:18 off=995 value="values.map(x, x * x * x).exists(x, x % 6 == 0)"
+match.output id=33 loc=32:0 off=1059 value="        \"at least one power of 6\""
+=== third_party/cel-go/policy/testdata/unnest/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/unnest/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/variable_type_propagation/config.yaml
+ERROR: third_party/cel-go/policy/testdata/variable_type_propagation/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/variable_type_propagation/policy.yaml
+name id=4 loc=15:6 off=581 value="variable_type_propagation"
+description id=0 loc=-1:-1 off=0 value=""
+rule id=6 loc=17:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+var.name id=11 loc=18:12 off=638 value="empty_list"
+var.expr id=13 loc=19:19 off=668 value="[]"
+var.name id=16 loc=20:12 off=684 value="string_list"
+var.expr id=18 loc=21:19 off=715 value="[\"foo\"]"
+match id=21 loc=23:6
+match.cond id=22 loc=-1:-1 off=0 value="true"
+match.output id=24 loc=23:15 off=748 value="variables.empty_list + [1]"
+=== third_party/cel-go/policy/testdata/variable_type_propagation/tests.yaml
+ERROR: third_party/cel-go/policy/testdata/variable_type_propagation/tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/policy/testdata/yaml_parsing/config.yaml
+ERROR: third_party/cel-go/policy/testdata/yaml_parsing/config.yaml:3:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/yaml_parsing/policy.yaml
+name id=4 loc=1:6 off=6 value="yaml_parsing"
+description id=6 loc=4:1 off=36 value="A block literal description with mutliple lines.\n - line 2\n - line 3\n"
+rule id=8 loc=9:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=11 loc=10:6
+match.cond id=14 loc=10:18 off=144 value="match_id == 'folded_unambiguous'"
+match.output id=16 loc=12:0 off=194 value="        \"a string expression that \" +\n        \"is folded\""
+match id=17 loc=14:6
+match.cond id=20 loc=14:18 off=270 value="match_id == 'folded_line_break'"
+match.output id=22 loc=16:0 off=319 value="        '''a string expression that\n        is folded'''"
+match id=23 loc=18:6
+match.cond id=26 loc=18:18 off=394 value="match_id == 'folded_line_break_indent'"
+match.output id=28 loc=20:0 off=450 value="          '''a string expression that\n          is folded'''"
+match id=29 loc=22:6
+match.cond id=32 loc=22:18 off=529 value="match_id == 'literal_unambiguous'"
+match.output id=34 loc=24:0 off=580 value="          \"a string expression that \" +\n          \"is a literal block\""
+match id=35 loc=26:6
+match.cond id=38 loc=26:18 off=669 value="match_id == 'literal_line_break'"
+match.output id=40 loc=28:0 off=719 value="        '''a string expression that\n        is a literal block'''"
+match id=41 loc=30:6
+match.cond id=44 loc=30:18 off=803 value="match_id == 'literal_line_break_indent'"
+match.output id=46 loc=32:0 off=860 value="          '''a string expression that\n          is a literal block'''"
+match id=47 loc=34:6
+match.cond id=48 loc=-1:-1 off=0 value="true"
+match.output id=50 loc=34:15 off=945 value="'no match encountered'"
+=== third_party/cel-go/policy/testdata/yaml_parsing_cel_error/config.yaml
+ERROR: third_party/cel-go/policy/testdata/yaml_parsing_cel_error/config.yaml:2:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/policy/testdata/yaml_parsing_cel_error/policy.yaml
+name id=4 loc=1:6 off=6 value="yaml_parsing_cel_error"
+description id=6 loc=4:1 off=46 value="A block literal description with mutliple lines.\n"
+rule id=8 loc=7:2
+rule.id id=0 loc=-1:-1 off=0 value=""
+rule.description id=0 loc=-1:-1 off=0 value=""
+match id=11 loc=8:6
+match.cond id=14 loc=8:18 off=132 value="match_id == 'folded_error_presentation'"
+match.output id=16 loc=10:0 off=189 value="        \"foo\" +\n        (\"bar\" + 1)"
+match id=17 loc=12:6
+match.cond id=20 loc=12:18 off=243 value="match_id == 'folded_error_presentation_indent'"
+match.output id=22 loc=14:0 off=307 value="          \"foo\" +\n          (\"bar\" + 1)"
+match id=23 loc=16:6
+match.cond id=26 loc=16:18 off=365 value="match_id == 'literal_error_presentation'"
+match.output id=28 loc=18:0 off=423 value="        \"foo\" +\n        (\"bar\" + 1)"
+match id=29 loc=20:6
+match.cond id=32 loc=20:18 off=477 value="match_id == 'literal_error_presentation_indent'"
+match.output id=34 loc=22:0 off=542 value="          \"foo\" +\n          (\"bar\" + 1)"
+match id=35 loc=24:6
+match.cond id=36 loc=-1:-1 off=0 value="true"
+match.output id=38 loc=24:15 off=597 value="'no match encountered'"
+=== third_party/cel-go/tools/celtest/testdata/config.yaml
+ERROR: third_party/cel-go/tools/celtest/testdata/config.yaml:16:1: unsupported policy tag: variables
+ | variables:
+ | ^
+=== third_party/cel-go/tools/celtest/testdata/custom_policy.celpolicy
+ERROR: third_party/cel-go/tools/celtest/testdata/custom_policy.celpolicy:16:1: unsupported policy tag: variable_types
+ | variable_types:
+ | ^
+=== third_party/cel-go/tools/celtest/testdata/custom_policy_tests.yaml
+ERROR: third_party/cel-go/tools/celtest/testdata/custom_policy_tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^
+=== third_party/cel-go/tools/celtest/testdata/raw_expr_tests.yaml
+ERROR: third_party/cel-go/tools/celtest/testdata/raw_expr_tests.yaml:16:1: unsupported policy tag: section
+ | section:
+ | ^

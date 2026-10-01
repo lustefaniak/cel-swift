@@ -1,0 +1,6 @@
+name: !txt |
+  foo
+rule:
+  match:
+    - output: !!str >
+        x

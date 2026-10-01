@@ -1,0 +1,6 @@
+name: a
+rule:
+  match:
+    - output: |
+        1 +
+        2

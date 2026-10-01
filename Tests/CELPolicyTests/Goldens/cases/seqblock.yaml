@@ -1,0 +1,6 @@
+rule:
+  match:
+  - output: >-
+      long
+      text
+    condition: x

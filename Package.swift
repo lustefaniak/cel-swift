@@ -5,11 +5,14 @@ let package = Package(
   name: "cel-swift",
   platforms: [.macOS(.v13), .iOS(.v16)],
   products: [
-    .library(name: "CEL", targets: ["CEL"])
+    .library(name: "CEL", targets: ["CEL"]),
+    .library(name: "CELPolicy", targets: ["CELPolicy"]),
+    .library(name: "CELTest", targets: ["CELTest"]),
   ],
   dependencies: [
     // 1.38 requires Swift 6.1; stay on 1.37.x while the floor is 6.0.
-    .package(url: "https://github.com/apple/swift-protobuf.git", .upToNextMinor(from: "1.37.0"))
+    .package(url: "https://github.com/apple/swift-protobuf.git", .upToNextMinor(from: "1.37.0")),
+    .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.2"),
   ],
   targets: [
     .target(
@@ -20,6 +23,16 @@ let package = Package(
     .target(
       name: "CELSpecProtos",
       dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .target(
+      name: "CELPolicy",
+      dependencies: ["CEL", .product(name: "Yams", package: "Yams")],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .target(
+      name: "CELTest",
+      dependencies: ["CEL", "CELPolicy"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .testTarget(
@@ -35,6 +48,17 @@ let package = Package(
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
       ],
       exclude: ["skip.txt", "passing.txt"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .testTarget(
+      name: "CELPolicyTests",
+      dependencies: ["CELPolicy"],
+      exclude: ["Goldens"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .testTarget(
+      name: "CELTestTests",
+      dependencies: ["CELTest", "CELPolicy"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
   ]

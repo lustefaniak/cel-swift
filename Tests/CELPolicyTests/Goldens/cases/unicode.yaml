@@ -1,0 +1,9 @@
+name: "ünïcode"
+rule:
+  match:
+    - output: "\"ž\" + x"
+      condition: >-
+        a ==
+          b
+    - output: |2
+         indented

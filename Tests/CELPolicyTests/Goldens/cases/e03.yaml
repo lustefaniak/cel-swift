@@ -1,0 +1,5 @@
+
+rule:
+  match:
+    - name: "true"
+      alt_name: "bool_true"

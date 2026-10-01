@@ -1,0 +1,5 @@
+name: a
+name: b
+rule:
+  match:
+    - output: '1'

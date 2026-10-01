@@ -1,0 +1,8 @@
+rule:
+  variables:
+    - &v
+      name: a
+      expression: '1'
+    - *v
+  match:
+    - output: '1'

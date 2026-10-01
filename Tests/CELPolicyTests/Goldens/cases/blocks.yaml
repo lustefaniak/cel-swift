@@ -1,0 +1,11 @@
+name: test
+rule:
+  variables:
+    - name: a
+      expression: |
+        1 +
+        2
+  match:
+    - condition: >
+        a
+      output: 'single'
