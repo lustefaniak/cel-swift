@@ -110,10 +110,21 @@ extension Value {
 
   /// The capabilities of the value's type.
   public var traits: TypeTraits {
-    if case .object(let object) = self {
-      return object.traits
+    // The same traits as `celType.traits`, without building the type.
+    switch self {
+    case .object(let object): return object.traits
+    case .bool: return [.comparer, .negator]
+    case .bytes: return [.adder, .comparer, .sizer]
+    case .double: return [.adder, .comparer, .divider, .multiplier, .negator, .subtractor]
+    case .duration: return [.adder, .comparer, .negator, .receiver, .subtractor]
+    case .int: return [.adder, .comparer, .divider, .modder, .multiplier, .negator, .subtractor]
+    case .list: return [.adder, .container, .indexer, .iterable, .sizer]
+    case .map: return [.container, .indexer, .iterable, .sizer]
+    case .string: return [.adder, .comparer, .matcher, .receiver, .sizer]
+    case .timestamp: return [.adder, .comparer, .receiver, .subtractor]
+    case .uint: return [.adder, .comparer, .divider, .modder, .multiplier, .subtractor]
+    case .null, .type, .optional, .error, .unknown: return celType.traits
     }
-    return celType.traits
   }
 
   /// Whether the value is an error.

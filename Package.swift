@@ -63,6 +63,13 @@ let package = Package(
       dependencies: ["CEL", "CELPolicy"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
+    // Interpreter benchmarks: swift run -c release CELBenchmarks
+    .executableTarget(
+      name: "CELBenchmarks",
+      dependencies: ["CEL"],
+      path: "Benchmarks/CELBenchmarks",
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
     .testTarget(
       name: "CELTests",
       dependencies: ["CEL", "CELProtobuf", "CELGoTestProtos"],

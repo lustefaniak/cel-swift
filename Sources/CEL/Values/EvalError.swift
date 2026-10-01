@@ -89,6 +89,7 @@ extension Value {
   /// Returns the value with its error labelled with the expression `id`, if it is an unlabelled error.
   ///
   /// Port of cel-go `types.LabelErrNode`.
+  @inline(__always)
   package func labellingError(with id: Int64) -> Value {
     if case .error(let err) = self, err.exprID == 0 {
       return .error(err.labelled(with: id))

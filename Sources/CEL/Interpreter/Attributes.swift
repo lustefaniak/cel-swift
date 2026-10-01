@@ -335,8 +335,15 @@ final class AbsoluteAttribute: NamespacedAttribute {
     }
     for name in namespaceNames {
       if let obj = frame.resolveName(name) {
-        if case .error(let err) = obj {
+        switch obj {
+        case .error(let err):
           throw .eval(err)
+        case .optional:
+          break
+        default:
+          if qualifiers.isEmpty {
+            return obj
+          }
         }
         let (out, isOpt) = try applyQualifiers(frame, obj, qualifiers)
         if isOpt {
