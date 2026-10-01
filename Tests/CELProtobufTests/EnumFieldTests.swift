@@ -86,6 +86,27 @@ struct EnumFieldTests {
     #expect(types.value(of: list).celEquals(types.newValue(proto2, fields: ["repeated_nested_enum": [1, 10]])) == true)
   }
 
+  /// A singular field (and a map key) repeated on the wire takes the last value. swift-protobuf
+  /// keeps a declared number in the typed field and an undeclared one in the unknown fields, so a
+  /// decoded message holds both; the declared number came last here, and cel-go (and the typed
+  /// accessor) read it.
+  @Test func decodedClosedEnumFieldsReadTheLastDeclaredValue() throws {
+    // standalone_enum (24) = 10, then = 1.
+    let singular = try Cel_Expr_Conformance_Proto2_TestAllTypes(
+      serializedBytes: [0xC0, 0x01, 0x0A, 0xC0, 0x01, 0x01] as [UInt8])
+    #expect(singular.standaloneEnum == .bar)
+    // map_int32_enum (83) {1: 10}, then {1: 1}.
+    let map = try Cel_Expr_Conformance_Proto2_TestAllTypes(
+      serializedBytes: [0x9A, 0x05, 0x04, 0x08, 0x01, 0x10, 0x0A, 0x9A, 0x05, 0x04, 0x08, 0x01, 0x10, 0x01] as [UInt8])
+    #expect(map.mapInt32Enum == [1: .bar])
+    let singularField = types.value(of: singular).protobufObject?.field("standalone_enum")
+    let mapField = types.value(of: map).protobufObject?.field("map_int32_enum")
+    withKnownIssue("the undeclared number in the unknown fields takes precedence") {
+      #expect(singularField == 1)
+      #expect(mapField == [1: 1])
+    }
+  }
+
   /// protojson writes undeclared enum numbers as numbers and declared ones as names.
   @Test func proto2UndeclaredEnumNumbersInJSON() throws {
     let value = types.newValue(
