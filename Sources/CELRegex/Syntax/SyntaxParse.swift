@@ -401,52 +401,89 @@ extension Syntax {
       }
     }
 
-    func calcSize(_ re: Regexp, _ force: Bool) -> Int64 {
+    /// Go's recursive calcSize, run with an explicit stack (the tree may be up to maxHeight
+    /// deep). Children are visited in Go's order and memoized the same way. Arithmetic wraps
+    /// like Go's int64.
+    func calcSize(_ root: Regexp, _ force: Bool) -> Int64 {
       if !force {
-        if let size = size?[ObjectIdentifier(re)] {
+        if let size = size?[ObjectIdentifier(root)] {
           return size
         }
       }
+      var stack: [(re: Regexp, next: Int, sizes: [Int64])] = [(root, 0, [])]
+      while true {
+        let top = stack.count - 1
+        let re = stack[top].re
+        if stack[top].next < calcSizeChildren(re) {
+          let child = re.sub[stack[top].next]
+          stack[top].next += 1
+          if let s = size?[ObjectIdentifier(child)] {
+            stack[top].sizes.append(s)
+          } else {
+            stack.append((child, 0, []))
+          }
+          continue
+        }
+        let s = calcSizeStep(re, stack[top].sizes)
+        self.size?[ObjectIdentifier(re)] = s
+        stack.removeLast()
+        if stack.isEmpty {
+          return s
+        }
+        stack[stack.count - 1].sizes.append(s)
+      }
+    }
 
+    /// The number of children Go's calcSize consults.
+    private func calcSizeChildren(_ re: Regexp) -> Int {
+      switch re.op {
+      case .capture, .star, .plus, .quest, .repeat:
+        return 1
+      case .concat, .alternate:
+        return re.sub.count
+      default:
+        return 0
+      }
+    }
+
+    /// One step of Go's calcSize, given the sizes of the children.
+    private func calcSizeStep(_ re: Regexp, _ subs: [Int64]) -> Int64 {
       var size: Int64 = 0
       switch re.op {
       case .literal:
         size = Int64(re.rune.count)
       case .capture, .star:
         // star can be 1+ or 2+; assume 2 pessimistically
-        size = 2 + calcSize(re.sub[0], false)
+        size = 2 &+ subs[0]
       case .plus, .quest:
-        size = 1 + calcSize(re.sub[0], false)
+        size = 1 &+ subs[0]
       case .concat:
-        for sub in re.sub {
-          size += calcSize(sub, false)
+        for s in subs {
+          size = size &+ s
         }
       case .alternate:
-        for sub in re.sub {
-          size += calcSize(sub, false)
+        for s in subs {
+          size = size &+ s
         }
         if re.sub.count > 1 {
-          size += Int64(re.sub.count) - 1
+          size = size &+ (Int64(re.sub.count) - 1)
         }
       case .repeat:
-        let sub = calcSize(re.sub[0], false)
+        let sub = subs[0]
         if re.max == -1 {
           if re.min == 0 {
-            size = 2 + sub  // x*
+            size = 2 &+ sub  // x*
           } else {
-            size = 1 + Int64(re.min) * sub  // xxx+
+            size = 1 &+ Int64(re.min) &* sub  // xxx+
           }
           break
         }
         // x{2,5} = xx(x(x(x)?)?)?
-        size = Int64(re.max) * sub + Int64(re.max - re.min)
+        size = Int64(re.max) &* sub &+ Int64(re.max - re.min)
       default:
         break
       }
-
-      size = Swift.max(1, size)
-      self.size?[ObjectIdentifier(re)] = size
-      return size
+      return Swift.max(1, size)
     }
 
     func checkHeight(_ re: Regexp) throws {
@@ -464,21 +501,35 @@ extension Syntax {
       }
     }
 
-    func calcHeight(_ re: Regexp, _ force: Bool) -> Int {
+    /// Go's recursive calcHeight, run with an explicit stack and the same memoization.
+    func calcHeight(_ root: Regexp, _ force: Bool) -> Int {
       if !force {
-        if let h = height?[ObjectIdentifier(re)] {
+        if let h = height?[ObjectIdentifier(root)] {
           return h
         }
       }
-      var h = 1
-      for sub in re.sub {
-        let hsub = calcHeight(sub, false)
-        if h < 1 + hsub {
-          h = 1 + hsub
+      var stack: [(re: Regexp, next: Int, h: Int)] = [(root, 0, 1)]
+      while true {
+        let top = stack.count - 1
+        let re = stack[top].re
+        if stack[top].next < re.sub.count {
+          let child = re.sub[stack[top].next]
+          stack[top].next += 1
+          if let hsub = height?[ObjectIdentifier(child)] {
+            stack[top].h = Swift.max(stack[top].h, 1 + hsub)
+          } else {
+            stack.append((child, 0, 1))
+          }
+          continue
         }
+        let h = stack[top].h
+        height?[ObjectIdentifier(re)] = h
+        stack.removeLast()
+        if stack.isEmpty {
+          return h
+        }
+        stack[stack.count - 1].h = Swift.max(stack[stack.count - 1].h, 1 + h)
       }
-      height?[ObjectIdentifier(re)] = h
-      return h
     }
 
     // Parse stack manipulation.
@@ -675,11 +726,81 @@ extension Syntax {
     /// If sub contains op nodes, they all get hoisted up
     /// so that there is never a concat of a concat or an
     /// alternate of an alternate.
+    ///
+    /// In Go, collapse and factor recurse into each other once per factored common prefix,
+    /// which for an alternation like `.....x|.....y` is once per leading item, close to the
+    /// height limit of 1000. Here the same calls run as resumable frames on an explicit stack,
+    /// in the same order (so nodes are allocated and reused exactly as in Go).
     func collapse(_ subs: [Regexp], _ op: Op) throws -> Regexp {
-      if subs.count == 1 {
-        return subs[0]
+      var call = collapseEnter(subs, op)
+      guard case .factor(let re) = call else {
+        if case .done(let re) = call {
+          return re
+        }
+        preconditionFailure("unreachable")
       }
-      var re = newRegexp(op)
+      // Frames waiting for a result: a collapse waits for factor(re.sub), a factor for a
+      // collapse of one of its runs.
+      var frames: [FactorFrame] = [.collapse(re), .factor(FactorState(re.sub))]
+      var ret: FactorReturn? = nil
+      while let frame = frames.popLast() {
+        switch frame {
+        case .collapse(var re):
+          guard case .list(let sub) = ret else { preconditionFailure("collapse resumed without factor result") }
+          re.sub = sub
+          if re.sub.count == 1 {
+            let old = re
+            re = re.sub[0]
+            reuse(old)
+          }
+          ret = .regexp(re)
+        case .factor(var state):
+          var suffix: Regexp? = nil
+          if case .regexp(let r) = ret {
+            suffix = r
+          }
+          ret = nil
+          switch try factorStep(&state, suffix) {
+          case .done(let out):
+            ret = .list(out)
+          case .collapse(let run):
+            frames.append(.factor(state))
+            call = collapseEnter(run, .alternate)
+            switch call {
+            case .done(let re):
+              ret = .regexp(re)
+            case .factor(let re):
+              frames.append(.collapse(re))
+              frames.append(.factor(FactorState(re.sub)))
+            }
+          }
+        }
+      }
+      guard case .regexp(let result) = ret else { preconditionFailure("collapse without result") }
+      return result
+    }
+
+    private enum CollapseCall {
+      case done(Regexp)  // collapse finished without factoring
+      case factor(Regexp)  // alternation node built; its subs still need factor
+    }
+
+    private enum FactorFrame {
+      case collapse(Regexp)
+      case factor(FactorState)
+    }
+
+    private enum FactorReturn {
+      case regexp(Regexp)
+      case list([Regexp])
+    }
+
+    /// The part of Go's collapse before it calls factor.
+    private func collapseEnter(_ subs: [Regexp], _ op: Op) -> CollapseCall {
+      if subs.count == 1 {
+        return .done(subs[0])
+      }
+      let re = newRegexp(op)
       re.sub = []
       for sub in subs {
         if sub.op == op {
@@ -690,14 +811,39 @@ extension Syntax {
         }
       }
       if op == .alternate {
-        re.sub = try factor(re.sub)
-        if re.sub.count == 1 {
-          let old = re
-          re = re.sub[0]
-          reuse(old)
-        }
+        return .factor(re)
       }
-      return re
+      return .done(re)
+    }
+
+    /// The local state of one call of Go's factor.
+    private struct FactorState {
+      enum Phase {
+        case start, round1, round1Resume, round2Start, round2, round2Resume, rounds34
+      }
+      var phase = Phase.start
+      var sub: [Regexp]
+      var out: [Regexp] = []
+      var start = 0
+      var i = 0
+      // Round 1.
+      var str: [Rune] = []
+      var strflags: Flags = []
+      var pendingPrefix: Regexp? = nil
+      var pendingIStr: [Rune] = []
+      var pendingIFlags: Flags = []
+      // Round 2.
+      var first: Regexp? = nil
+      var pendingIFirst: Regexp? = nil
+
+      init(_ sub: [Regexp]) {
+        self.sub = sub
+      }
+    }
+
+    private enum FactorAction {
+      case done([Regexp])
+      case collapse([Regexp])  // call collapse(run, OpAlternate), then resume with its result
     }
 
     /// factor factors common prefixes from the alternation list sub.
@@ -714,136 +860,185 @@ extension Syntax {
     /// which simplifies by character class introduction to
     ///
     ///     A(B[CD]|EF)|BC[XY]
-    func factor(_ sub0: [Regexp]) throws -> [Regexp] {
-      var sub = sub0
-      if sub.count < 2 {
-        return sub
-      }
+    ///
+    /// Runs Go's factor until it finishes or needs the result of collapsing a run (the recursive
+    /// call in Go); `suffix` is that result when resuming.
+    private func factorStep(_ s: inout FactorState, _ suffix: Regexp?) throws -> FactorAction {
+      while true {
+        switch s.phase {
+        case .start:
+          if s.sub.count < 2 {
+            return .done(s.sub)
+          }
+          // Round 1: Factor out common literal prefixes.
+          s.str = []
+          s.strflags = []
+          s.start = 0
+          s.out = []
+          s.i = 0
+          s.phase = .round1
 
-      // Round 1: Factor out common literal prefixes.
-      var str: [Rune] = []
-      var strflags: Flags = []
-      var start = 0
-      var out: [Regexp] = []
-      var i = 0
-      while i <= sub.count {
-        // Invariant: sub[start:i] consists of regexps that all begin
-        // with str as modified by strflags.
-        var istr: [Rune] = []
-        var iflags: Flags = []
-        if i < sub.count {
-          (istr, iflags) = leadingString(sub[i])
-          if iflags == strflags {
-            var same = 0
-            while same < str.count && same < istr.count && str[same] == istr[same] {
-              same += 1
+        case .round1Resume:
+          guard let suffix, let prefix = s.pendingPrefix else { preconditionFailure("factor resumed without suffix") }
+          let re = newRegexp(.concat)
+          re.sub = [prefix, suffix]
+          s.out.append(re)
+          s.pendingPrefix = nil
+          // Prepare for next iteration.
+          s.start = s.i
+          s.str = s.pendingIStr
+          s.strflags = s.pendingIFlags
+          s.i += 1
+          s.phase = .round1
+
+        case .round1:
+          if s.i > s.sub.count {
+            s.sub = s.out
+            s.phase = .round2Start
+            continue
+          }
+          let i = s.i
+          // Invariant: sub[start:i] consists of regexps that all begin
+          // with str as modified by strflags.
+          var istr: [Rune] = []
+          var iflags: Flags = []
+          if i < s.sub.count {
+            (istr, iflags) = leadingString(s.sub[i])
+            if iflags == s.strflags {
+              var same = 0
+              while same < s.str.count && same < istr.count && s.str[same] == istr[same] {
+                same += 1
+              }
+              if same > 0 {
+                // Matches at least one rune in current range.
+                // Keep going around.
+                s.str.removeSubrange(same...)
+                s.i += 1
+                continue
+              }
             }
-            if same > 0 {
-              // Matches at least one rune in current range.
-              // Keep going around.
-              str.removeSubrange(same...)
-              i += 1
+          }
+
+          // Found end of a run with common leading literal string:
+          // sub[start:i] all begin with str[:len(str)], but sub[i]
+          // does not even begin with str[0].
+          //
+          // Factor out common string and append factored expression to out.
+          if i == s.start {
+            // Nothing to do - run of length 0.
+          } else if i == s.start + 1 {
+            // Just one: don't bother factoring.
+            s.out.append(s.sub[s.start])
+          } else {
+            // Construct factored form: prefix(suffix1|suffix2|...)
+            let prefix = newRegexp(.literal)
+            prefix.flags = s.strflags
+            prefix.rune = s.str
+
+            for j in s.start..<i {
+              s.sub[j] = removeLeadingString(s.sub[j], s.str.count)
+              try checkLimits(s.sub[j])
+            }
+            s.pendingPrefix = prefix
+            s.pendingIStr = istr
+            s.pendingIFlags = iflags
+            s.phase = .round1Resume
+            return .collapse(Array(s.sub[s.start..<i]))  // recurse
+          }
+
+          // Prepare for next iteration.
+          s.start = i
+          s.str = istr
+          s.strflags = iflags
+          s.i += 1
+
+        case .round2Start:
+          // Round 2: Factor out common simple prefixes,
+          // just the first piece of each concatenation.
+          // This will be good enough a lot of the time.
+          //
+          // Complex subexpressions (e.g. involving quantifiers)
+          // are not safe to factor because that collapses their
+          // distinct paths through the automaton, which affects
+          // correctness in some cases.
+          s.start = 0
+          s.out = []
+          s.first = nil
+          s.i = 0
+          s.phase = .round2
+
+        case .round2Resume:
+          guard let suffix, let prefix = s.first else { preconditionFailure("factor resumed without suffix") }
+          let re = newRegexp(.concat)
+          re.sub = [prefix, suffix]
+          s.out.append(re)
+          // Prepare for next iteration.
+          s.start = s.i
+          s.first = s.pendingIFirst
+          s.pendingIFirst = nil
+          s.i += 1
+          s.phase = .round2
+
+        case .round2:
+          if s.i > s.sub.count {
+            s.sub = s.out
+            s.phase = .rounds34
+            continue
+          }
+          let i = s.i
+          // Invariant: sub[start:i] consists of regexps that all begin with ifirst.
+          var ifirst: Regexp? = nil
+          if i < s.sub.count {
+            ifirst = leadingRegexp(s.sub[i])
+            if let first = s.first, first.equal(ifirst),
+              // first must be a character class OR a fixed repeat of a character class.
+              Syntax.isCharClass(first)
+                || (first.op == .repeat && first.min == first.max && Syntax.isCharClass(first.sub[0]))
+            {
+              s.i += 1
               continue
             }
           }
-        }
 
-        // Found end of a run with common leading literal string:
-        // sub[start:i] all begin with str[:len(str)], but sub[i]
-        // does not even begin with str[0].
-        //
-        // Factor out common string and append factored expression to out.
-        if i == start {
-          // Nothing to do - run of length 0.
-        } else if i == start + 1 {
-          // Just one: don't bother factoring.
-          out.append(sub[start])
-        } else {
-          // Construct factored form: prefix(suffix1|suffix2|...)
-          let prefix = newRegexp(.literal)
-          prefix.flags = strflags
-          prefix.rune = str
-
-          for j in start..<i {
-            sub[j] = removeLeadingString(sub[j], str.count)
-            try checkLimits(sub[j])
+          // Found end of a run with common leading regexp:
+          // sub[start:i] all begin with first but sub[i] does not.
+          //
+          // Factor out common regexp and append factored expression to out.
+          if i == s.start {
+            // Nothing to do - run of length 0.
+          } else if i == s.start + 1 {
+            // Just one: don't bother factoring.
+            s.out.append(s.sub[s.start])
+          } else if s.first != nil {
+            // Construct factored form: prefix(suffix1|suffix2|...)
+            for j in s.start..<i {
+              let reuse = j != s.start  // prefix came from sub[start]
+              s.sub[j] = removeLeadingRegexp(s.sub[j], reuse)
+              try checkLimits(s.sub[j])
+            }
+            s.pendingIFirst = ifirst
+            s.phase = .round2Resume
+            return .collapse(Array(s.sub[s.start..<i]))  // recurse
           }
-          let suffix = try collapse(Array(sub[start..<i]), .alternate)  // recurse
 
-          let re = newRegexp(.concat)
-          re.sub = [prefix, suffix]
-          out.append(re)
+          // Prepare for next iteration.
+          s.start = i
+          s.first = ifirst
+          s.i += 1
+
+        case .rounds34:
+          return .done(factorRounds34(s.sub))
         }
-
-        // Prepare for next iteration.
-        start = i
-        str = istr
-        strflags = iflags
-        i += 1
       }
-      sub = out
+    }
 
-      // Round 2: Factor out common simple prefixes,
-      // just the first piece of each concatenation.
-      // This will be good enough a lot of the time.
-      //
-      // Complex subexpressions (e.g. involving quantifiers)
-      // are not safe to factor because that collapses their
-      // distinct paths through the automaton, which affects
-      // correctness in some cases.
-      start = 0
-      out = []
-      var first: Regexp? = nil
-      i = 0
-      while i <= sub.count {
-        // Invariant: sub[start:i] consists of regexps that all begin with ifirst.
-        var ifirst: Regexp? = nil
-        if i < sub.count {
-          ifirst = leadingRegexp(sub[i])
-          if let first, first.equal(ifirst),
-            // first must be a character class OR a fixed repeat of a character class.
-            Syntax.isCharClass(first)
-              || (first.op == .repeat && first.min == first.max && Syntax.isCharClass(first.sub[0]))
-          {
-            i += 1
-            continue
-          }
-        }
-
-        // Found end of a run with common leading regexp:
-        // sub[start:i] all begin with first but sub[i] does not.
-        //
-        // Factor out common regexp and append factored expression to out.
-        if i == start {
-          // Nothing to do - run of length 0.
-        } else if i == start + 1 {
-          // Just one: don't bother factoring.
-          out.append(sub[start])
-        } else if let prefix = first {
-          // Construct factored form: prefix(suffix1|suffix2|...)
-          for j in start..<i {
-            let reuse = j != start  // prefix came from sub[start]
-            sub[j] = removeLeadingRegexp(sub[j], reuse)
-            try checkLimits(sub[j])
-          }
-          let suffix = try collapse(Array(sub[start..<i]), .alternate)  // recurse
-
-          let re = newRegexp(.concat)
-          re.sub = [prefix, suffix]
-          out.append(re)
-        }
-
-        // Prepare for next iteration.
-        start = i
-        first = ifirst
-        i += 1
-      }
-      sub = out
-
+    /// Rounds 3 and 4 of Go's factor, which do not recurse.
+    private func factorRounds34(_ sub0: [Regexp]) -> [Regexp] {
+      var sub = sub0
       // Round 3: Collapse runs of single literals into character classes.
-      start = 0
-      out = []
-      i = 0
+      var start = 0
+      var out: [Regexp] = []
+      var i = 0
       while i <= sub.count {
         // Invariant: sub[start:i] consists of regexps that are either
         // literal runes or character classes.
@@ -1621,25 +1816,29 @@ extension Syntax {
   /// We avoid this by only calling repeatIsValid when min or max >= 2.
   /// In that case the depth of any >= 2 nesting can only get to 9 without
   /// triggering a parse error, so each subtree can only be rewalked 9 times.
-  static func repeatIsValid(_ re: Regexp, _ n: Int) -> Bool {
-    var n = n
-    if re.op == .repeat {
-      var m = re.max
-      if m == 0 {
-        return true
+  static func repeatIsValid(_ root: Regexp, _ n0: Int) -> Bool {
+    // Go recurses; the same (node, budget) pairs are checked here with an explicit stack.
+    var stack: [(Regexp, Int)] = [(root, n0)]
+    while let (re, n0) = stack.popLast() {
+      var n = n0
+      if re.op == .repeat {
+        var m = re.max
+        if m == 0 {
+          continue  // this subtree is valid
+        }
+        if m < 0 {
+          m = re.min
+        }
+        if m > n {
+          return false
+        }
+        if m > 0 {
+          n /= m
+        }
       }
-      if m < 0 {
-        m = re.min
+      for sub in re.sub.reversed() {
+        stack.append((sub, n))
       }
-      if m > n {
-        return false
-      }
-      if m > 0 {
-        n /= m
-      }
-    }
-    for sub in re.sub where !repeatIsValid(sub, n) {
-      return false
     }
     return true
   }

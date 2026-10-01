@@ -136,49 +136,55 @@ extension Syntax {
 
 extension Syntax.Regexp {
   /// Equal reports whether x and y have identical structure.
+  ///
+  /// Go's version recurses; this compares the same node pairs with an explicit stack.
   package func equal(_ y: Syntax.Regexp?) -> Bool {
     guard let y else { return false }
-    let x = self
-    if x.op != y.op {
-      return false
-    }
-    switch x.op {
-    case .endText:
-      // The parse flags remember whether this is \z or \Z.
-      if x.flags.intersection(.wasDollar) != y.flags.intersection(.wasDollar) {
+    var pairs: [(Syntax.Regexp, Syntax.Regexp)] = [(self, y)]
+    while let (x, y) = pairs.popLast() {
+      if x.op != y.op {
         return false
       }
+      switch x.op {
+      case .endText:
+        // The parse flags remember whether this is \z or \Z.
+        if x.flags.intersection(.wasDollar) != y.flags.intersection(.wasDollar) {
+          return false
+        }
 
-    case .literal, .charClass:
-      return x.flags.intersection(.foldCase) == y.flags.intersection(.foldCase) && x.rune == y.rune
+      case .literal, .charClass:
+        if !(x.flags.intersection(.foldCase) == y.flags.intersection(.foldCase) && x.rune == y.rune) {
+          return false
+        }
 
-    case .alternate, .concat:
-      if x.sub.count != y.sub.count {
-        return false
-      }
-      for (a, b) in zip(x.sub, y.sub) where !a.equal(b) {
-        return false
-      }
-      return true
+      case .alternate, .concat:
+        if x.sub.count != y.sub.count {
+          return false
+        }
+        pairs.append(contentsOf: zip(x.sub, y.sub).reversed())
 
-    case .star, .plus, .quest:
-      if x.flags.intersection(.nonGreedy) != y.flags.intersection(.nonGreedy) || !x.sub[0].equal(y.sub[0]) {
-        return false
-      }
+      case .star, .plus, .quest:
+        if x.flags.intersection(.nonGreedy) != y.flags.intersection(.nonGreedy) {
+          return false
+        }
+        pairs.append((x.sub[0], y.sub[0]))
 
-    case .repeat:
-      if x.flags.intersection(.nonGreedy) != y.flags.intersection(.nonGreedy) || x.min != y.min
-        || x.max != y.max || !x.sub[0].equal(y.sub[0])
-      {
-        return false
-      }
+      case .repeat:
+        if x.flags.intersection(.nonGreedy) != y.flags.intersection(.nonGreedy) || x.min != y.min
+          || x.max != y.max
+        {
+          return false
+        }
+        pairs.append((x.sub[0], y.sub[0]))
 
-    case .capture:
-      if x.cap != y.cap || x.name != y.name || !x.sub[0].equal(y.sub[0]) {
-        return false
+      case .capture:
+        if x.cap != y.cap || x.name != y.name {
+          return false
+        }
+        pairs.append((x.sub[0], y.sub[0]))
+      default:
+        break
       }
-    default:
-      break
     }
     return true
   }
@@ -210,7 +216,88 @@ private func addSpan(_ start: Syntax.Regexp, _ last: Syntax.Regexp, _ f: PrintFl
 /// storing that information in flags[sub] for each affected subexpression.
 /// calcFlags also calculates the flags that must be active or can't be active
 /// around re and returns those flags.
-private func calcFlags(_ re: Syntax.Regexp, _ flags: inout FlagMap) -> (must: PrintFlags, cant: PrintFlags) {
+private func calcFlags(_ root: Syntax.Regexp, _ flags: inout FlagMap) -> (must: PrintFlags, cant: PrintFlags) {
+  // Go's calcFlags recurses; here each node is a frame and child results are fed back one at a
+  // time, so the side effects on flags (addSpan) happen in exactly Go's order.
+  struct Frame {
+    var re: Syntax.Regexp
+    var i = 0
+    var must: PrintFlags = []
+    var cant: PrintFlags = []
+    var allCant: PrintFlags = []
+    var start = 0
+    var last = 0
+    var did = false
+  }
+  var frames = [Frame(re: root)]
+  var ret: (must: PrintFlags, cant: PrintFlags)? = nil
+  while let top = frames.indices.last {
+    let re = frames[top].re
+    switch re.op {
+    case .capture, .star, .plus, .quest, .repeat:
+      if ret == nil {
+        frames.append(Frame(re: re.sub[0]))
+        continue
+      }
+      // Pass the child's result up unchanged.
+      frames.removeLast()
+
+    case .concat, .alternate:
+      // Gather the must and cant for each subexpression.
+      // When we find a conflicting subexpression, insert the necessary
+      // flags around the previously identified span and start over.
+      if let (subMust, subCant) = ret {
+        ret = nil
+        var f = frames[top]
+        let i = f.i
+        if !f.must.intersection(subCant).isEmpty || !subMust.intersection(f.cant).isEmpty {
+          if !f.must.isEmpty {
+            addSpan(re.sub[f.start], re.sub[f.last], f.must, &flags)
+          }
+          f.must = []
+          f.cant = []
+          f.start = i
+          f.did = true
+        }
+        f.must.formUnion(subMust)
+        f.cant.formUnion(subCant)
+        f.allCant.formUnion(subCant)
+        if !subMust.isEmpty {
+          f.last = i
+        }
+        if f.must.isEmpty && f.start == i {
+          f.start += 1
+        }
+        f.i += 1
+        frames[top] = f
+      }
+      let f = frames[top]
+      if f.i < re.sub.count {
+        frames.append(Frame(re: re.sub[f.i]))
+        continue
+      }
+      frames.removeLast()
+      if !f.did {
+        // No conflicts: pass the accumulated must and cant upward.
+        ret = (f.must, f.cant)
+      } else {
+        if !f.must.isEmpty {
+          // Conflicts found; need to finish final span.
+          addSpan(re.sub[f.start], re.sub[f.last], f.must, &flags)
+        }
+        ret = ([], f.allCant)
+      }
+
+    default:
+      frames.removeLast()
+      ret = calcFlagsLeaf(re)
+    }
+  }
+  return ret ?? ([], [])
+}
+
+/// The cases of Go's calcFlags that do not recurse.
+private func calcFlagsLeaf(_ re: Syntax.Regexp) -> (must: PrintFlags, cant: PrintFlags) {
   switch re.op {
   case .literal:
     // If literal is fold-sensitive, return (flagI, 0) or (0, flagI)
@@ -264,57 +351,115 @@ private func calcFlags(_ re: Syntax.Regexp, _ flags: inout FlagMap) -> (must: Pr
     }
     return ([], [])
 
-  case .capture, .star, .plus, .quest, .repeat:
-    return calcFlags(re.sub[0], &flags)
-
-  case .concat, .alternate:
-    // Gather the must and cant for each subexpression.
-    // When we find a conflicting subexpression, insert the necessary
-    // flags around the previously identified span and start over.
-    var must: PrintFlags = []
-    var cant: PrintFlags = []
-    var allCant: PrintFlags = []
-    var start = 0
-    var last = 0
-    var did = false
-    for (i, sub) in re.sub.enumerated() {
-      let (subMust, subCant) = calcFlags(sub, &flags)
-      if !must.intersection(subCant).isEmpty || !subMust.intersection(cant).isEmpty {
-        if !must.isEmpty {
-          addSpan(re.sub[start], re.sub[last], must, &flags)
-        }
-        must = []
-        cant = []
-        start = i
-        did = true
-      }
-      must.formUnion(subMust)
-      cant.formUnion(subCant)
-      allCant.formUnion(subCant)
-      if !subMust.isEmpty {
-        last = i
-      }
-      if must.isEmpty && start == i {
-        start += 1
-      }
-    }
-    if !did {
-      // No conflicts: pass the accumulated must and cant upward.
-      return (must, cant)
-    }
-    if !must.isEmpty {
-      // Conflicts found; need to finish final span.
-      addSpan(re.sub[start], re.sub[last], must, &flags)
-    }
-    return ([], allCant)
-
   default:
     return ([], [])
   }
 }
 
 /// writeRegexp writes the Perl syntax for the regular expression re to b.
-private func writeRegexp(_ b: inout String, _ re: Syntax.Regexp, _ f0: PrintFlags, _ flags: FlagMap) {
+///
+/// Go's writeRegexp recurses; here each node is a frame that writes its opening, its children
+/// one at a time, and then its closing, which produces the same text.
+private func writeRegexp(_ b: inout String, _ root: Syntax.Regexp, _ f0: PrintFlags, _ flags: FlagMap) {
+  struct Frame {
+    var re: Syntax.Regexp
+    var f: PrintFlags
+    var closers = ""
+    var i = -1  // -1: not started; otherwise the next child to write
+  }
+  var frames = [Frame(re: root, f: f0)]
+  while let top = frames.indices.last {
+    let re = frames[top].re
+    if frames[top].i < 0 {
+      frames[top].closers = writeFlagsPrefix(&b, re, frames[top].f, flags)
+      frames[top].i = 0
+      switch re.op {
+      case .capture:
+        if !re.name.isEmpty {
+          b += "(?P<"
+          b += re.name
+          b += ">"
+        } else {
+          b += "("
+        }
+      case .star, .plus, .quest, .repeat, .concat, .alternate:
+        break
+      default:
+        writeLeaf(&b, re)
+        b += frames[top].closers
+        frames.removeLast()
+        continue
+      }
+    }
+
+    let i = frames[top].i
+    frames[top].i += 1
+    switch re.op {
+    case .capture:
+      if i == 0 && re.sub[0].op != .emptyMatch {
+        frames.append(Frame(re: re.sub[0], f: flags[ObjectIdentifier(re.sub[0])] ?? []))
+        continue
+      }
+      b += ")"
+    case .star, .plus, .quest, .repeat:
+      if i == 0 {
+        var p: PrintFlags = []
+        let sub = re.sub[0]
+        if sub.op > .capture || sub.op == .literal && sub.rune.count > 1 {
+          p = .flagPrec
+        }
+        frames.append(Frame(re: sub, f: p))
+        continue
+      }
+      switch re.op {
+      case .star:
+        b += "*"
+      case .plus:
+        b += "+"
+      case .quest:
+        b += "?"
+      default:
+        b += "{"
+        b += String(re.min)
+        if re.max != re.min {
+          b += ","
+          if re.max >= 0 {
+            b += String(re.max)
+          }
+        }
+        b += "}"
+      }
+      if re.flags.contains(.nonGreedy) {
+        b += "?"
+      }
+    case .concat:
+      if i < re.sub.count {
+        let sub = re.sub[i]
+        var p: PrintFlags = []
+        if sub.op == .alternate {
+          p = .flagPrec
+        }
+        frames.append(Frame(re: sub, f: p))
+        continue
+      }
+    case .alternate:
+      if i < re.sub.count {
+        if i > 0 {
+          b += "|"
+        }
+        frames.append(Frame(re: re.sub[i], f: []))
+        continue
+      }
+    default:
+      break
+    }
+    b += frames[top].closers
+    frames.removeLast()
+  }
+}
+
+/// The flag prefix of Go's writeRegexp; returns the closing text its defers would write.
+private func writeFlagsPrefix(_ b: inout String, _ re: Syntax.Regexp, _ f0: PrintFlags, _ flags: FlagMap) -> String {
   var f = f0.union(flags[ObjectIdentifier(re)] ?? [])
   if f.contains(.flagPrec) && !f.subtracting([.flagOff, .flagPrec]).isEmpty && f.contains(.flagOff) {
     // flagPrec is redundant with other flags being added and terminated
@@ -350,8 +495,11 @@ private func writeRegexp(_ b: inout String, _ re: Syntax.Regexp, _ f0: PrintFlag
     b += "(?:"
     closers = ")" + closers
   }
-  defer { b += closers }
+  return closers
+}
 
+/// The cases of Go's writeRegexp that do not recurse.
+private func writeLeaf(_ b: inout String, _ re: Syntax.Regexp) {
   switch re.op {
   case .noMatch:
     b += #"[^\x00-\x{10FFFF}]"#
@@ -420,62 +568,6 @@ private func writeRegexp(_ b: inout String, _ re: Syntax.Regexp, _ f0: PrintFlag
     b += #"\b"#
   case .noWordBoundary:
     b += #"\B"#
-  case .capture:
-    if !re.name.isEmpty {
-      b += "(?P<"
-      b += re.name
-      b += ">"
-    } else {
-      b += "("
-    }
-    if re.sub[0].op != .emptyMatch {
-      writeRegexp(&b, re.sub[0], flags[ObjectIdentifier(re.sub[0])] ?? [], flags)
-    }
-    b += ")"
-  case .star, .plus, .quest, .repeat:
-    var p: PrintFlags = []
-    let sub = re.sub[0]
-    if sub.op > .capture || sub.op == .literal && sub.rune.count > 1 {
-      p = .flagPrec
-    }
-    writeRegexp(&b, sub, p, flags)
-
-    switch re.op {
-    case .star:
-      b += "*"
-    case .plus:
-      b += "+"
-    case .quest:
-      b += "?"
-    default:
-      b += "{"
-      b += String(re.min)
-      if re.max != re.min {
-        b += ","
-        if re.max >= 0 {
-          b += String(re.max)
-        }
-      }
-      b += "}"
-    }
-    if re.flags.contains(.nonGreedy) {
-      b += "?"
-    }
-  case .concat:
-    for sub in re.sub {
-      var p: PrintFlags = []
-      if sub.op == .alternate {
-        p = .flagPrec
-      }
-      writeRegexp(&b, sub, p, flags)
-    }
-  case .alternate:
-    for (i, sub) in re.sub.enumerated() {
-      if i > 0 {
-        b += "|"
-      }
-      writeRegexp(&b, sub, [], flags)
-    }
   default:
     b += "<invalid op\(re.op.rawValue)>"
   }
@@ -536,16 +628,21 @@ private func escape(_ b: inout String, _ r: Rune, _ force: Bool) {
 }
 
 extension Syntax.Regexp {
+  /// Visits the nodes of the tree in pre-order (Go's recursion order), without recursing.
+  func forEachPreOrder(_ body: (Syntax.Regexp) -> Void) {
+    var stack: [Syntax.Regexp] = [self]
+    while let re = stack.popLast() {
+      body(re)
+      stack.append(contentsOf: re.sub.reversed())
+    }
+  }
+
   /// MaxCap walks the regexp to find the maximum capture index.
   package func maxCap() -> Int {
     var m = 0
-    if op == .capture {
-      m = cap
-    }
-    for sub in sub {
-      let n = sub.maxCap()
-      if m < n {
-        m = n
+    forEachPreOrder { re in
+      if re.op == .capture && m < re.cap {
+        m = re.cap
       }
     }
     return m
@@ -554,16 +651,11 @@ extension Syntax.Regexp {
   /// CapNames walks the regexp to find the names of capturing groups.
   package func capNames() -> [String] {
     var names = [String](repeating: "", count: maxCap() + 1)
-    capNames(&names)
+    forEachPreOrder { re in
+      if re.op == .capture {
+        names[re.cap] = re.name
+      }
+    }
     return names
-  }
-
-  private func capNames(_ names: inout [String]) {
-    if op == .capture {
-      names[cap] = name
-    }
-    for sub in sub {
-      sub.capNames(&names)
-    }
   }
 }

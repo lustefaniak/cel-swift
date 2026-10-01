@@ -140,9 +140,9 @@ private struct QueueOnePass {
 /// i, NextIp[i/2] is the target. If the input sets intersect, an empty runeset and a
 /// NextIp array with the single element mergeFailed is returned.
 /// The code assumes that both inputs contain ordered and non-intersecting rune pairs.
-private let mergeFailed = UInt32(0xffff_ffff)
+let mergeFailed = UInt32(0xffff_ffff)
 
-private func mergeRuneSets(_ leftRunes: [Rune], _ rightRunes: [Rune], _ leftPC: UInt32, _ rightPC: UInt32)
+func mergeRuneSets(_ leftRunes: [Rune], _ rightRunes: [Rune], _ leftPC: UInt32, _ rightPC: UInt32)
   -> ([Rune], [UInt32])
 {
   let leftLen = leftRunes.count
@@ -297,16 +297,48 @@ private func makeOnePass(_ p0: OnePassProg) -> OnePassProg? {
 
   // check that paths from Alt instructions are unambiguous, and rebuild the new
   // program as a onepass program
-  func check(_ pc: UInt32) -> Bool {
+  //
+  // Go's check recurses along the program (up to its 1000 instructions); this runs the same
+  // visits with an explicit stack. Phase 0 enters an instruction, phase 1 follows Out returning,
+  // phase 2 follows Arg returning (Alt only). Any failure makes the whole program not one-pass,
+  // so it ends the walk at once, which is where Go's failure result propagates to as well.
+  func check(_ root: UInt32) -> Bool {
+    var frames: [(pc: UInt32, phase: Int)] = [(root, 0)]
+    while let (pc, phase) = frames.popLast() {
+      let ipc = Int(pc)
+      let op = p.inst[ipc].inst.op
+      switch (op, phase) {
+      case (_, 0):
+        if visitQueue.contains(pc) {
+          continue
+        }
+        visitQueue.insert(pc)
+        switch op {
+        case .alt, .altMatch, .capture, .nop, .emptyWidth:
+          frames.append((pc, 1))
+          frames.append((p.inst[ipc].inst.out, 0))
+        default:
+          checkStep(pc, phase: 0)
+        }
+      case (.alt, 1), (.altMatch, 1):
+        frames.append((pc, 2))
+        frames.append((p.inst[ipc].inst.arg, 0))
+      default:
+        if !checkStep(pc, phase: phase) {
+          return false
+        }
+      }
+    }
+    return true
+  }
+
+  /// The body of Go's check for pc, run once the recursive checks it depends on are done.
+  @discardableResult
+  func checkStep(_ pc: UInt32, phase: Int) -> Bool {
     var ok = true
     let ipc = Int(pc)
-    if visitQueue.contains(pc) {
-      return ok
-    }
-    visitQueue.insert(pc)
     switch p.inst[ipc].inst.op {
     case .alt, .altMatch:
-      ok = check(p.inst[ipc].inst.out) && check(p.inst[ipc].inst.arg)
       // check no-input paths to InstMatch
       var matchOut = m[Int(p.inst[ipc].inst.out)]
       var matchArg = m[Int(p.inst[ipc].inst.arg)]
@@ -337,14 +369,12 @@ private func makeOnePass(_ p0: OnePassProg) -> OnePassProg? {
       }
     case .capture, .nop:
       let out = p.inst[ipc].inst.out
-      ok = check(out)
       m[ipc] = m[Int(out)]
       // pass matching runes back through these no-ops.
       onePassRunes[ipc] = onePassRunes[Int(out)]
       makeNext(ipc, out)
     case .emptyWidth:
       let out = p.inst[ipc].inst.out
-      ok = check(out)
       m[ipc] = m[Int(out)]
       onePassRunes[ipc] = onePassRunes[Int(out)]
       makeNext(ipc, out)

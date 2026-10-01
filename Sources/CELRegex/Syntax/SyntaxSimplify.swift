@@ -12,14 +12,51 @@ extension Syntax.Regexp {
   /// may have been duplicated or removed. For example, the simplified form
   /// for /(x){1,2}/ is /(x)(x)?/ but both parentheses capture as $1.
   /// The returned regexp may share structure with or be the original.
+  ///
+  /// Go's Simplify recurses over the tree; this visits the same nodes in the same order with an
+  /// explicit stack, so trees up to the parser's height limit fit any thread's stack.
   package func simplify() -> Syntax.Regexp {
+    var stack: [(re: Syntax.Regexp, simplified: [Syntax.Regexp])] = [(self, [])]
+    while true {
+      let top = stack.count - 1
+      let re = stack[top].re
+      let done = stack[top].simplified.count
+      if done < re.simplifyChildren {
+        stack.append((re.sub[done], []))
+        continue
+      }
+      let result = re.simplifyStep(stack[top].simplified)
+      stack.removeLast()
+      if stack.isEmpty {
+        return result
+      }
+      stack[stack.count - 1].simplified.append(result)
+    }
+  }
+
+  /// The number of children Go's Simplify simplifies before combining.
+  private var simplifyChildren: Int {
+    switch op {
+    case .capture, .concat, .alternate:
+      return sub.count
+    case .star, .plus, .quest:
+      return 1
+    case .repeat:
+      return min == 0 && max == 0 ? 0 : 1
+    default:
+      return 0
+    }
+  }
+
+  /// One step of Go's Simplify, given the simplified children (subs[i] = Simplify(re.Sub[i])).
+  private func simplifyStep(_ subs: [Syntax.Regexp]) -> Syntax.Regexp {
     let re = self
     switch re.op {
     case .capture, .concat, .alternate:
       // Simplify children, building new Regexp if children change.
       var nre = re
       for (i, sub) in re.sub.enumerated() {
-        let nsub = sub.simplify()
+        let nsub = subs[i]
         if nre === re && nsub !== sub {
           // Start a copy.
           nre = re.copy()
@@ -33,7 +70,7 @@ extension Syntax.Regexp {
       return nre
 
     case .star, .plus, .quest:
-      let sub = re.sub[0].simplify()
+      let sub = subs[0]
       return simplify1(re.op, re.flags, sub, re)
 
     case .repeat:
@@ -44,7 +81,7 @@ extension Syntax.Regexp {
       }
 
       // The fun begins.
-      let sub = re.sub[0].simplify()
+      let sub = subs[0]
 
       // x{n,} means at least n matches of x.
       if re.max == -1 {
@@ -120,7 +157,13 @@ extension Syntax.Regexp {
 extension Syntax.Regexp {
   /// Reports whether the tree contains an OpRepeat node, which only Simplify removes.
   func containsRepeat() -> Bool {
-    op == .repeat || sub.contains { $0.containsRepeat() }
+    var found = false
+    forEachPreOrder { re in
+      if re.op == .repeat {
+        found = true
+      }
+    }
+    return found
   }
 }
 

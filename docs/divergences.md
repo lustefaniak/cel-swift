@@ -48,9 +48,14 @@ surface and in mechanics that do not change results:
   counted repetition get exactly Go's number.
 - **No machine pools.** Go caches matchers in `sync.Pool`s; the port allocates them per call, since
   the package has no global mutable state.
-- **`machine.add` uses an explicit work stack** instead of recursion, so very large programs cannot
-  overflow the (fixed-size) native stack. Threads are added in the same order, so match priority
-  is unchanged.
+- **No recursion over trees or programs.** Go recurses freely (its stacks grow), and accepted
+  patterns can produce trees 1000 levels deep (the parser's height limit, or alternation factoring
+  of `....x|....y`) and simplified trees several thousand deep (`x{0,1000}` nests 2000 levels).
+  Swift threads other than the main one have 512 KB stacks, so every such walk (parser size and
+  height checks, alternation factoring, `Simplify`, `Equal`, `String`, `MaxCap`/`CapNames`, the
+  compiler, `minInputLen`, the one-pass analysis, `machine.add`, and releasing a tree) runs on an
+  explicit stack. Each keeps Go's visiting order and side effects, so trees, programs, node reuse
+  and match priority are unchanged; `StackDepthTests` covers the limits.
 
 ## Values, types, declarations and the standard library
 

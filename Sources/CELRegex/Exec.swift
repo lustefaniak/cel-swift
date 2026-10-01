@@ -197,7 +197,9 @@ struct Machine {
     }
     let t = Int32(nthreads)
     nthreads += 1
-    caps.append(contentsOf: repeatElement(0, count: ncap))
+    if ncap > 0 {
+      caps.append(contentsOf: repeatElement(0, count: ncap))
+    }
     return t
   }
 

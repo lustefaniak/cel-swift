@@ -3,14 +3,50 @@
 // license that can be found in the LICENSE file.
 
 // Port of Go's regexp/onepass_test.go.
-//
-// TestMergeRuneSet is not ported yet: mergeRuneSets is private in OnePass.swift.
 
 import Testing
 
 @testable import CELRegex
 
 struct OnePassTests {
+  static let runeMergeTests:
+    [(left: [Rune], right: [Rune], merged: [Rune], next: [UInt32], leftPC: UInt32, rightPC: UInt32)] = [
+      // empty rhs
+      ([69, 69], [], [69, 69], [1], 1, 2),
+      // identical runes, identical targets
+      ([69, 69], [69, 69], [], [mergeFailed], 1, 1),
+      // identical runes, different targets
+      ([69, 69], [69, 69], [], [mergeFailed], 1, 2),
+      // append right-first
+      ([69, 69], [71, 71], [69, 69, 71, 71], [1, 2], 1, 2),
+      // append, left-first
+      ([71, 71], [69, 69], [69, 69, 71, 71], [2, 1], 1, 2),
+      // successful interleave
+      ([60, 60, 71, 71, 101, 101], [69, 69, 88, 88], [60, 60, 69, 69, 71, 71, 88, 88, 101, 101], [1, 2, 1, 2, 1], 1, 2),
+      // left surrounds right
+      ([69, 74], [71, 71], [], [mergeFailed], 1, 2),
+      // right surrounds left
+      ([69, 74], [68, 75], [], [mergeFailed], 1, 2),
+      // overlap at interval begin
+      ([69, 74], [74, 75], [], [mergeFailed], 1, 2),
+      // overlap ar interval end
+      ([69, 74], [65, 69], [], [mergeFailed], 1, 2),
+      // overlap from above
+      ([69, 74], [71, 74], [], [mergeFailed], 1, 2),
+      // overlap from below
+      ([69, 74], [65, 71], [], [mergeFailed], 1, 2),
+      // out of order []rune
+      ([69, 74, 60, 65], [66, 67], [], [mergeFailed], 1, 2),
+    ]
+
+  @Test func mergeRuneSet() {
+    for (ix, test) in Self.runeMergeTests.enumerated() {
+      let (merged, next) = mergeRuneSets(test.left, test.right, test.leftPC, test.rightPC)
+      #expect(merged == test.merged, "mergeRuneSet :\(ix) (\(test.left), \(test.right)) merged")
+      #expect(next == test.next, "mergeRuneSet :\(ix) (\(test.left), \(test.right)) next")
+    }
+  }
+
   static let onePassTests: [(re: String, isOnePass: Bool)] = [
     (#"^(?:a|(?:a*))$"#, false),
     (#"^(?:(a)|(?:a*))$"#, false),
