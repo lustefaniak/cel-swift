@@ -166,6 +166,10 @@ messages, error node ids, observed ids and runtime cost). The differences:
   `mutableMap`) are `@unchecked Sendable`: each is created by one comprehension evaluation, reachable only
   through its accumulator variable, and converted to an immutable list or map before the comprehension
   returns.
+- **Pruned optionals are calls, not literals.** cel-go's `PruneAst` writes a known optional value as a
+  literal holding an optional constant, which its unparser prints as `optional.of(x)`; `Constant` has no
+  optional case, so the residual AST contains the calls `optional.of(x)` / `optional.none()` instead. The
+  unparsed residual is the same. Pruned list optional indices are sorted (cel-go uses Go map order).
 - **Deep expressions are planned, checked and evaluated on a large stack.** Like the parser (see
   `LargeStack`), `ProgramEnvironment` runs the checker, the planner and evaluation on a thread with a stack
   sized for the expression depth when the calling thread's stack may not suffice; Go has growable stacks.
