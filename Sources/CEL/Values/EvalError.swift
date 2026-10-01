@@ -35,7 +35,7 @@ public struct EvalError: Error, Sendable, Hashable, CustomStringConvertible {
   public var description: String { message }
 
   /// Returns the error labelled with `id` unless it already carries an expression id.
-  public func labelled(with id: Int64) -> EvalError {
+  func labelled(with id: Int64) -> EvalError {
     if exprID != 0 { return self }
     var copy = self
     copy.exprID = id

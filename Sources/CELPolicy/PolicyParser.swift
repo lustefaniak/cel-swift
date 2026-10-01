@@ -210,7 +210,7 @@ public struct PolicyParser: Sendable {
 ///
 /// Tag visitors receive the context to parse nested policy elements, record source positions and
 /// report errors.
-public struct PolicyParserContext {
+public struct PolicyParserContext: Sendable {
   let visitor: any PolicyTagVisitor
   let source: PolicySource
   let inlineStyleVariables: Bool
