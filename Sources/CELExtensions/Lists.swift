@@ -51,7 +51,8 @@ struct ListsLibrary {
   var library: Library {
     Library(
       name: "cel.lib.ext.lists", alias: "lists", version: version,
-      functions: makeDeclarations(try functions()))
+      functions: makeDeclarations(try functions()),
+      macros: version >= 2 ? [ListsMacros.sortBy] : [])
   }
 
   // swift-format-ignore: FunctionLength

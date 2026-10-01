@@ -48,6 +48,10 @@ public struct Library: Sendable {
   /// its type provider so the checker can resolve their names.
   package var types: [CELType]
 
+  /// Parser macros, added to the environment's macros (replacing standard macros with the same
+  /// key, as cel-go's `cel.Macros` does).
+  package var macros: [Macro]
+
   /// Names of libraries that must be configured in the same environment, with the error an
   /// environment reports when one is missing (cel-go checks this with an `EnvOption`).
   package var requiredLibraries: [(name: String, error: String)]
@@ -64,6 +68,7 @@ public struct Library: Sendable {
     functions: [FunctionDecl] = [],
     variables: [VariableDecl] = [],
     types: [CELType] = [],
+    macros: [Macro] = [],
     requiredLibraries: [(name: String, error: String)] = [],
     homogeneousLiteralExemptFunctions: [String] = []
   ) {
@@ -73,6 +78,7 @@ public struct Library: Sendable {
     self.functions = functions
     self.variables = variables
     self.types = types
+    self.macros = macros
     self.requiredLibraries = requiredLibraries
     self.homogeneousLiteralExemptFunctions = homogeneousLiteralExemptFunctions
   }

@@ -46,7 +46,7 @@ struct MathLibrary {
   var library: Library {
     Library(
       name: "cel.lib.ext.math", alias: "math", version: version,
-      functions: makeDeclarations(try functions()))
+      functions: makeDeclarations(try functions()), macros: MathMacros.macros)
   }
 
   private func minMax(_ name: String, prefix: String, pair: @escaping FunctionBinding.Binary,

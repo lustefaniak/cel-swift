@@ -406,7 +406,7 @@ extension Macro {
       step: step, result: result)
   }
 
-  private static func makeMap(_ eh: ExprHelper, _ target: Expr?, _ args: [Expr]) throws(CELError)
+  package static func makeMap(_ eh: ExprHelper, _ target: Expr?, _ args: [Expr]) throws(CELError)
     -> Expr?
   {
     guard let v = extractIdent(args[0]) else {

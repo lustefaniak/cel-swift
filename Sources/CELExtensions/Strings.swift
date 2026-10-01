@@ -393,7 +393,7 @@ func join(_ list: any ListValue, _ separator: String, checkElements: Bool) -> Va
       if checkElements {
         return errorValue("join: invalid input: \(formatGoValue(elem))")
       }
-      return errorValue("type conversion error from '\(elem.runtimeTypeName)' to 'string'")
+      return errorValue(nativeStringConversionError(elem))
     }
     if i != 0 {
       out += separator
@@ -422,4 +422,24 @@ func quote(_ s: String) -> String {
     }
   }
   return out + "\""
+}
+
+/// The error of cel-go's `ConvertToNative(string)` for a non-string value, as `join` reports it
+/// before version 2.
+private func nativeStringConversionError(_ value: Value) -> String {
+  switch value {
+  case .int: "unsupported type conversion from 'int' to string"
+  case .uint: "unsupported type conversion from 'uint' to string"
+  case .bool: "type conversion error from bool to 'string'"
+  case .bytes: "type conversion error from Bytes to 'string'"
+  case .double: "type conversion error from Double to 'string'"
+  case .duration: "type conversion error from 'Duration' to 'string'"
+  case .timestamp: "type conversion error from 'Timestamp' to 'string'"
+  case .list: "type conversion error from list to 'string'"
+  case .map: "type conversion error from map to 'string'"
+  case .null: "type conversion error from 'null_type' to 'string'"
+  case .type: "type conversion not supported for 'type'"
+  case .error(let e): e.message
+  default: "type conversion error from '\(value.runtimeTypeName)' to 'string'"
+  }
 }
