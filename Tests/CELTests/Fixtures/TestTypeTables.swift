@@ -279,6 +279,15 @@ enum TestTypeTables {
       Field(name: "var", jsonName: "var", type: .bool),
       Field(name: "void", jsonName: "void", type: .bool),
       Field(name: "while", jsonName: "while", type: .bool),
+      Field(name: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.int64_ext", jsonName: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.int64_ext", type: .int),
+      Field(name: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.message_scoped_nested_ext", jsonName: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.message_scoped_nested_ext", type: .object("cel.expr.conformance.proto2.TestAllTypes")),
+      Field(name: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.message_scoped_repeated_test_all_types", jsonName: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.message_scoped_repeated_test_all_types", type: .list(.object("cel.expr.conformance.proto2.TestAllTypes"))),
+      Field(name: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.nested_enum_ext", jsonName: "cel.expr.conformance.proto2.Proto2ExtensionScopedMessage.nested_enum_ext", type: .int),
+      Field(name: "cel.expr.conformance.proto2.int32_ext", jsonName: "cel.expr.conformance.proto2.int32_ext", type: .int),
+      Field(name: "cel.expr.conformance.proto2.nested_enum_ext", jsonName: "cel.expr.conformance.proto2.nested_enum_ext", type: .int),
+      Field(name: "cel.expr.conformance.proto2.nested_ext", jsonName: "cel.expr.conformance.proto2.nested_ext", type: .object("cel.expr.conformance.proto2.TestAllTypes")),
+      Field(name: "cel.expr.conformance.proto2.repeated_test_all_types", jsonName: "cel.expr.conformance.proto2.repeated_test_all_types", type: .list(.object("cel.expr.conformance.proto2.TestAllTypes"))),
+      Field(name: "cel.expr.conformance.proto2.test_all_types_ext", jsonName: "cel.expr.conformance.proto2.test_all_types_ext", type: .object("cel.expr.conformance.proto2.TestAllTypes")),
     ],
     "cel.expr.conformance.proto2.TestAllTypes.MapBoolAnyEntry": [
       Field(name: "key", jsonName: "key", type: .bool),
@@ -1867,6 +1876,8 @@ enum TestTypeTables {
       Field(name: "foo_bar", jsonName: "fooBar", type: .string),
       Field(name: "in", jsonName: "in", type: .int),
       Field(name: "name", jsonName: "name", type: .string),
+      Field(name: "google.expr.proto2.test.ExtendedExampleType.enum_ext", jsonName: "google.expr.proto2.test.ExtendedExampleType.enum_ext", type: .int),
+      Field(name: "google.expr.proto2.test.ExtendedExampleType.extended_examples", jsonName: "google.expr.proto2.test.ExtendedExampleType.extended_examples", type: .list(.string)),
     ],
     "google.expr.proto2.test.ExtendedExampleType": [
     ],
@@ -2045,6 +2056,9 @@ enum TestTypeTables {
     ],
     "google.protobuf.Empty": [
     ],
+    "google.protobuf.FieldMask": [
+      Field(name: "paths", jsonName: "paths", type: .list(.string)),
+    ],
     "google.protobuf.FloatValue": [
       Field(name: "value", jsonName: "value", type: .double),
     ],
@@ -2109,6 +2123,9 @@ enum TestTypeTables {
     "google.expr.proto3.test.GlobalEnum.GAR": 1,
     "google.expr.proto3.test.GlobalEnum.GAZ": 2,
     "google.expr.proto3.test.GlobalEnum.GOO": 0,
+    "google.expr.proto3.test.ImportedGlobalEnum.IMPORT_BAR": 1,
+    "google.expr.proto3.test.ImportedGlobalEnum.IMPORT_BAZ": 2,
+    "google.expr.proto3.test.ImportedGlobalEnum.IMPORT_FOO": 0,
     "google.expr.proto3.test.TestAllTypes.NestedEnum.BAR": 1,
     "google.expr.proto3.test.TestAllTypes.NestedEnum.BAZ": 2,
     "google.expr.proto3.test.TestAllTypes.NestedEnum.FOO": 0,

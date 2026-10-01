@@ -75,7 +75,11 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   /// Registers a struct type, making it available to the checker, to object construction and as
   /// a type value.
   public mutating func register(_ descriptor: any StructTypeDescriptor) throws {
-    try register(CELType.objectType(descriptor.typeName))
+    // Well-known type names are not registered as type identifiers, since they map to CEL types
+    // such as `map(string, dyn)` (cel-go `registerAllTypes`); their descriptors still are.
+    if CELType.checkedWellKnowns[descriptor.typeName] == nil {
+      try register(CELType.objectType(descriptor.typeName))
+    }
     structTypes[descriptor.typeName] = descriptor
   }
 
