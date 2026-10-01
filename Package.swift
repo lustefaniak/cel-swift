@@ -149,15 +149,19 @@ if Context.environment["CEL_FUZZ"] == "1" {
   package.targets.append(
     .target(
       name: "CELFuzzSupport",
-      dependencies: ["CEL", "CELProtobuf", "CELSpecProtos", "CELFuzzDriver"],
+      dependencies: ["CEL", "CELProtobuf", "CELSpecProtos"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ))
   for name in ["cel-fuzz-parser", "cel-fuzz-checker", "cel-fuzz-evaluator"] {
     package.targets.append(
       .executableTarget(
         name: name,
-        dependencies: ["CEL", "CELFuzzSupport"],
+        dependencies: ["CELFuzzDriver", "CELFuzzSupport"],
         swiftSettings: [.swiftLanguageMode(.v6), .unsafeFlags(["-parse-as-library"])]
       ))
   }
+  // Replays inputs through the target bodies without libFuzzer (any platform), for leak checks.
+  package.targets.append(
+    .executableTarget(
+      name: "cel-fuzz-leakcheck", dependencies: ["CELFuzzSupport"], swiftSettings: [.swiftLanguageMode(.v6)]))
 }

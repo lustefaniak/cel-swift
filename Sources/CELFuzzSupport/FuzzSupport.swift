@@ -5,7 +5,6 @@
 import CEL
 import CELProtobuf
 import CELSpecProtos
-import CELFuzzDriver
 
 /// The environment and bindings the checker and evaluator fuzzers run against.
 package enum FuzzSupport {
@@ -53,17 +52,6 @@ package enum FuzzSupport {
     "t": .timestamp(CELTimestamp(secondsSinceEpoch: 1_700_000_000, nanoseconds: 5)),
     "dur": .duration(CELDuration(nanoseconds: 90_000_000_000)),
   ]
-
-  /// Runs libFuzzer's driver from a target's entry point (`<module>_main`, which SwiftPM links as
-  /// `main`).
-  package static func runDriver(
-    _ argc: CInt, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?,
-    _ callback: @convention(c) (UnsafePointer<UInt8>?, Int) -> CInt
-  ) -> CInt {
-    var argc = argc
-    var argv = argv
-    return LLVMFuzzerRunDriver(&argc, &argv, callback)
-  }
 
   /// The input as an expression: UTF-8, invalid sequences repaired.
   package static func expression(_ data: UnsafePointer<UInt8>?, _ size: Int) -> String {
