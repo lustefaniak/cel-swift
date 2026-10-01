@@ -24,13 +24,32 @@ jobs:
       - run: swift test --skip-build
       - name: Conformance dashboard
         run: python3 tools/dashboard/dashboard.py --stale
+      - name: License headers
+        run: python3 tools/check-headers/check_headers.py
+      - name: Doc comments and DocC catalogs
+        run: tools/check-docs/check-docs.sh
+
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      # SwiftPM cross-builds for the simulator SDK without a simulator runtime; CELTest and
+      # CELProtobuf between them depend on every library target.
+      - name: Build the libraries for the iOS simulator
+        run: |
+          sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          for target in CELTest CELProtobuf; do
+            swift build --triple arm64-apple-ios16.0-simulator --sdk "$sdk" --target "$target"
+          done
 
   linux:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        swift: ["6.0", "6.1"]
+        swift: ["6.0", "6.1", "6.2", "6.3"]
     container: swift:${{ matrix.swift }}-noble
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +62,38 @@ jobs:
       - run: swift --version
       - run: swift build --build-tests
       - run: swift test --skip-build
+
+  static-linux:
+    runs-on: ubuntu-latest
+    container: swift:6.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      # The static Linux SDK must match the toolchain exactly (swift:6.0-noble is 6.0.3).
+      - name: Install the static Linux SDK
+        run: >
+          swift sdk install
+          https://download.swift.org/swift-6.0.3-release/static-sdk/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz
+          --checksum 67f765e0030e661a7450f7e4877cfe008db4f57f177d5a08a6e26fd661cdd0bd
+      - name: Build the libraries and the command line tool
+        run: |
+          swift build --swift-sdk x86_64-swift-linux-musl --product cel-swift
+          swift build --swift-sdk x86_64-swift-linux-musl --target CELTest
+          swift build --swift-sdk x86_64-swift-linux-musl --target CELProtobuf
+      - name: Run the statically linked command line tool
+        run: .build/x86_64-swift-linux-musl/debug/cel-swift eval "[1, 2, 3].map(x, x * 2)"
+
+  api-breakage:
+    runs-on: macos-15
+    # Report only before 1.0: a minor release may still break the API (CLAUDE.md).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Select latest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+      - name: Diagnose API-breaking changes against the last tag
+        run: tools/api-check/check-api.sh
 
   oracle:
     runs-on: ubuntu-latest
