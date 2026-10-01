@@ -14,13 +14,18 @@
 //
 // Ported from cel-go common/stdlib/standard.go (inTimeZone).
 //
-// This is the only file in `CEL` that uses Foundation: IANA time zone rules come from
-// `TimeZone(identifier:)`. Everything else about timestamps is integer civil-calendar arithmetic.
+// IANA time zones are read from the system tz database as Go does (TZif.swift). On Darwin,
+// where that directory may be unreadable (iOS sandboxes), Foundation's `TimeZone` is the fallback;
+// this is the only Foundation use in `CEL`. Linux uses no Foundation: FoundationEssentials alone
+// cannot resolve zone names without FoundationInternationalization (ICU).
 
-#if canImport(FoundationEssentials)
-  import FoundationEssentials
-#else
+#if canImport(Darwin)
   import Foundation
+#endif
+#if canImport(Glibc)
+  import Glibc
+#elseif canImport(Musl)
+  import Musl
 #endif
 
 /// Resolves the UTC offset, in seconds, of the time zone `name` at the instant `ts`.
@@ -80,18 +85,40 @@ private func ianaOffset(_ name: String, at ts: CELTimestamp) -> Result<Int64, Ev
   // Go rejects names that could escape the zoneinfo directory.
   let hasDotDot = bytes.split(separator: UInt8(ascii: "/"), omittingEmptySubsequences: false)
     .contains { $0.elementsEqual("..".utf8) }
-  if bytes.first == UInt8(ascii: "/") || bytes.contains(UInt8(ascii: "\\")) || hasDotDot {
+  if bytes.first == UInt8(ascii: "/") || bytes.first == UInt8(ascii: "\\") || hasDotDot {
     return .failure(EvalError("time: invalid location name"))
   }
-  let zone: TimeZone?
   if name == "Local" {
-    zone = TimeZone.current
-  } else {
-    zone = TimeZone(identifier: name)
+    return .success(localOffset(at: ts))
   }
-  guard let zone else {
-    return .failure(EvalError("unknown time zone \(name)"))
+  if let location = TZifLocation.load(named: name) {
+    return .success(location.offset(at: ts.secondsSinceEpoch))
   }
-  let date = Date(timeIntervalSince1970: Double(ts.secondsSinceEpoch))
-  return .success(Int64(zone.secondsFromGMT(for: date)))
+  #if canImport(Darwin)
+    if let zone = TimeZone(identifier: name) {
+      let date = Date(timeIntervalSince1970: Double(ts.secondsSinceEpoch))
+      return .success(Int64(zone.secondsFromGMT(for: date)))
+    }
+  #endif
+  return .failure(EvalError("unknown time zone \(name)"))
+}
+
+/// Go's `time.Local`: the `TZ` environment variable (empty means UTC), else `/etc/localtime`.
+private func localOffset(at ts: CELTimestamp) -> Int64 {
+  #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
+    if let tz = getenv("TZ") {
+      let name = String(cString: tz)
+      if name.isEmpty || name == "UTC" {
+        return 0
+      }
+      if let location = TZifLocation.load(named: name) {
+        return location.offset(at: ts.secondsSinceEpoch)
+      }
+      return 0
+    }
+  #endif
+  if let location = TZifLocation.load(path: "/etc/localtime") {
+    return location.offset(at: ts.secondsSinceEpoch)
+  }
+  return 0
 }
