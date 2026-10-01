@@ -27,6 +27,48 @@ Pure-Swift port of cel-go. The plan, architecture, milestones and conformance ta
 - `CEL` has zero dependencies. Protobuf lives in `CELProtobuf`, YAML in `CELPolicy`.
 - Tests use swift-testing (`import Testing`).
 
+## Skills
+
+Vendored in `.claude/skills` (provenance in its `README.md`). Load the matching one before the work, not
+after:
+
+- `swift-api-design-guidelines`: any new or changed `public` / `package` declaration.
+- `swift-concurrency-pro`: anything touching `Sendable`, isolation, cancellation or the interrupt check.
+- `swift-testing-pro`: writing or reviewing tests.
+
+The concurrency and testing skills target Swift 6.2. **This repo's floor is Swift 6.0 on macOS 13 / iOS 16**,
+and CI builds with 6.0, so where a skill and this file disagree, this file wins:
+
+- Not available on the floor: `@concurrent`, `Task.immediate`, default-actor-isolation settings, raw
+  identifiers as test names, exit tests, attachments. Use them only behind `#if compiler(>=6.2)` when a
+  fallback exists, otherwise not at all.
+- `Synchronization` (`Mutex`, `Atomic`) needs macOS 15 / iOS 18. The core is synchronous value code and
+  should need neither; if something does, raise it before reaching for `@unchecked Sendable`.
+
+## Library practices
+
+This is a library other packages depend on, so the public surface is the product.
+
+- **Access control.** `public` is a commitment; default to `internal`. Code shared between this package's
+  targets (e.g. `CELExtensions` using `CEL` internals) is `package`, never `public` and never
+  `@_spi` / `@testable` in non-test code.
+- **Source compatibility.** SemVer from the first tag. Before 1.0 a minor bump may break; after 1.0 only a
+  major may. Adding a case to a public enum, a requirement to a public protocol without a default, or
+  changing a signature is breaking. Once a tag exists, check with
+  `swift package diagnose-api-breaking-changes <last-tag>` before committing API changes.
+- **Public enums clients switch over** (`Value`, `CELType`) are decided deliberately: either the case list
+  is closed by the spec, or clients get accessors instead of exhaustive switches.
+- **Errors.** Public errors are concrete types (`CompileError`, `EvalError`) carrying source locations.
+  Typed throws (`throws(CompileError)`) only where the error set is truly closed; otherwise plain `throws`.
+- **Performance annotations.** `@inlinable` / `@usableFromInline` only with a benchmark showing the gain:
+  an inlinable body becomes part of the client's compiled code and constrains later changes.
+- **No name clashes with the standard library** in public API (`Duration`, `Error`, `Type`, `Optional`,
+  `Regex`): qualify or rename, since clients import both.
+- **Portability.** Everything in `Sources` builds on Linux; Darwin-only code needs `#if canImport(Darwin)`
+  and a Linux path. CI is the check, not the local macOS build.
+- **Documentation.** Every `public` declaration has a doc comment in DocC markup; the API design skill sets
+  the shape.
+
 ## Repo
 
 - `third_party/cel-spec` is a submodule pinned to a release tag (currently v0.25.3). Bump deliberately, with
