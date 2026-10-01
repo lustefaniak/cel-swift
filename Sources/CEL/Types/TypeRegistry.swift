@@ -23,7 +23,7 @@
 public struct TypeRegistry: TypeProvider, TypeAdapter {
   private var revTypeMap: [String: CELType] = [:]
   private var structTypes: [String: any StructTypeDescriptor] = [:]
-  private var enumValues: [String: Int64] = [:]
+  private var enumValues: [String: Int32] = [:]
   private var fallbackProvider: (any TypeProvider)?
   private var fallbackAdapter: (any TypeAdapter)?
   /// Whether enum values are ``EnumValue``s rather than `int`s; see ``Environment/Option/strongEnums``.
@@ -86,7 +86,10 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   }
 
   /// Registers an enum value under its fully qualified name, such as `pkg.Color.RED`.
-  public mutating func registerEnumValue(_ qualifiedName: String, number: Int64) {
+  ///
+  /// Enum numbers are 32-bit, as in protobuf; the value is an `int`, or with strong enums a value
+  /// of the enum named by everything before the last dot.
+  public mutating func registerEnumValue(_ qualifiedName: String, number: Int32) {
     enumValues[qualifiedName] = number
   }
 
@@ -161,12 +164,12 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   // MARK: Strong enums
 
   /// A registered enum value: an `int`, or with strong enums a value of the enum its name is in.
-  private func registeredEnumValue(_ name: String, _ number: Int64) -> Value {
+  private func registeredEnumValue(_ name: String, _ number: Int32) -> Value {
     guard usesStrongEnums, let dot = name.utf8.lastIndex(of: UInt8(ascii: ".")) else {
-      return .int(number)
+      return .int(Int64(number))
     }
     let typeName = String(decoding: name.utf8[..<dot], as: UTF8.self)
-    return .object(EnumValue(typeName: typeName, number: Int32(truncatingIfNeeded: number)))
+    return .object(EnumValue(typeName: typeName, number: number))
   }
 
   /// The enum types of the registered enum values: everything before the last dot of their names.
@@ -176,7 +179,7 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
       guard let dot = name.utf8.lastIndex(of: UInt8(ascii: ".")) else { continue }
       let typeName = String(decoding: name.utf8[..<dot], as: UTF8.self)
       let valueName = String(decoding: name.utf8[name.utf8.index(after: dot)...], as: UTF8.self)
-      types[typeName, default: [:]][valueName] = Int32(truncatingIfNeeded: number)
+      types[typeName, default: [:]][valueName] = number
     }
     return types
   }

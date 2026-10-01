@@ -113,15 +113,18 @@ struct StrongEnumTests {
     #expect(try evaluate("my.Color('RED') == my.Color.RED && type(my.Color.RED) == my.Color", in: env) == true)
   }
 
-  /// Enum numbers are 32-bit (protobuf, cel-go's `EnumValueDescription.Value() int32`); a strong
-  /// enum value must not hold a different number than the one registered.
-  @Test func registeredEnumValuesOutsideInt32() throws {
+  /// Enum numbers are 32-bit (protobuf, cel-go's `EnumValueDescription.Value() int32`), so
+  /// `registerEnumValue` takes an `Int32`: a strong enum value cannot hold a different number
+  /// than the one registered.
+  @Test func registeredEnumValuesAtInt32Bounds() throws {
     var registry = TypeRegistry()
-    registry.registerEnumValue("my.Size.HUGE", number: 4_294_967_298)
+    registry.registerEnumValue("my.Size.HUGE", number: .max)
+    registry.registerEnumValue("my.Size.TINY", number: .min)
     let env = try Environment(.typeProvider(registry), .strongEnums)
-    let number = try evaluate("int(my.Size.HUGE)", in: env)
-    withKnownIssue("the number wraps to 32 bits") {
-      #expect(number == 4_294_967_298)
-    }
+    #expect(try evaluate("int(my.Size.HUGE)", in: env) == 2_147_483_647)
+    #expect(try evaluate("int(my.Size.TINY)", in: env) == -2_147_483_648)
+    #expect(try evaluate("my.Size(2147483647) == my.Size.HUGE", in: env) == true)
+    let legacy = try Environment(.typeProvider(registry))
+    #expect(try evaluate("my.Size.TINY", in: legacy) == -2_147_483_648)
   }
 }
