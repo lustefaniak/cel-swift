@@ -35,6 +35,10 @@
 ///
 /// Use ``extending(_:)`` to derive an environment with more declarations; the original is not
 /// affected. Environments are cheap to share between threads and tasks.
+///
+/// Parsing gets faster as an environment is used: the parser's prediction cache, shared by the
+/// environment, its copies and the environments extended from it, learns the grammar paths the
+/// parsed expressions take. Keep a long-lived environment rather than creating one per expression.
 public struct Environment: Sendable {
   package let configuration: Configuration
   package let checkerEnv: CheckerEnv
@@ -130,7 +134,9 @@ public struct Environment: Sendable {
     }
     self.configuration = configuration
     do {
-      self.parser = try Parser(options: configuration.parserOptions)
+      // The prediction cache depends only on the grammar: extended environments keep warming the
+      // base's.
+      self.parser = try Parser(options: configuration.parserOptions, sharingPredictionCacheWith: base?.parser)
     } catch {
       throw DeclarationError(error.description)
     }

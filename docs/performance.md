@@ -74,11 +74,9 @@ Earlier changes on main, measured back to back in their commit messages: policy 
 
 ## Where the time goes
 
-- **Parse** (8× cel-go): about half is ANTLR adaptive prediction rebuilding the prediction DFAs that
-  antlr4-go keeps in a process-wide static cache; with the cache warm (shared cache prototype) parsing is
-  2–3× cel-go, the remainder being parse-tree and token allocation and release (ARC frees the per-parse
-  tree eagerly, about a fifth of the profile) and the thread hop `LargeStack` makes for inputs with many
-  operators.
+- **Parse** (2–3× cel-go with a warm prediction cache, 8× before it was shared): what remains is
+  parse-tree and token allocation and release (ARC frees the per-parse tree eagerly, about a fifth of the
+  profile) and the thread hop `LargeStack` makes for inputs with many operators.
 - **Check** (1.3–2× cel-go, faster on `long-or`): no single hotspot.
 - **Plan** (about 3× cel-go): node and attribute allocation, `Expr.depth`, and freeing the previous
   program; cel-go plans into a garbage-collected graph.
@@ -105,16 +103,38 @@ enum, invisible to source but part of the ABI (relevant only with library evolut
 does not enable). Going further (final classes in place of the existentials, dropping `as? ArrayList`
 casts) would change the public collection API and was rejected (`docs/decisions.md` § 6).
 
-### (b) Shared ANTLR prediction cache (decided: implementing)
+### (b) Shared ANTLR prediction cache: landed
 
-The prototype (`perf/shared-parser-cache`) moves the per-parse `decisionToDFA` into `PredictionCache.shared`,
-an `@unchecked Sendable` final class guarded by a pthread mutex (`Synchronization.Mutex` needs macOS 15 /
-iOS 18), and runs all of `adaptivePredict` under the lock. Single-threaded parse becomes 3–5× faster (policy
-1.06 ms → 461 µs, comprehension-nested 422 → 87 µs), 2–3× cel-go. A test parses concurrently from 16 tasks
-and compares with sequential parses.
+Each `Parser` (so each `Environment`, shared with its copies and the environments `extending` it) owns a
+`PredictionCache` holding the prediction DFAs that were rebuilt for every parse before; antlr4-go keeps them
+in a process-wide static. Locking is antlr4-go's: read-write locks around DFA state lookup and insertion
+and around edge reads and updates, target states computed outside them (`docs/decisions.md` § 9).
 
-Costs: global mutable state in `CEL`, a cache that grows with the variety of inputs (as in cel-go, never
-trimmed), and the coarse lock serializes prediction: with 8 threads parsing `arith` at once (`--threads 8`)
-the prototype managed one parse per 135 µs of wall time against 92 µs on a single thread, so concurrent
-parsers ran slower together than one alone. The decision (`docs/decisions.md` § 9) is antlr4-go's finer
-locking (`stateMu`, `edgeMu`, target states computed outside the lock), being implemented.
+Parse, before (`ea241f9`) and after, `tools/bench/bench.py --swift-only --phase pa --rounds 9 --threads n`
+(`--threads` runs the phase on n threads at once; the time is wall time per parse), best of 3 interleaved
+passes under load average 90 to 190 on 10 cores, so the 4- and 8-thread rows mostly show how little CPU
+the machine had to spare:
+
+| case | 1 thread before | after | 4 threads before | after | 8 threads before | after |
+|---|---:|---:|---:|---:|---:|---:|
+| arith | 290.9 µs | 93.0 µs | 166.9 µs | 38.7 µs | 209.0 µs | 37.7 µs |
+| select-chain | 506.2 µs | 167.5 µs | 334.2 µs | 66.9 µs | 384.2 µs | 63.4 µs |
+| literals | 555.4 µs | 198.7 µs | 279.9 µs | 79.4 µs | 404.0 µs | 69.8 µs |
+| policy | 944.9 µs | 461.9 µs | 513.5 µs | 223.3 µs | 631.0 µs | 292.9 µs |
+| comprehension-map-filter | 501.8 µs | 151.4 µs | 343.9 µs | 64.3 µs | 331.2 µs | 57.6 µs |
+| comprehension-nested | 412.4 µs | 88.0 µs | 349.1 µs | 34.2 µs | 342.3 µs | 32.5 µs |
+| string-ops | 436.1 µs | 115.4 µs | 339.1 µs | 49.2 µs | 336.3 µs | 46.9 µs |
+| long-or | 1.44 ms | 1.29 ms | 716.7 µs | 623.0 µs | 765.8 µs | 763.8 µs |
+
+Single-threaded parse is 2 to 5 times faster, 2–3× cel-go. With several threads the cache is shared and
+still scales: 4 threads parse 2 to 2.6 times as many expressions as one (main: 1.2 to 2 times). The
+coarse-lock prototype (`perf/shared-parser-cache`, all of `adaptivePredict` under one mutex) measured in
+the same session ran slower with threads than alone (arith 92 µs on one thread, 100 µs per parse on 8;
+fine locking 41 µs), and the same fine locking with plain mutexes in place of the read-write locks got
+1.7 to 2.7 times slower than the read-write locks at 8 threads (arith 101 against 39 µs). `long-or` gains
+little: its time is in parse-tree allocation and the `LargeStack` thread hop, not in prediction.
+
+Memory: the cache grows with the variety of parsed inputs and is never trimmed (as in cel-go), and it is
+freed with the environments using it; `DFA.deinit` breaks the edge cycles. Replaying the parser fuzz
+corpus 5 times through `cel-fuzz-leakcheck` (whose parsers keep their caches) holds RSS at 16 MB from the
+first round on, and `leaks --atExit` reports no leaks for the parser and checker targets.

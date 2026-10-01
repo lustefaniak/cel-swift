@@ -57,4 +57,6 @@ leaks --atExit -- .build/leakcheck/release/cel-fuzz-leakcheck checker 1 .build-f
 
 `cel-fuzz-leakcheck` also prints the slowest inputs of the first round. The parser target is the slow one
 (about 10 runs/s under ASan): long inputs of nested unary operators cost ANTLR's adaptive prediction 100 ms
-and more, about twice cel-go's time, since the prediction DFA is rebuilt for every parse.
+and more on a cold prediction cache. The parser target's parsers keep their caches across inputs, as a long-lived
+`Environment` does, so the cache grows with the corpus; RSS that levels off after the first round is that
+cache, not a leak.

@@ -61,18 +61,21 @@ final class ParserRuntime {
 
   // MARK: Prediction (antlr ParserATNSimulator)
 
-  private var decisionToDFA: [DFA?]
+  /// The prediction DFAs, shared with other parses; see `PredictionCache` for what its locks guard.
+  private let cache: PredictionCache
+  private let errorState: DFAState
   private var mergeCache: MergeCache?
   private var startIndex = 0
   private var outerContext: ParserRuleContext?
   private var currentDFA: DFA?
-  private let errorState = DFAState(stateNumber: Int.max, configs: ATNConfigSet(fullCtx: false))
 
   init(
     input: [Unicode.Scalar], sourceInfo: SourceInfo, errors: CELErrors, maxRecursionDepth: Int,
-    errorReportingLimit: Int, errorRecoveryLimit: Int, lookaheadLimit: Int
+    errorReportingLimit: Int, errorRecoveryLimit: Int, lookaheadLimit: Int, cache: PredictionCache
   ) {
     self.atn = celParserATN
+    self.cache = cache
+    self.errorState = cache.errorState
     self.lexer = CELLexer(input: input)
     self.sourceInfo = sourceInfo
     self.errors = errors
@@ -80,7 +83,6 @@ final class ParserRuntime {
     self.errorReportingLimit = errorReportingLimit
     self.errorRecoveryLimit = errorRecoveryLimit
     self.lookaheadLimit = lookaheadLimit
-    self.decisionToDFA = Array(repeating: nil, count: atn.decisionToState.count)
   }
 
   // MARK: - Token stream
@@ -742,51 +744,49 @@ final class ParserRuntime {
 
   // MARK: - Adaptive prediction (antlr ParserATNSimulator)
 
-  private func dfa(_ decision: Int) -> DFA {
-    if let d = decisionToDFA[decision] {
-      return d
-    }
-    let d = DFA(atn: atn, decision: decision)
-    decisionToDFA[decision] = d
-    return d
-  }
-
   /// antlr `AdaptivePredict`. Sets `error` on failure and returns 0 (ATNInvalidAltNumber).
   func adaptivePredict(_ decision: Int) throws -> Int {
     let outer = ctx
     startIndex = tokenIndex
     outerContext = outer
-    let dfa = dfa(decision)
+    let dfa = cache.decisionToDFA[decision]
     currentDFA = dfa
     let index = tokenIndex
-    var s0: DFAState?
-    if dfa.precedenceDfa {
-      s0 = dfa.precedenceStartState(precedence)
-    } else {
-      s0 = dfa.s0
-    }
-    if s0 == nil, let snapshot = ParserRuntime.startStateSnapshot(decision, precedence) {
-      // The SLL start state depends only on the ATN and the precedence: reuse the precomputed one.
-      let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: snapshot.materialize()))
+    let precedence = precedence
+    var s0: DFAState? = cache.stateLock.withReadLock {
       if dfa.precedenceDfa {
-        dfa.setPrecedenceStartState(precedence, start)
-      } else {
-        dfa.s0 = start
+        return cache.edgeLock.withReadLock { dfa.precedenceStartState(precedence) }
       }
-      s0 = start
+      return dfa.s0
     }
     if s0 == nil {
-      let s0Closure = computeStartState(dfa.atnStartState, nil, fullCtx: false)
-      if dfa.precedenceDfa {
-        dfa.s0?.configs = s0Closure
-        let filtered = applyPrecedenceFilter(s0Closure)
-        let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: filtered))
-        dfa.setPrecedenceStartState(precedence, start)
-        s0 = start
+      // Computed outside the locks; a parse that races us to it publishes an equal state, which
+      // addDFAState then returns to both.
+      if let snapshot = ParserRuntime.startStateSnapshot(decision, precedence) {
+        // The SLL start state depends only on the ATN and the precedence: reuse the precomputed one.
+        let configs = snapshot.materialize()
+        s0 = cache.stateLock.withWriteLock {
+          let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: configs))
+          if dfa.precedenceDfa {
+            cache.edgeLock.withWriteLock { dfa.setPrecedenceStartState(precedence, start) }
+          } else {
+            dfa.s0 = start
+          }
+          return start
+        }
       } else {
-        let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: s0Closure))
-        dfa.s0 = start
-        s0 = start
+        let s0Closure = computeStartState(dfa.atnStartState, nil, fullCtx: false)
+        let filtered = dfa.precedenceDfa ? applyPrecedenceFilter(s0Closure) : s0Closure
+        s0 = cache.stateLock.withWriteLock {
+          let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: filtered))
+          if dfa.precedenceDfa {
+            dfa.s0?.configs = s0Closure
+            cache.edgeLock.withWriteLock { dfa.setPrecedenceStartState(precedence, start) }
+          } else {
+            dfa.s0 = start
+          }
+          return start
+        }
       }
     }
     guard let s0 else {
@@ -804,7 +804,8 @@ final class ParserRuntime {
   private static let startStates: [[Int: ConfigSetSnapshot]] = {
     let runtime = ParserRuntime(
       input: [], sourceInfo: SourceInfo(source: nil), errors: CELErrors(), maxRecursionDepth: 1,
-      errorReportingLimit: 1, errorRecoveryLimit: 1, lookaheadLimit: 1)
+      errorReportingLimit: 1, errorRecoveryLimit: 1, lookaheadLimit: 1,
+      cache: PredictionCache(atn: celParserATN))
     return runtime.computeAllStartStates()
   }()
 
@@ -902,10 +903,15 @@ final class ParserRuntime {
   }
 
   private func existingTargetState(_ previousD: DFAState, _ t: Int) -> DFAState? {
-    guard t + 1 >= 0, let edges = previousD.edges, t + 1 < edges.count else {
+    guard t + 1 >= 0 else {
       return nil
     }
-    return edges[t + 1]
+    return cache.edgeLock.withReadLock {
+      guard let count = previousD.edges?.count, t + 1 < count else {
+        return nil
+      }
+      return previousD.edges?[t + 1] ?? nil
+    }
   }
 
   private func computeTargetState(_ dfa: DFA, _ previousD: DFAState, _ t: Int) throws -> DFAState {
@@ -1412,18 +1418,23 @@ final class ParserRuntime {
     PredictionMode.alts(PredictionMode.conflictingAltSubsets(configs))
   }
 
+  /// antlr `addDFAEdge`: publishes `to` (or the equal state already in the DFA) and links it from
+  /// `from`, taking each lock only for its own step.
   private func addDFAEdge(_ dfa: DFA, _ from: DFAState, _ t: Int, _ to: DFAState) -> DFAState {
-    let to = addDFAState(dfa, to)
+    let to = cache.stateLock.withWriteLock { addDFAState(dfa, to) }
     if t < -1 || t > atn.maxTokenType {
       return to
     }
-    if from.edges == nil {
-      from.edges = Array(repeating: nil, count: atn.maxTokenType + 2)
+    cache.edgeLock.withWriteLock {
+      if from.edges == nil {
+        from.edges = Array(repeating: nil, count: atn.maxTokenType + 2)
+      }
+      from.edges?[t + 1] = to
     }
-    from.edges?[t + 1] = to
     return to
   }
 
+  /// antlr `addDFAState`. The caller holds `cache.stateLock` for writing; `d` must not be shared yet.
   private func addDFAState(_ dfa: DFA, _ d: DFAState) -> DFAState {
     if d === errorState {
       return d
@@ -1432,7 +1443,7 @@ final class ParserRuntime {
       return existing
     }
     d.stateNumber = dfa.count
-    d.configs.readOnly = true
+    d.configs.makeReadOnly()
     dfa.put(d)
     return d
   }

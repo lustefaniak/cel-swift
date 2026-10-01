@@ -271,6 +271,13 @@ final class ATNConfigSet {
     add(config, noCache)
   }
 
+  /// Freezes the set before its DFA state is published to other parses; the lookup table is only
+  /// needed for adding (antlr `addDFAState` sets `configLookup` to nil).
+  func makeReadOnly() {
+    readOnly = true
+    configLookup = [:]
+  }
+
   var alts: BitSet {
     var alts = BitSet()
     for c in configs {
@@ -312,6 +319,9 @@ struct PredPrediction {
 }
 
 /// A DFA state caching prediction results (antlr `DFAState`).
+///
+/// Shared between parses once published; only `edges` changes after that, under the cache's
+/// `edgeLock` (see `PredictionCache`).
 final class DFAState {
   var stateNumber: Int
   var configs: ATNConfigSet
@@ -347,7 +357,9 @@ private struct DFAStateKey: Hashable {
   }
 }
 
-/// The prediction DFA of one decision (antlr `DFA`). Caches are per parse.
+/// The prediction DFA of one decision (antlr `DFA`), shared by the parses of a `PredictionCache`.
+/// `states` and `s0` are guarded by the cache's `stateLock`, the edges of `s0` (the start states of a
+/// precedence DFA) by its `edgeLock`.
 final class DFA {
   let atnStartState: Int
   let decision: Int
@@ -371,7 +383,7 @@ final class DFA {
   }
 
   /// The states' edges point at each other (loops in the grammar give cycles), which ARC cannot
-  /// free. Go's garbage collector does; here the per-parse DFA breaks the cycles when it goes.
+  /// free. Go's garbage collector does; here the DFA breaks the cycles when its cache goes.
   deinit {
     for state in states.values {
       state.edges = nil

@@ -159,8 +159,18 @@ struct ParseRecord: Decodable, Sendable, CustomStringConvertible {
     return expr
   }
 
-  /// The parser configurations of tools/parsedump.
+  /// The parsers of the tools/parsedump configurations, built once so their prediction caches stay
+  /// warm across records, as in a long-lived environment.
+  static let sharedParsers: [Parser] = (0...2).compactMap { try? makeParser(config: $0) }
+
+  /// The parser of this record's configuration, sharing its prediction cache with every other record.
   func parser() throws -> Parser {
+    try #require(Self.sharedParsers.count == 3)
+    return Self.sharedParsers[min(config, 2)]
+  }
+
+  /// The parser configurations of tools/parsedump, each with a new prediction cache.
+  static func makeParser(config: Int) throws -> Parser {
     switch config {
     case 0:
       return try Parser(
@@ -177,8 +187,8 @@ struct ParseRecord: Decodable, Sendable, CustomStringConvertible {
   }
 
   /// Parses the expression and returns the first difference to cel-go, or nil when identical.
-  func mismatch() throws -> String? {
-    let (ast, errors) = try parser().parse(TextSource(expr))
+  func mismatch(using parser: Parser? = nil) throws -> String? {
+    let (ast, errors) = try (parser ?? self.parser()).parse(TextSource(expr))
     if !errors.isEmpty || self.errors != nil {
       let got = errors.isEmpty ? "" : errors.toDisplayString()
       let want = self.errors ?? ""

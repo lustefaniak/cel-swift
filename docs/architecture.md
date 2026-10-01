@@ -157,6 +157,24 @@ labelled with `exprID`. `invoke(args)` calls the implementation directly.
 .alias("q.n", as: "a"))`, `extended(...)`, `resolveCandidateNames(_:)` (most qualified first, leading dot
 = absolute, aliases win). `Container.qualifiedName(of: expr)` is cel-go `ToQualifiedName`.
 
+## Parser (`Sources/CEL/Parser`)
+
+The lexer, cel-go's generated parser and the parts of the antlr4-go runtime it uses (`ANTLR/`) are ported
+by hand; `Parser` (package, `Sendable` struct) runs a per-parse `ParserRuntime` and the visitor that builds
+the AST.
+
+- **Prediction cache** (`ANTLR/PredictionCache.swift`, decision 9 in `docs/decisions.md`): ANTLR's adaptive
+  prediction memoizes in one DFA per grammar decision. antlr4-go keeps them in a process-wide static; here
+  a `Parser` owns a `PredictionCache`, created with it and shared by its copies, by the `Environment`
+  holding it and by environments `extending` that one. The DFAs depend only on the grammar, so parser
+  options do not matter. There is no process-wide state: a cache lives as long as the environments using
+  it, and `DFA.deinit` breaks the DFA's edge cycles when it goes.
+- **Locking** is antlr4-go's: `stateLock` guards each DFA's state set and start state, `edgeLock` the
+  edges between states, both read-write locks (pthread, since `Synchronization` is above the macOS 13
+  floor), taken in that order. Target states are computed outside the locks from the immutable configs of
+  published states; publishing a state finds an equal one another parse may have added first. The
+  invariants that make `PredictionCache: @unchecked Sendable` sound are listed on the class.
+
 ## Type checker (`Sources/CEL/Checker`)
 
 Ported from cel-go `checker` (all of it but `cost.go` and the protobuf-typed `FormatCheckedType` /

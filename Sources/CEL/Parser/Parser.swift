@@ -17,6 +17,9 @@
 /// Parses CEL expressions into ASTs, expanding macros (cel-go `parser.Parser`).
 package struct Parser: Sendable {
   package let options: ParserOptions
+  /// The ANTLR prediction DFAs, warmed by every parse and shared by copies of this parser (antlr4-go
+  /// keeps them in a process-wide static). Thread-safe.
+  let predictionCache: PredictionCache
 
   /// Creates a parser; options are applied in order on top of cel-go's defaults.
   package init(_ options: ParserOption...) throws(ParserOptionError) {
@@ -25,7 +28,14 @@ package struct Parser: Sendable {
 
   /// Creates a parser; options are applied in order on top of cel-go's defaults.
   package init(options: [ParserOption]) throws(ParserOptionError) {
+    try self.init(options: options, sharingPredictionCacheWith: nil)
+  }
+
+  /// Creates a parser that shares the prediction cache of `other` when given. The cache depends only
+  /// on the grammar, so parsers with different options may share it.
+  package init(options: [ParserOption], sharingPredictionCacheWith other: Parser?) throws(ParserOptionError) {
     self.options = try ParserOptions(options)
+    self.predictionCache = other?.predictionCache ?? PredictionCache(atn: celParserATN)
   }
 
   /// Parses `source`. The AST is always returned; it is only meaningful when `errors` is empty.
@@ -36,14 +46,16 @@ package struct Parser: Sendable {
     let scalars = source.scalars
     var out: Expr?
     if scalars.count > options.expressionSizeCodePointLimit {
-      let visitor = ParseVisitor(options: options, helper: helper, errors: errors)
+      let visitor = ParseVisitor(
+        options: options, helper: helper, errors: errors, predictionCache: predictionCache)
       out = visitor.reportError(
         .location(.none),
         "expression code point size exceeds limit: size: \(scalars.count), limit \(options.expressionSizeCodePointLimit)"
       )
       errors = visitor.errors
     } else {
-      let visitor = ParseVisitor(options: options, helper: helper, errors: errors)
+      let visitor = ParseVisitor(
+        options: options, helper: helper, errors: errors, predictionCache: predictionCache)
       let units = min(LargeStack.nestingUnits(scalars), Parser.maxNestingUnits(options))
       if let stackSize = LargeStack.requiredStackSize(units: units) {
         LargeStack.run(stackSize: stackSize) {
@@ -82,12 +94,14 @@ final class ParseVisitor {
   let options: ParserOptions
   let helper: ParserHelper
   var errors: CELErrors
+  private let predictionCache: PredictionCache
   private var recursionDepth = 0
 
-  init(options: ParserOptions, helper: ParserHelper, errors: CELErrors) {
+  init(options: ParserOptions, helper: ParserHelper, errors: CELErrors, predictionCache: PredictionCache) {
     self.options = options
     self.helper = helper
     self.errors = errors
+    self.predictionCache = predictionCache
   }
 
   func parse(_ input: [Unicode.Scalar]) -> Expr? {
@@ -95,7 +109,8 @@ final class ParseVisitor {
       input: input, sourceInfo: helper.sourceInfo, errors: errors,
       maxRecursionDepth: options.maxRecursionDepth, errorReportingLimit: options.errorReportingLimit,
       errorRecoveryLimit: options.errorRecoveryLimit,
-      lookaheadLimit: options.errorRecoveryTokenLookaheadLimit)
+      lookaheadLimit: options.errorRecoveryTokenLookaheadLimit,
+      cache: predictionCache)
     let tree: ParserRuleContext
     do {
       tree = try runtime.start()

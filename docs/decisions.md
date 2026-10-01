@@ -22,7 +22,7 @@ the new module can use the core's `package` declarations.
 | 6 | Boxed list, map, object and error payloads | `indirect` cases, public shape unchanged | done |
 | 7 | Strong enums | no new `Value` / `CELType` cases, opaque object value behind an option | done |
 | 8 | Spec-over-cel-go defaults | keep the spec behaviour, no options | done |
-| 9 | Shared ANTLR prediction cache | shared cache with antlr-go's finer locking | decided: implementing |
+| 9 | Shared ANTLR prediction cache | shared cache with antlr-go's finer locking, owned per `Environment` | done |
 | 10 | Public names that abbreviate or clash | full words, no clash with dependencies | done |
 
 ## 1. Package name: keep `cel-swift`
@@ -92,13 +92,22 @@ hexadecimal IPv4-mapped IPv6 form, as cel-spec and cel-cpp do (cel-go differs on
 rare, and library options are additive, so a cel-go-compatible flag can come when a client asks. For
 `indexOf`, follow cel-spec when its pinned version changes.
 
-## 9. Shared ANTLR prediction cache (decided: implementing)
+## 9. Shared ANTLR prediction cache (done)
 
 antlr4-go keeps the prediction DFAs in a process-wide cache, cel-swift rebuilt them for every parse, which
-made parsing about 8 times slower than cel-go. The cache is shared, with antlr-go's finer locking (lock only
-DFA state lookup and insertion and edge updates, compute target states outside the lock) so concurrent
-parses scale; owned by the parser per `Environment` if process-wide state is a problem. The coarse-lock
-prototype (`perf/shared-parser-cache`) serialized concurrent parses.
+made parsing about 8 times slower than cel-go. The cache is now shared, with antlr-go's finer locking: two
+read-write locks, one for DFA state lookup and insertion, one for edge reads and updates, and target states
+computed outside both, so concurrent parses scale (numbers in `docs/performance.md`). The coarse-lock
+prototype (`perf/shared-parser-cache`) serialized concurrent parses. The locks are pthread read-write locks
+in an `@unchecked Sendable` class whose invariants are documented on it; plain mutexes scaled worse, and
+`Synchronization` is above the macOS 13 floor.
+
+The cache is owned by the `Parser`, so by the `Environment`, not process-wide: copies of an environment and
+environments made with `extending` share it, and it is freed with the last of them. Measurements gave no
+reason for global state: only a new environment's first parses pay for building the DFA paths they take,
+and hosts keep an environment for many expressions. Owned caches also keep growth bounded by the lifetime of the
+environments that fed them (the DFAs grow with the variety of inputs and are never trimmed, as in cel-go),
+and keep tests and fuzz targets independent of each other.
 
 ## 10. Public names: full words, no clashes with dependencies
 
