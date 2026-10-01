@@ -135,8 +135,23 @@ func printError(_ message: String) {
 
 struct StandardError: TextOutputStream {
   mutating func write(_ string: String) {
-    fputs(string, stderr)
+    var bytes = Array(string.utf8)
+    bytes.withUnsafeMutableBytes { buffer in
+      var offset = 0
+      while offset < buffer.count {
+        let written = writeBytes(2, buffer.baseAddress.map { $0 + offset }, buffer.count - offset)
+        if written <= 0 {
+          return
+        }
+        offset += written
+      }
+    }
   }
+}
+
+/// `write(2)`, named apart from `TextOutputStream.write`.
+private func writeBytes(_ fd: Int32, _ pointer: UnsafeMutableRawPointer?, _ count: Int) -> Int {
+  write(fd, pointer, count)
 }
 
 /// Whether standard input is an interactive terminal.
