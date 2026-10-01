@@ -7,3 +7,5 @@
 # Every field is required, every entry must match at least one test. A test that is merely not implemented
 # yet needs no entry: it is simply absent from passing.txt. Skip only what cannot or should not pass, and
 # remove entries as they are fixed.
+type_deductions/wrappers/wrapper_promotion_2 | checked | cel-go deduces list(int), the spec list(wrapper(int)); the checker follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/conformance/BUILD.bazel (_TESTS_TO_SKIP)
+type_deductions/legacy_nullable_types/null_assignable_to_abstract_parameter_candidate | checked | cel-go deduces null, the spec optional_type(int); the checker follows cel-go | https://github.com/google/cel-go/blob/v0.32.0/conformance/BUILD.bazel (_TESTS_TO_SKIP)

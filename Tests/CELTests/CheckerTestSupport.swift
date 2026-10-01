@@ -14,9 +14,8 @@
 //
 // Ported from cel-go checker/checker_test.go (testInfo, testEnv) and test/compare.go.
 //
-// The protobuf test messages come from Fixtures/TestTypeTables.swift (tools/test-types): a field table
-// standing in for cel-go's protobuf registry until CELProtobuf supplies descriptors.
-
+import CELGoTestProtos
+import CELProtobuf
 import Testing
 
 @testable import CEL
@@ -40,40 +39,16 @@ struct CheckerCase: Sendable, CustomTestStringConvertible {
   var testDescription: String { "\(index) \(self.in)" }
 }
 
-/// A message type described by a generated field table.
-struct TableStructType: StructTypeDescriptor {
-  let typeName: String
-  let fields: [TestTypeTables.Field]
-  let jsonFieldNames: Bool
-
-  var fieldNames: [String] { fields.map(\.name) }
-
-  func fieldType(named name: String) -> FieldType? {
-    // cel-go's TypeDescription.FieldByName: JSON names first when enabled, then proto names.
-    let field =
-      (jsonFieldNames ? fields.first { $0.jsonName == name } : nil) ?? fields.first { $0.name == name }
-    guard let field else {
-      return nil
-    }
-    return FieldType(
-      name: field.name, type: field.type, isJSONField: jsonFieldNames && name == field.jsonName)
-  }
-
-  func newValue(fields: [String: Value]) -> Value {
-    .error(message: "unsupported: constructing \(typeName) in checker tests")
-  }
-}
-
-/// A registry with the protobuf test messages and enums (cel-go `types.NewRegistry(ProtoTypeDefs(...))`).
+/// A registry with cel-go's proto2 / proto3 test messages (cel-go
+/// `types.NewRegistry(types.ProtoTypeDefs(&proto2pb.TestAllTypes{}, &proto3pb.TestAllTypes{}))`).
 func testTypeRegistry(jsonFieldNames: Bool = false) -> TypeRegistry {
-  var registry = TypeRegistry()
-  for (name, fields) in TestTypeTables.messages.sorted(by: { $0.key < $1.key }) {
-    try? registry.register(TableStructType(typeName: name, fields: fields, jsonFieldNames: jsonFieldNames))
-  }
-  for (name, number) in TestTypeTables.enumValues {
-    registry.registerEnumValue(name, number: number)
-  }
-  return registry
+  let protos = ProtobufTypes(
+    files: [
+      Google_Expr_Proto3_Test_TestAllTypes_CELFile,
+      Google_Expr_Proto2_Test_TestAllTypes_CELFile,
+    ],
+    jsonFieldNames: jsonFieldNames)
+  return TypeRegistry(composing: protos, adapter: protos)
 }
 
 /// Compares ignoring spaces, tabs, carriage returns and newlines (cel-go `test.Compare`).
