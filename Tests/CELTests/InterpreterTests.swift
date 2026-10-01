@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Ported from cel-go interpreter/interpreter_test.go: the testData table (cases without protobuf
-// messages or Go-native input types) and TestInterpreter's evaluation in the default, optimized,
-// exhaustive and state-tracking modes.
+// Ported from cel-go interpreter/interpreter_test.go: the testData table and TestInterpreter's
+// evaluation in the default, optimized, exhaustive and state-tracking modes. The cases with protobuf
+// messages are in InterpreterProtoCases.swift.
 
 import Testing
 
@@ -32,6 +32,10 @@ struct InterpreterCase: Sendable, CustomTestStringConvertible {
   /// Unknown attribute patterns: evaluates with the partial attribute factory.
   var unknowns: [AttributePattern]?
   var errorOnBadPresenceTest = false
+  /// Registers cel-go's proto2 and proto3 test messages (cel-go `typeOpts` with `ProtoTypeDefs`).
+  var protos = false
+  /// Resolves message fields by their JSON names (cel-go `types.JSONFieldNames(true)`).
+  var jsonFieldNames = false
   var out: Value = .bool(true)
   var err: String?
   var progErr: String?
@@ -583,6 +587,7 @@ func interpreterEnvironment(_ tc: InterpreterCase) throws -> ProgramEnvironment 
   }
   var env = ProgramEnvironment(
     container: try Container(options: options),
+    provider: tc.protos ? testTypeRegistry(jsonFieldNames: tc.jsonFieldNames) : TypeRegistry(),
     parserOptions: [.enableOptionalSyntax(true), .enableVariadicOperatorASTs(true)],
     errorOnBadPresenceTest: tc.errorOnBadPresenceTest)
   env.checkerOptions = [.crossTypeNumericComparisons(true)]
@@ -632,7 +637,7 @@ struct InterpreterTests {
     }
   }
 
-  @Test(arguments: interpreterCases)
+  @Test(arguments: interpreterCases + interpreterProtoCases)
   func interpreter(_ tc: InterpreterCase) throws {
     let program = try interpreterProgram(tc)
     verify(tc, program.eval(interpreterActivation(tc)).value, mode: "default", requireNodeID: false)

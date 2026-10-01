@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Ported from cel-go interpreter/prune_test.go (the cases without protobuf messages).
+// Ported from cel-go interpreter/prune_test.go.
 
+import CELGoTestProtos
+import CELProtobuf
 import Testing
 
 @testable import CEL
@@ -53,11 +55,59 @@ let pruneCases: [PruneCase] = [
   tc(unknown("x"), "(false || false) && x", "false"),
   tc(unknown("a"), "a && [1, 1u, 1.0].exists(x, type(x) == uint)", "a"),
   tc(unknown("this"), "this in []", "false"),
+  PruneCase(
+    input: ["this": ["b": "exists"]], unknowns: [AttributePattern("this")], expr: "has(this.a) || !has(this.b)",
+    out: "has(this.a) || !has(this.b)"),
+  PruneCase(
+    input: ["this": ["b": "exists"]], unknowns: [AttributePattern("this").qualString("a")],
+    expr: "has(this.a) || !has(this.b)", out: "has(this.a)"),
+  PruneCase(
+    input: ["this": ["b": "exists"]], unknowns: [AttributePattern("this").qualString("a")],
+    expr: "!has(this.b) || has(this.a)", out: "has(this.a)"),
+  PruneCase(
+    input: ["this": .map(OrderedMap())], unknowns: [AttributePattern("this")],
+    expr: "(!(this.a in []) || has(this.a)) || !has(this.b)", out: "true"),
+  PruneCase(
+    input: ["this": .map(OrderedMap())], unknowns: [AttributePattern("this")], expr: "has(this.a) || !has(this.b)",
+    out: "has(this.a) || !has(this.b)"),
+  PruneCase(
+    input: ["this": .map(OrderedMap())], unknowns: [AttributePattern("this")],
+    expr: "(has(this.a) || !(this.a in [])) || !has(this.b)", out: "true"),
+  PruneCase(
+    input: ["this": ["a": "exists"]], unknowns: [AttributePattern("this").qualString("b")],
+    expr: "has(this.a) && !has(this.b)", out: "!has(this.b)"),
+  PruneCase(
+    input: ["this": .map(OrderedMap())], unknowns: [AttributePattern("this")],
+    expr: "(has(this.a) && this.a in []) || !has(this.b)", out: "!has(this.b)"),
+  PruneCase(
+    input: ["this": .map(OrderedMap())], unknowns: [AttributePattern("this")],
+    expr: "(this.a in [] && has(this.a)) || !has(this.b)", out: "!has(this.b)"),
+  PruneCase(
+    input: ["this": ["a": .map(OrderedMap())]], unknowns: [AttributePattern("this").qualString("a")],
+    expr: "has(this.a.b)", out: "has(this.a.b)"),
+  PruneCase(
+    input: ["this": ["a": .map(OrderedMap())]], unknowns: [AttributePattern("this").qualString("a")],
+    expr: #"has(this["a"].b)"#, out: #"has(this["a"].b)"#),
+  PruneCase(
+    input: [
+      "this": proto3Types.value(
+        of: Google_Expr_Proto3_Test_TestAllTypes.with {
+          $0.singleInt32 = 0
+          $0.singleInt64 = 1
+        })
+    ], unknowns: [AttributePattern("this").qualString("single_int64")],
+    expr: "has(this.single_int32) && !has(this.single_int64)", out: "false"),
   tc(unknown("this"), "this in {}", "false"),
   tc(partial(["rules": .list(ArrayList())], "this"), "this in rules", "false"),
   tc(
     partial(["rules": ["not_in": .list(ArrayList())]], "this"),
     "this.size() > 0 ? this in rules.not_in : !(this in rules.not_in)", "(this.size() > 0) ? false : true"),
+  tc(
+    partial(["rules": ["not_in": .list(ArrayList())]], "this"),
+    """
+    this.size() > 0 ? this in rules.not_in :
+    				!(this in rules.not_in) ? true : false
+    """, "(this.size() > 0) ? false : true"),
   tc(nil, "{'hello': 'world'.size()}", #"{"hello": 5}"#),
   tc(nil, "[b'bytes-string']", #"[b"\142\171\164\145\163\055\163\164\162\151\156\147"]"#),
   tc(nil, "[b'bytes'] + [b'-' + b'string']", #"[b"\142\171\164\145\163", b"\055\163\164\162\151\156\147"]"#),
@@ -133,6 +183,9 @@ let pruneCases: [PruneCase] = [
   tc(unknown("a", "c"), "[has(a.b), has(c.d)].exists(x, x == true)", "[has(a.b), has(c.d)].exists(x, x == true)"),
   tc(
     partial(["a": [:]], "c"), "[has(a.b), has(c.d)].exists(x, x == true)",
+    "[false, has(c.d)].exists(x, x == true)"),
+  tc(
+    partial(["a": [:]], "c"), "[has(a.b), has(c.d)].exists(x, x == true)",
     "[false, has(c.d)].exists(x, x == true)", iterRange: "[false, has(c.d)]"),
   tc(partial(["a": [:]]), "[?a[?0], a.b]", "[a.b]"),
   tc(partial(["a": [:]], "a"), "[?a[?0], a.b].exists(x, x == true)", "[?a[?0], a.b].exists(x, x == true)"),
@@ -147,8 +200,10 @@ struct InterpreterPruneTests {
 
   @Test(arguments: pruneCases)
   func prune(_ tc: PruneCase) throws {
+    // cel-go's TestPrune plans every case with a registry holding proto3 TestAllTypes.
     var env = ProgramEnvironment(
       functions: StandardLibrary.functions + OptionalLibrary.functions(),
+      provider: TypeRegistry(composing: proto3Types, adapter: proto3Types),
       parserOptions: [.enableOptionalSyntax(true), .populateMacroCalls(true)])
     env.decorators = [OptionalLibrary.decorator]
     let parsed = try env.parse(tc.expr)
