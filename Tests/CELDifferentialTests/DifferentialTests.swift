@@ -289,6 +289,20 @@ struct DifferentialTests {
     }
   }
 
+  /// Triage helper: `CEL_DIFF_REPLAY=path` runs the requests of a `CEL_DIFF_TRACE` file, in order, through
+  /// one cel-swift side (no oracle), to reproduce a crash.
+  @Test(.enabled(if: env["CEL_DIFF_REPLAY"] != nil))
+  func replay() throws {
+    let path = try #require(Self.env["CEL_DIFF_REPLAY"])
+    let text = String(decoding: FileManager.default.contents(atPath: path) ?? Data(), as: UTF8.self)
+    var swift = SwiftSide()
+    for line in text.split(separator: "\n") {
+      let request = try JSON.parse(String(line))
+      print("replay \(request["id"]?.stringValue ?? "?")")
+      _ = swift.run(request)
+    }
+  }
+
   /// The generator is deterministic and its output parses.
   @Test func generatorIsDeterministic() {
     for i in 0..<50 {

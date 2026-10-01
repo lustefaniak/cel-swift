@@ -187,7 +187,11 @@ enum Codec {
     }
     let total = secs.multipliedReportingOverflow(by: 1_000_000_000)
     guard !total.overflow else { return nil }
-    return negative ? -(total.partialValue + nanos) : total.partialValue + nanos
+    // Negative durations are summed below zero so that -9223372036.854775808s (Int64.min) fits.
+    let (sum, overflow) =
+      negative
+      ? (-total.partialValue).subtractingReportingOverflow(nanos) : total.partialValue.addingReportingOverflow(nanos)
+    return overflow ? nil : sum
   }
 
   static func daysFromCivil(_ y0: Int64, _ m: Int64, _ d: Int64) -> Int64 {

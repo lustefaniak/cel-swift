@@ -23,7 +23,10 @@ struct DiffCase: Sendable {
   var unknowns: [JSON] = []
   var costLimit: UInt64?
 
-  var expr: String { root.rendered }
+  /// Source text replacing the rendered tree: a mutated expression that usually fails to parse.
+  var textOverride: String?
+
+  var expr: String { textOverride ?? root.rendered }
 
   /// Size hints for the static cost estimate: every sized variable is between 0 and 4 long.
   static func sizeHints(_ decls: [(String, GType)]) -> JSON {
@@ -103,6 +106,23 @@ struct DiffCase: Sendable {
         }
         c.unknowns.append(.object([("variable", .string(name)), ("path", .array(path))]))
       }
+    }
+    if pick.chance(4) {
+      // Syntax errors: delete, duplicate or insert one character, to compare parser error messages.
+      var scalars = Array(c.expr.unicodeScalars)
+      let at = pick.below(scalars.count + 1)
+      let inserts: [Unicode.Scalar] = [
+        "(", ")", "[", "]", "{", "}", ".", ",", "?", ":", "!", "\"", "'", "`", "&", "|", "-", "@", "#", "\\", "1", "a",
+        " ",
+      ]
+      switch pick.below(3) {
+      case 0 where at < scalars.count: scalars.remove(at: at)
+      case 1 where at < scalars.count: scalars.insert(scalars[at], at: at)
+      default: scalars.insert(pick.pick(inserts), at: at)
+      }
+      var text = ""
+      text.unicodeScalars.append(contentsOf: scalars)
+      c.textOverride = text
     }
     if !root.anyUsesExtension && pick.chance(10) {
       // A cost limit somewhere around the cost of a typical case.
@@ -277,7 +297,46 @@ struct SwiftSide {
     return try result.get()
   }
 
+  /// A program-creation failure. cel-go's `Env.Program` returns a plain error, which the oracle reports as
+  /// `err.Error()`; cel-swift throws a ``CompileError`` whose description renders its issue as a location-less
+  /// `ERROR: <input>:-1:0: ...`. The comparison uses the messages.
+  struct ProgramError: Error, CustomStringConvertible {
+    var description: String
+  }
+
+  private func makeProgram(_ env: Environment, expression: CheckedExpression, options: [Program.Option]) throws
+    -> Program
+  {
+    do {
+      return try env.program(expression, options: options)
+    } catch {
+      throw ProgramError(description: error.issues.map(\.message).joined(separator: "\n"))
+    }
+  }
+
+  private func makeProgram(_ env: Environment, parsed: ParsedExpression, options: [Program.Option]) throws -> Program {
+    do {
+      return try env.program(parsed, options: options)
+    } catch {
+      throw ProgramError(description: error.issues.map(\.message).joined(separator: "\n"))
+    }
+  }
+
+  /// `CEL_DIFF_TRACE=path`: each request is written there before cel-swift runs it, so the case behind a
+  /// crash is the file's content (use with `CEL_DIFF_WORKERS=1`).
+  static let tracePath = ProcessInfo.processInfo.environment["CEL_DIFF_TRACE"]
+
   mutating func run(_ request: JSON) -> Outcome {
+    if let path = Self.tracePath {
+      // Appends, so a crash that depends on earlier cases can be replayed in order.
+      if let handle = FileHandle(forWritingAtPath: path) {
+        handle.seekToEndOfFile()
+        handle.write(Data((request.rendered + "\n").utf8))
+        handle.closeFile()
+      } else {
+        try? Data((request.rendered + "\n").utf8).write(to: URL(fileURLWithPath: path))
+      }
+    }
     var outcome = Outcome()
     let env: Environment
     var bindings: [String: Value] = [:]
@@ -329,14 +388,12 @@ struct SwiftSide {
         outcome.type = expression.outputType.checkerDescription
         let estimate = env.estimateCost(expression, sizeHints: hints)
         outcome.estimate = "\(estimate.lowerBound)..\(estimate.upperBound)"
-        program = try env.program(expression, options: programOptions)
+        program = try makeProgram(env, expression: expression, options: programOptions)
       } else {
-        program = try env.program(try env.parse(text), options: programOptions)
+        program = try makeProgram(env, parsed: try env.parse(text), options: programOptions)
       }
     } catch {
-      outcome.compileError = error.description
-      outcome.type = nil
-      outcome.estimate = nil
+      outcome.compileError = "\(error)"
       return outcome
     }
     do {

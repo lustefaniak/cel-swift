@@ -141,12 +141,30 @@ enum Reducer {
     var rounds = 0
     while rounds < maxRounds {
       rounds += 1
-      var variants = candidates(current.root).map { root -> DiffCase in
-        var copy = current
-        copy.root = root
-        return copy
+      var variants: [DiffCase]
+      if let text = current.textOverride {
+        // A mutated text has no tree: delete runs of characters instead.
+        let scalars = Array(text.unicodeScalars)
+        variants = []
+        for length in [8, 4, 2, 1] where length <= scalars.count {
+          for start in stride(from: 0, to: scalars.count - length + 1, by: length) {
+            var copy = current
+            var rest = scalars
+            rest.removeSubrange(start..<start + length)
+            var s = ""
+            s.unicodeScalars.append(contentsOf: rest)
+            copy.textOverride = s
+            variants.append(copy)
+          }
+        }
+      } else {
+        variants = candidates(current.root).map { root -> DiffCase in
+          var copy = current
+          copy.root = root
+          return copy
+        }
       }
-      variants.sort { $0.root.size < $1.root.size }
+      variants.sort { $0.expr.unicodeScalars.count < $1.expr.unicodeScalars.count }
       variants += bindingCandidates(current)
       var improved = false
       var start = 0

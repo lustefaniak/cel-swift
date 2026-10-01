@@ -495,7 +495,12 @@ struct Generator {
     return (root, bindings)
   }
 
+  /// A new comprehension or binding variable name; sometimes the name of one in scope, which the new one
+  /// shadows.
   mutating func fresh(_ prefix: String) -> String {
+    if !scope.isEmpty && rng.chance(8) {
+      return rng.pick(scope).0
+    }
     counter += 1
     return "\(prefix)\(counter)"
   }
@@ -524,7 +529,7 @@ struct Generator {
   /// A comprehension variable binding for the body of a macro.
   mutating func withScope<T>(_ vars: [(String, GType)], _ body: (inout Generator) -> T) -> T {
     let saved = scope
-    scope += vars
+    scope = scope.filter { old in !vars.contains { $0.0 == old.0 } } + vars
     comprehensionDepth += 1
     defer {
       scope = saved
@@ -568,6 +573,9 @@ struct Generator {
       ])
       return Node("%0[$1]", [g.gen(.map(k, t), d), Node(key, [], .dyn)], t)
     }
+    add(1, "map_select") { g in
+      Node("%0.\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty }))", [g.gen(.map(.string, t), d)], t)
+    }
     add(1, "map_index") { g in
       let k: GType = g.rng.pick([.string, .int, .bool, .uint])
       return Node("%0[$1]", [g.gen(.map(k, t), d), g.literal(k, 0)], t)
@@ -599,6 +607,14 @@ struct Generator {
         return Node("dyn($0) \(op) dyn($1)", [g.gen(a, d), g.gen(b, d)], .dyn, op: true)
       }
       add(1, "dyn_neg") { g in Node("-dyn($0)", [g.gen(g.scalarType(), d)], .dyn, op: true) }
+      add(1, "dyn_index") { g in
+        // Indexing and field selection on values only known at runtime.
+        let key: Node = g.rng.chance(50) ? g.index(d) : g.literal(.string, 0)
+        return Node("dyn(%0)[$1]", [g.gen(g.randomType(nesting: 1), d), key], .dyn)
+      }
+      add(1, "dyn_select") { g in
+        Node("dyn(%0).\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty }))", [g.gen(g.randomType(nesting: 1), d)], .dyn)
+      }
     case .null: break
     }
 
@@ -872,6 +888,11 @@ struct Generator {
     addIf(&o, true, 2, "has") { g in
       let maps = g.decls.filter { if case .map(.string, _) = $0.1 { return true } else { return false } }.map(\.0)
       return Node("has(\(g.rng.pick(maps)).\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty })))", [], .bool)
+    }
+    addIf(&o, true, 1, "has_expr") { g in
+      // Presence tests on computed maps and on values that are not maps at all.
+      let operand = g.rng.chance(60) ? g.gen(.map(.string, g.scalarType()), d) : g.gen(g.randomType(nesting: 1), d)
+      return Node("has(dyn(%0).\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty })))", [operand], .bool)
     }
     for fn in ["contains", "startsWith", "endsWith"] {
       addIf(&o, true, 1, "str_\(fn)") { g in Node("%0.\(fn)($1)", [g.gen(.string, d), g.gen(.string, d)], .bool) }
