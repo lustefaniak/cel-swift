@@ -30,7 +30,11 @@ private struct LazyInts: ListValue {
 private struct StringStringMap: MapValue {
   let storage: [String: String]
   var count: Int { storage.count }
-  var keys: [MapKey] { storage.keys.sorted().map(MapKey.string) }
+  func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+    for key in storage.keys.sorted() where try !body(.string(key)) {
+      return
+    }
+  }
   func value(forKey key: MapKey) -> Value? {
     guard case .string(let s) = key, let v = storage[s] else { return nil }
     return .string(v)
@@ -194,6 +198,26 @@ struct MapValueTests {
     map[.string("e\u{301}")] = 2
     #expect(map.count == 3)
     #expect(Value.map(map).get(.string("\u{E9}")) == 1)
+  }
+
+  @Test func hostMapKeyIteration() throws {
+    let map = StringStringMap(storage: ["c": "3", "a": "1", "b": "2"])
+    #expect(map.keys == ["a", "b", "c"])
+    var visited: [MapKey] = []
+    map.forEachKey { key in
+      visited.append(key)
+      return key != "b"
+    }
+    #expect(visited == ["a", "b"])
+    #expect(map.firstNonNil { $0 == "c" ? $0 : nil } == "c")
+    struct Stop: Error {}
+    #expect(throws: Stop.self) {
+      try map.forEachKey { _ in throw Stop() }
+    }
+
+    let env = try Environment(.variable("m", .map(key: .string, value: .string)))
+    let program = try env.program(env.compile("m.exists(k, k == 'b') && m.all(k, m[k] != '') && m == m"))
+    #expect(try program.evaluate(["m": .map(map)]).value == true)
   }
 
   @Test func convertToType() {

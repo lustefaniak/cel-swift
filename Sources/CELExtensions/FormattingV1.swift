@@ -141,28 +141,31 @@ enum FormatterV1 {
   private static func formatMap(_ arg: Value) -> Result<String, FormatError> {
     guard case .map(let map) = arg else { return .success("") }
     var pairs: [(key: String, value: String)] = []
-    for key in map.keys {
+    let failure = map.firstNonNil { key -> FormatError? in
       let keyValue = key.value
       let unquotedKey: Result<String, FormatError>
       switch keyValue {
       case .string, .bool: unquotedKey = formatString(keyValue)
       case .int, .uint: unquotedKey = decimal(keyValue)
       default:
-        return .failure(
-          FormatError("no formatting function for map key of type \(keyValue.runtimeTypeName)"))
+        return FormatError("no formatting function for map key of type \(keyValue.runtimeTypeName)")
       }
       let keyStr: String
       switch unquotedKey {
       case .success(let s): keyStr = quoteForCEL(keyValue, s)
-      case .failure(let err): return .failure(err)
+      case .failure(let err): return err
       }
       guard let value = map.value(forKey: key) else {
-        return .failure(FormatError("could not find key: \(GoFormat.quote(key.description))"))
+        return FormatError("could not find key: \(GoFormat.quote(key.description))")
       }
       switch formatMember(value) {
       case .success(let s): pairs.append((keyStr, quoteForCEL(value, s)))
-      case .failure(let err): return .failure(err)
+      case .failure(let err): return err
       }
+      return nil
+    }
+    if let failure {
+      return .failure(failure)
     }
     let sorted = pairs.enumerated().sorted { a, b in
       let ka = Array(a.element.key.utf8)

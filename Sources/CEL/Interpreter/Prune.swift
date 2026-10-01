@@ -139,17 +139,24 @@ private final class ASTPruner {
       return .list(id: id, elements: elems)
     case .map(let map):
       var entries: [Expr.MapEntry] = []
-      for key in map.keys {
+      var complete = true
+      map.forEachKey { key in
         let k = key.value
         let v = map.value(forKey: key) ?? .null
         if v.isUnknownOrError {
-          return nil
+          complete = false
+          return false
         }
         guard let keyExpr = maybeCreateLiteral(nextID(), k), let valExpr = maybeCreateLiteral(nextID(), v)
         else {
-          return nil
+          complete = false
+          return false
         }
         entries.append(Expr.MapEntry(id: nextID(), key: keyExpr, value: valExpr))
+        return true
+      }
+      if !complete {
+        return nil
       }
       state.setValue(id, val)
       return .map(id: id, entries: entries)

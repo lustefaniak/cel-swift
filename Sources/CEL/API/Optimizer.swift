@@ -347,10 +347,18 @@ package struct OptimizerContext {
       return newList(elements, [])
     case .map(let map):
       var entries: [Expr.MapEntry] = []
-      for key in map.keys {
-        let keyExpr = try adaptLiteral(key.value)
-        let valueExpr = try adaptLiteral(map.value(forKey: key) ?? .null)
-        entries.append(newMapEntry(keyExpr, valueExpr, isOptional: false))
+      let failure = map.firstNonNil { key -> OptimizerError? in
+        do throws(OptimizerError) {
+          let keyExpr = try adaptLiteral(key.value)
+          let valueExpr = try adaptLiteral(map.value(forKey: key) ?? .null)
+          entries.append(newMapEntry(keyExpr, valueExpr, isOptional: false))
+          return nil
+        } catch {
+          return error
+        }
+      }
+      if let failure {
+        throw failure
       }
       return newMap(entries)
     case .object(let object):

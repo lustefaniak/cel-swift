@@ -109,9 +109,13 @@ struct ProtobufMap<K: Hashable & Sendable, V: Sendable>: MapValue {
 
   var count: Int { entries.count }
 
-  var keys: [MapKey] {
-    guard let toMapKey = keyKind.toMapKey else { return [] }
-    return entries.keys.map(toMapKey).sorted(by: mapKeyPrecedes)
+  func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+    guard let toMapKey = keyKind.toMapKey else { return }
+    for key in entries.keys.map(toMapKey).sorted(by: mapKeyPrecedes) {
+      if try !body(key) {
+        return
+      }
+    }
   }
 
   func value(forKey key: MapKey) -> Value? {

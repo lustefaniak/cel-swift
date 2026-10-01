@@ -194,11 +194,11 @@ extension ProtobufField {
         }
         var entries: [K: V] = [:]
         var undeclared: [(key: K, mapKey: MapKey, number: Int32)] = []
-        for sourceKey in source.keys {
+        let failure = source.firstNonNil { sourceKey -> EvalError? in
           let k: K
           switch key.fromValue(sourceKey.value, types) {
           case .success(let converted?): k = converted
-          case .success(nil): continue
+          case .success(nil): return nil
           case .failure(let error): return fieldTypeConversionError(M.self, name, error)
           }
           let n: Int32
@@ -211,6 +211,10 @@ extension ProtobufField {
           } else {
             undeclared.append((k, sourceKey, n))
           }
+          return nil
+        }
+        if let failure {
+          return failure
         }
         m[keyPath: keyPath] = entries
         var unknown = removingUnknownFields(m.unknownFields, number)

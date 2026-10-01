@@ -649,8 +649,8 @@ final class EvalFold: Interpretable {
     if !iterVar2.isEmpty {
       switch foldRange {
       case .map(let m):
-        for key in m.keys where !folder.foldEntry(child, key.value, m.value(forKey: key) ?? .null) {
-          break
+        m.forEachKey { key in
+          folder.foldEntry(child, key.value, m.value(forKey: key) ?? .null)
         }
       case .list(let l):
         for i in 0..<l.count where !folder.foldEntry(child, .int(Int64(i)), l.element(at: i)) {
@@ -668,8 +668,8 @@ final class EvalFold: Interpretable {
         break
       }
     case .map(let m):
-      for key in m.keys where !folder.foldStep(child, key.value) {
-        break
+      m.forEachKey { key in
+        folder.foldStep(child, key.value)
       }
     default:
       return Value.valOrError(foldRange, "got '\(goTypeName(foldRange))', expected iterable type")

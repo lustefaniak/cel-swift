@@ -106,11 +106,12 @@ extension Cel_Expr_Value {
       listValue = result
     case .map(let map):
       var result = Cel_Expr_MapValue()
-      for key in map.keys {
+      try map.forEachKey { key in
         var entry = Cel_Expr_MapValue.Entry()
         entry.key = try Cel_Expr_Value(celValue: key.value, types: types)
         entry.value = try Cel_Expr_Value(celValue: map.value(forKey: key) ?? .null, types: types)
         result.entries.append(entry)
+        return true
       }
       mapValue = result
     case .error(let error):

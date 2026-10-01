@@ -202,11 +202,15 @@ extension Value: Equatable {
       return true
     case (.map(let a), .map(let b)):
       guard a.count == b.count else { return false }
-      for key in a.keys {
-        guard let other = b.value(forKey: key), let mine = a.value(forKey: key), mine == other
-        else { return false }
+      var equal = true
+      a.forEachKey { key in
+        guard let other = b.value(forKey: key), let mine = a.value(forKey: key), mine == other else {
+          equal = false
+          return false
+        }
+        return true
       }
-      return true
+      return equal
     case (.type(let a), .type(let b)): return a == b
     case (.duration(let a), .duration(let b)): return a == b
     case (.timestamp(let a), .timestamp(let b)): return a == b

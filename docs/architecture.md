@@ -56,7 +56,8 @@ Go formatting/parsing that conversions rely on is ported and pinned by fixtures 
 ### Collections
 
 - `protocol ListValue { var count: Int; func element(at:) -> Value }` and
-  `protocol MapValue { var count: Int; var keys: [MapKey]; func value(forKey: MapKey) -> Value? }`.
+  `protocol MapValue { var count: Int; func forEachKey(_: (MapKey) throws -> Bool) rethrows; func value(forKey: MapKey) -> Value? }`
+  (`keys: [MapKey]` is an extension that collects them; see `docs/decisions.md` § 13).
   Host data adapts lazily by conforming; `ArrayList` (`[Value]`) and `OrderedMap` (insertion ordered) are
   the concrete types for literals and results. Fast paths: `list as? ArrayList`.
 - `MapKey` is `bool | int | uint | string`. Cross-numeric lookup (`m[1.0]` finds `1` or `1u`) is

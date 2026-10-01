@@ -61,7 +61,9 @@ package final class MutableMap: MapValue, @unchecked Sendable {
 
   package var count: Int { map.count }
 
-  package var keys: [MapKey] { map.keys }
+  package func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+    try map.forEachKey(body)
+  }
 
   package func value(forKey key: MapKey) -> Value? {
     map.value(forKey: key)

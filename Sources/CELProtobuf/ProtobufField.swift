@@ -220,19 +220,23 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
         }
         var entries: [K: V] = [:]
         entries.reserveCapacity(source.count)
-        for sourceKey in source.keys {
+        let failure = source.firstNonNil { sourceKey -> EvalError? in
           let k: K
           switch key.fromValue(sourceKey.value, types) {
           case .success(let converted?): k = converted
-          case .success(nil): continue
+          case .success(nil): return nil
           case .failure(let error): return fieldTypeConversionError(M.self, name, error)
           }
           let element = source.value(forKey: sourceKey) ?? .null
           switch value.fromValue(element, types) {
           case .success(let converted?): entries[k] = converted
-          case .success(nil): continue
+          case .success(nil): break
           case .failure(let error): return fieldTypeConversionError(M.self, name, error)
           }
+          return nil
+        }
+        if let failure {
+          return failure
         }
         m[keyPath: keyPath] = entries
         return nil

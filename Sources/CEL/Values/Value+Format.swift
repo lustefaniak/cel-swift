@@ -68,8 +68,10 @@ extension Value: CustomStringConvertible {
       out += "]"
     case .map(let m):
       var entries: [(key: String, value: String)] = []
-      for key in m.keys {
+      entries.reserveCapacity(m.count)
+      m.forEachKey { key in
         entries.append((key.value.description, (m.value(forKey: key) ?? .null).description))
+        return true
       }
       entries.sort { compareUTF8($0.key, $1.key) < 0 }
       out += "{"

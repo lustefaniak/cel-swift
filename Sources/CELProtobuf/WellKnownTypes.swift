@@ -354,19 +354,22 @@ enum WellKnownTypes {
     Google_Protobuf_Struct, EvalError
   > {
     var result = Google_Protobuf_Struct()
-    for key in map.keys {
+    let failure = map.firstNonNil { key -> EvalError? in
       guard case .string(let name) = key else {
         // The key's ConvertToNative message: cel-go `Bool` words it unlike `Int` and `Uint`.
         if case .bool = key {
-          return .failure(EvalError("type conversion error from bool to 'string'"))
+          return EvalError("type conversion error from bool to 'string'")
         }
-        return .failure(
-          EvalError("unsupported type conversion from '\(key.value.runtimeTypeName)' to string"))
+        return EvalError("unsupported type conversion from '\(key.value.runtimeTypeName)' to string")
       }
       switch jsonValue(map.value(forKey: key) ?? .null, types: types) {
       case .success(let json): result.fields[name] = json
-      case .failure(let error): return .failure(error)
+      case .failure(let error): return error
       }
+      return nil
+    }
+    if let failure {
+      return .failure(failure)
     }
     return .success(result)
   }
@@ -391,8 +394,12 @@ struct JSONStructValue: MapValue {
 
   var count: Int { fields.count }
 
-  var keys: [MapKey] {
-    fields.keys.sorted { $0.utf8.lexicographicallyPrecedes($1.utf8) }.map { .string($0) }
+  func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+    for name in fields.keys.sorted(by: { $0.utf8.lexicographicallyPrecedes($1.utf8) }) {
+      if try !body(.string(name)) {
+        return
+      }
+    }
   }
 
   func value(forKey key: MapKey) -> Value? {

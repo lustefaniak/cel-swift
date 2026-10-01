@@ -106,20 +106,64 @@ extension MapKey: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral,
 
 /// A CEL map.
 ///
-/// Implement this protocol to expose host dictionaries to CEL without copying them.
-/// ``OrderedMap`` is the implementation used for map literals.
+/// Implement this protocol to expose host dictionaries to CEL without copying them: a conformer
+/// supplies the entry count, key iteration and exact-key lookup, and nothing is materialized
+/// unless a caller asks for it. ``OrderedMap`` is the implementation used for map literals.
 ///
 /// Lookups with CEL's cross-numeric key semantics (`m[1.0]` finds the key `1` or `1u`) are built
 /// on ``value(forKey:)``, which only needs to answer exact-key queries.
+///
+/// ```swift
+/// struct Headers: MapValue {
+///   let fields: [(name: String, value: String)]
+///
+///   var count: Int { fields.count }
+///
+///   func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+///     for field in fields {
+///       if try !body(.string(field.name)) {
+///         return
+///       }
+///     }
+///   }
+///
+///   func value(forKey key: MapKey) -> Value? {
+///     guard case .string(let name) = key else { return nil }
+///     return fields.first { $0.name == name }.map { .string($0.value) }
+///   }
+/// }
+/// ```
 public protocol MapValue: Sendable {
   /// The number of entries.
   var count: Int { get }
 
-  /// The keys in iteration order.
-  var keys: [MapKey] { get }
+  /// Calls `body` with each key in iteration order until `body` returns `false`.
+  ///
+  /// The order must be the same on every call for the same map, so that comprehensions, equality
+  /// and formatting are deterministic; it need not be sorted. Each key is visited once.
+  ///
+  /// - Parameter body: Called with each key; returns `true` to continue with the next key, `false`
+  ///   to stop.
+  /// - Throws: Rethrows any error `body` throws, which stops the iteration.
+  func forEachKey(_ body: (MapKey) throws -> Bool) rethrows
 
   /// Returns the value stored under exactly `key`, or `nil`.
   func value(forKey key: MapKey) -> Value?
+}
+
+extension MapValue {
+  /// The keys in iteration order, collected into an array.
+  ///
+  /// - Complexity: O(*n*); prefer ``forEachKey(_:)`` when the keys are only iterated.
+  public var keys: [MapKey] {
+    var keys: [MapKey] = []
+    keys.reserveCapacity(count)
+    forEachKey { key in
+      keys.append(key)
+      return true
+    }
+    return keys
+  }
 }
 
 /// An insertion-ordered map from ``MapKey`` to ``Value``, used for map literals.
@@ -144,6 +188,15 @@ public struct OrderedMap: MapValue {
 
   /// The number of entries.
   public var count: Int { keys.count }
+
+  /// Calls `body` with each key in insertion order until `body` returns `false`.
+  public func forEachKey(_ body: (MapKey) throws -> Bool) rethrows {
+    for key in keys {
+      if try !body(key) {
+        return
+      }
+    }
+  }
 
   /// Returns the value stored under `key`, or `nil`.
   public func value(forKey key: MapKey) -> Value? {
@@ -179,6 +232,18 @@ public struct OrderedMap: MapValue {
 // MARK: - CEL map operations (cel-go baseMap)
 
 extension MapValue {
+  /// The first non-nil result of `transform` applied to the keys in iteration order, or `nil`;
+  /// the key-iteration counterpart of swift-algorithms' `firstNonNil(_:)`, for loops that stop
+  /// with a result such as an error.
+  package func firstNonNil<Result>(_ transform: (MapKey) -> Result?) -> Result? {
+    var result: Result?
+    forEachKey { key in
+      result = transform(key)
+      return result == nil
+    }
+    return result
+  }
+
   /// Finds the value for a CEL key value, applying cross-numeric key equality: a `double` key
   /// matches an `int` or `uint` key with the same value, and `int` / `uint` keys match each other.
   ///
@@ -230,14 +295,18 @@ extension MapValue {
     if count != other.count {
       return .bool(false)
     }
-    for key in keys {
+    var equal = true
+    forEachKey { key in
       guard let mine = value(forKey: key), let theirs = other.find(key.value) else {
-        return .bool(false)
+        equal = false
+        return false
       }
       if case .bool(false) = mine.celEquals(theirs) {
-        return .bool(false)
+        equal = false
+        return false
       }
+      return true
     }
-    return .bool(true)
+    return .bool(equal)
   }
 }

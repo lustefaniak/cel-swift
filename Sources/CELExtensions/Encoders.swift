@@ -271,16 +271,19 @@ enum CELJSONEncoder {
       return .success(.list(items))
     case .map(let map):
       var fields: [(String, JSON)] = []
-      for key in map.keys {
+      let failure = map.firstNonNil { key -> ExtError? in
         guard case .string(let k) = key.value else {
-          return .failure(
-            ExtError("unsupported type conversion from '\(key.value.runtimeTypeName)' to string"))
+          return ExtError("unsupported type conversion from '\(key.value.runtimeTypeName)' to string")
         }
-        guard let v = map.value(forKey: key) else { continue }
+        guard let v = map.value(forKey: key) else { return nil }
         switch toJSON(v) {
         case .success(let j): fields.append((k, j))
-        case .failure(let e): return .failure(e)
+        case .failure(let e): return e
         }
+        return nil
+      }
+      if let failure {
+        return .failure(failure)
       }
       return .success(.object(fields))
     case .optional(let inner):

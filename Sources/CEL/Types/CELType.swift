@@ -346,7 +346,7 @@ extension CELType {
       guard case .list(let list) = value, list.count > 0 else { return true }
       return elemType.isAssignableRuntime(list.element(at: 0))
     case .map(let keyType, let valueType):
-      guard case .map(let map) = value, map.count > 0, let first = map.keys.first else {
+      guard case .map(let map) = value, let first = map.firstNonNil({ $0 }) else {
         return true
       }
       let elem = map.value(forKey: first) ?? .null

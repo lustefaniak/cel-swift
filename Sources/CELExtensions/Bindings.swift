@@ -79,12 +79,13 @@ extension Library {
             guard case .map(var tm) = target, case .map(let um) = update else {
               return noSuchOverload(target, update)
             }
-            for key in um.keys {
+            let failure = um.firstNonNil { key -> Value? in
               let updated = insertMapKeyValue(tm, key.value, um.value(forKey: key) ?? .null)
               guard case .map(let m) = updated else { return updated }
               tm = m
+              return nil
             }
-            return .map(tm)
+            return failure ?? .map(tm)
           }))
     ])
     return Library(
@@ -129,7 +130,11 @@ func insertMapKeyValue(_ m: any MapValue, _ key: Value, _ value: Value) -> Value
   guard let mapKey = MapKey(key) else {
     return errorValue("unsupported key type: \(key.runtimeTypeName)")
   }
-  var copy = OrderedMap(m.keys.map { ($0, m.value(forKey: $0) ?? .null) })
+  var copy = OrderedMap()
+  m.forEachKey { key in
+    copy[key] = m.value(forKey: key) ?? .null
+    return true
+  }
   _ = copy.insert(value, forKey: mapKey)
   return .map(copy)
 }

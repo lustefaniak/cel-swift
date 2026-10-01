@@ -26,6 +26,7 @@ the new module can use the core's `package` declarations.
 | 10 | Public names that abbreviate or clash | full words, no clash with dependencies | done |
 | 11 | `OverloadDecl.Option.lateBinding` without a runtime half | `package` until a supply path exists | done |
 | 12 | Untyped `throws` on closed error sets | typed throws on declarations, containers, registry and protobuf conversion | done |
+| 13 | `MapValue.keys: [MapKey]` as the iteration requirement | `forEachKey(_:)` is the requirement, `keys` an extension | done |
 
 ## 1. Package name: keep `cel-swift`
 
@@ -143,3 +144,19 @@ concrete error type; plain `throws` is left only on `package` hooks whose closur
 targets (environment options, program decorators), which `Environment` maps to `DeclarationError`. On Swift 6.0 a closure only
 gets a typed throw when it says so (`{ (c: inout Container) throws(DeclarationError) in ... }`) and a
 `do` block only with `do throws(DeclarationError)`; both are written out.
+
+## 13. `MapValue` iterates keys with `forEachKey(_:)`
+
+The protocol required `keys: [MapKey]`, so every adapter over host data had to build an array of all keys
+for each iteration, which defeats the lazy adapters `Value` advertises. The requirement is now
+`forEachKey(_ body: (MapKey) throws -> Bool) rethrows`: the map calls `body` with each key in its
+iteration order until `body` returns `false`, so `exists` and equality stop early. The order must be the
+same on every call (comprehensions, equality and formatting depend on it) but need not be sorted.
+`keys` stays as an extension that collects the keys, and `OrderedMap` keeps its stored `keys`. An
+associated `Sequence` type was rejected: it makes clients name an iterator type and iterates through an
+existential iterator for `any MapValue`. Typed throws (`throws(Failure)` generic over the closure's error)
+was the first choice, but Swift 6.0 cannot see a method's generic parameter in the thrown type of a
+protocol requirement ("cannot find type 'Failure' in scope"), so the requirement uses `rethrows`; it can
+move to typed throws when the floor is raised. The benchmark expressions, with a new
+`comprehension-over-map` case, are unchanged within noise (`tools/bench/bench.py`, eval phase, 0.99 to
+1.02 times).

@@ -93,7 +93,7 @@ enum FormatterV2 {
       out.append(UInt8(ascii: "]"))
     case .map(let map):
       var entries: [(key: [UInt8], value: [UInt8])] = []
-      for key in map.keys {
+      let failure = map.firstNonNil { key -> FormatError? in
         guard let value = map.value(forKey: key) else {
           return FormatError("key missing from map: '\(key)'")
         }
@@ -106,6 +106,10 @@ enum FormatterV2 {
           return err
         }
         entries.append((k, v))
+        return nil
+      }
+      if let failure {
+        return failure
       }
       // sort.SliceStable by the formatted key, compared as Go strings (bytes).
       let sorted = entries.enumerated().sorted { a, b in

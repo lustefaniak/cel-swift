@@ -77,6 +77,8 @@ Settled before the release after a design review, for code written against `main
   (`docs/decisions.md` § 12).
 - `OverloadDecl.Option.lateBinding` and `hasLateBinding` are no longer public: nothing could supply the
   implementation at evaluation time (`docs/decisions.md` § 11).
+- `MapValue` requires `forEachKey(_:)` instead of `keys: [MapKey]`, so map adapters iterate without
+  materializing their keys; `keys` is an extension (`docs/decisions.md` § 13).
 
 ### Conformance
 

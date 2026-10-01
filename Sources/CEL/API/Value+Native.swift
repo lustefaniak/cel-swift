@@ -161,8 +161,10 @@ extension Value {
   public var asMap: [MapKey: Value]? {
     guard case .map(let map) = self else { return nil }
     var result: [MapKey: Value] = [:]
-    for key in map.keys {
+    result.reserveCapacity(map.count)
+    map.forEachKey { key in
       result[key] = map.value(forKey: key)
+      return true
     }
     return result
   }
