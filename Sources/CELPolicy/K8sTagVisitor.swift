@@ -14,11 +14,13 @@
 
 // Ported from cel-go policy/test_tag_handler_k8s.go.
 
-import CELPolicy
 
-/// A tag visitor for the custom policy tags used in Kubernetes admission policies.
-struct K8sTagVisitor: PolicyTagVisitor {
-  func visitPolicyTag(
+/// A tag visitor for the custom policy tags used in Kubernetes admission policies; cel-go uses it
+/// to test custom tags (`K8sTestTagHandler`), and so do the policy tests and `cel-swift policy test`.
+package struct K8sTagVisitor: PolicyTagVisitor {
+  package init() {}
+
+  package func visitPolicyTag(
     _ tagName: String,
     id: Int64,
     node: YAMLNode,
@@ -45,7 +47,7 @@ struct K8sTagVisitor: PolicyTagVisitor {
     }
   }
 
-  func visitRuleTag(
+  package func visitRuleTag(
     _ tagName: String,
     id: Int64,
     node: YAMLNode,
@@ -79,7 +81,7 @@ struct K8sTagVisitor: PolicyTagVisitor {
     }
   }
 
-  func visitMatchTag(
+  package func visitMatchTag(
     _ tagName: String,
     id: Int64,
     node: YAMLNode,

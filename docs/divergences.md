@@ -24,6 +24,14 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
 - **Model types are values.** cel-go's `Policy`, `Rule`, `Match` and `Variable` are mutable pointers shared
   with tag visitors; here they are structs and tag visitors receive them `inout`. The parse result is the
   same. Policy metadata values are `any Sendable` instead of `any`.
+- **`PolicyCompiler.compile` adds optional types and the bindings library** to the environment it is
+  given and returns that environment in `CompiledPolicy`. cel-go's `policy.Compile` leaves both to the
+  caller and fails with an undeclared `optional.none` or `cel.@block` when they are missing; the composed
+  expression always needs them, and returning the environment keeps programs from being planned without
+  the `cel.@block` evaluation.
+- **The static optimizer lives in `CELPolicy`** (`StaticOptimizer.swift`) and is internal: the composer is
+  its only user until the core gets a public optimizer API. Swift expressions are values, so updates
+  address nodes by id where cel-go mutates shared pointers.
 
 ## CELRegex (port of Go `regexp` and `regexp/syntax`, Go 1.26)
 
