@@ -103,6 +103,37 @@ struct ListsTests {
     #expect(errorMessage(d.call("flatten", list(), -1)) == "level must be non-negative")
   }
 
+  /// A host list nested `depth` levels deep, built lazily so that neither building nor releasing it
+  /// recurses: `[[[...[1]...]], 2]`.
+  struct DeepList: ListValue {
+    let depth: Int
+    var count: Int { 2 }
+    func element(at index: Int) -> Value {
+      if index == 1 {
+        return .int(2)
+      }
+      return depth == 0 ? .int(1) : .list(DeepList(depth: depth - 1))
+    }
+  }
+
+  /// cel-go recurses once per nesting level (Go stacks grow); host lists can be nested far deeper
+  /// than a Swift thread's stack allows.
+  @Test(.disabled("overflows the stack: flatten recurses once per nesting level"))
+  func flattenDeepHostList() throws {
+    let depth = 1_000_000
+    let flat = d.call("flatten", .list(DeepList(depth: depth)), .int(Int64(depth) + 1))
+    guard case .list(let result) = flat else {
+      Issue.record("not a list: \(flat)")
+      return
+    }
+    #expect(result.count == depth + 2)
+    #expect(result.element(at: 0) == .int(1))
+    #expect(result.element(at: 1) == .int(2))
+    // A depth below the nesting stops there.
+    let partial = d.call("flatten", .list(DeepList(depth: 10)), .int(2))
+    #expect(partial == list(.list(DeepList(depth: 7)), 2, 2, 2))
+  }
+
   @Test func sort() {
     #expect(d.call("sort", list(4, 3, 2, 1)) == list(1, 2, 3, 4))
     #expect(d.call("sort", list("d", "a", "b", "c")) == list("a", "b", "c", "d"))
