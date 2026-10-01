@@ -183,7 +183,11 @@ cel-go reflects over protobuf descriptors (`pb.Db`, `dynamicpb`); swift-protobuf
   it when decoding). Reads, `has()`, equality, binary and JSON encoding see the number as cel-go does. A
   list with an undeclared number is stored entirely in the unknown fields to keep its order; a message
   decoded from bytes holds the declared numbers of a list in the typed field and the others in unknown
-  fields, so reading it lists the declared ones first.
+  fields, so reading it lists the declared ones first. Likewise a singular field or map entry that came
+  twice on the wire, once with a declared and once with an undeclared number, decodes into both places;
+  it reads the declared number, as protobuf's closed enum semantics and swift-protobuf's accessors
+  have it, where cel-go reads whichever came last (Go treats every enum as open). swift-protobuf does
+  not keep the wire order, so neither case can follow cel-go for messages decoded by the host.
 - **Extension equality covers registered extensions only.** `pb.Equal` ranges over every set field; here
   extension fields take part in equality when their file is registered. Unknown fields are compared as
   cel-go does (bytes, then grouped by field number).

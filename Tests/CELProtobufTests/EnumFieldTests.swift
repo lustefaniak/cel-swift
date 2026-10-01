@@ -101,10 +101,33 @@ struct EnumFieldTests {
     #expect(map.mapInt32Enum == [1: .bar])
     let singularField = types.value(of: singular).protobufObject?.field("standalone_enum")
     let mapField = types.value(of: map).protobufObject?.field("map_int32_enum")
-    withKnownIssue("the undeclared number in the unknown fields takes precedence") {
-      #expect(singularField == 1)
-      #expect(mapField == [1: 1])
+    #expect(singularField == 1)
+    #expect(mapField == [1: 1])
+  }
+
+  /// In the other order cel-go reads the undeclared number, the last on the wire. Decoding loses
+  /// the order, and the declared number wins as in protobuf's closed enum semantics
+  /// (docs/divergences.md).
+  @Test func decodedClosedEnumFieldsPreferTheDeclaredValue() throws {
+    // standalone_enum (24) = 1, then = 10.
+    let singular = try Cel_Expr_Conformance_Proto2_TestAllTypes(
+      serializedBytes: [0xC0, 0x01, 0x01, 0xC0, 0x01, 0x0A] as [UInt8])
+    #expect(singular.standaloneEnum == .bar)
+    #expect(types.value(of: singular).protobufObject?.field("standalone_enum") == 1)
+  }
+
+  /// A literal assigning a field twice keeps the last value, as in cel-go, also when that hides a
+  /// declared number assigned first.
+  @Test func repeatedAssignmentKeepsTheLastNumber() throws {
+    let env = try Environment(.typeProvider(types), .container("cel.expr.conformance.proto2"))
+    func evaluate(_ text: String) throws -> Value {
+      try env.program(try env.compile(text)).evaluate().value
     }
+    #expect(try evaluate("TestAllTypes{standalone_enum: 1, standalone_enum: 10}.standalone_enum") == 10)
+    #expect(try evaluate("TestAllTypes{standalone_enum: 10, standalone_enum: 1}.standalone_enum") == 1)
+    #expect(
+      try evaluate("TestAllTypes{single_int32: 7, standalone_enum: 2, standalone_enum: 10}")
+        == evaluate("TestAllTypes{single_int32: 7, standalone_enum: 10}"))
   }
 
   /// protojson writes undeclared enum numbers as numbers and declared ones as names.

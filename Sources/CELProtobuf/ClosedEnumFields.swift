@@ -32,17 +32,22 @@ struct ClosedEnumNumbers<V: Sendable>: Sendable {
 }
 
 extension ProtobufField {
-  /// A singular closed enum field: an undeclared number is a varint in the unknown fields, which
-  /// takes precedence over the typed value (it was decoded or assigned last).
+  /// A singular closed enum field: an undeclared number is a varint in the unknown fields, read
+  /// when the typed field is not set.
+  ///
+  /// A decoded message holds both when the field came twice on the wire, a declared and an
+  /// undeclared number; the order is lost. The typed value wins, as with protobuf's closed enum
+  /// semantics and swift-protobuf's accessor; cel-go reads the last one (Go treats every enum as
+  /// open). Assignment keeps only one of the two.
   static func closedEnumSingular<V>(
     _ name: String, number: Int32, jsonName: String?, _ keyPath: WritableKeyPath<M, V> & Sendable,
     _ kind: ProtobufValueKind<V>, _ closed: ClosedEnumNumbers<V>, isTypedSet: @escaping @Sendable (M) -> Bool
   ) -> ProtobufField<M> {
     let effective: @Sendable (M) -> Int32? = { m in
-      if let unknown = unknownVarints(m.unknownFields, number).last {
-        return Int32(truncatingIfNeeded: unknown)
+      if isTypedSet(m) {
+        return closed.number(m[keyPath: keyPath])
       }
-      return isTypedSet(m) ? closed.number(m[keyPath: keyPath]) : nil
+      return unknownVarints(m.unknownFields, number).last.map { Int32(truncatingIfNeeded: $0) }
     }
     return ProtobufField(
       name: name,
@@ -54,11 +59,19 @@ extension ProtobufField {
         closed.toValue(effective(m) ?? closed.number(m[keyPath: keyPath]), types)
       },
       isSet: { m in effective(m) != nil },
-      set: { m, value, _ in
+      set: { m, value, types in
         let n: Int32
         switch closed.fromValue(value) {
         case .success(let converted): n = converted
         case .failure(let error): return fieldTypeConversionError(M.self, name, error)
+        }
+        if closed.declared(n) == nil && isTypedSet(m) {
+          // The typed value would hide the undeclared one; swift-protobuf has no generic way to
+          // clear a field, so the message is decoded again without it.
+          guard let cleared = removingField(m, number, extensions: types.extensionMap) else {
+            return EvalError("cannot clear \(M.protoMessageName).\(name)")
+          }
+          m = cleared
         }
         var unknown = removingUnknownFields(m.unknownFields, number)
         if let v = closed.declared(n) {
@@ -72,7 +85,7 @@ extension ProtobufField {
       equal: { a, b, _ in effective(a) == effective(b) },
       holdsUndeclaredEnumNumbers: true,
       patchJSON: { m, json, _ in
-        guard let n = unknownVarints(m.unknownFields, number).last else { return }
+        guard !isTypedSet(m), let n = unknownVarints(m.unknownFields, number).last else { return }
         json = Google_Protobuf_Value(numberValue: Double(Int32(truncatingIfNeeded: n)))
       }
     )
@@ -139,7 +152,8 @@ extension ProtobufField {
 
   /// A map field with closed enum values: entries with an undeclared number are map entries in the
   /// unknown fields, written in key order. swift-protobuf encodes and decodes their keys: an entry is
-  /// built with a declared stand-in value whose varint is then replaced.
+  /// built with a declared stand-in value whose varint is then replaced. As for singular fields, a
+  /// typed entry wins over an unknown one with the same key, which only decoding produces.
   static func closedEnumMap<K: Hashable, V>(
     _ name: String, number: Int32, jsonName: String?, _ keyPath: WritableKeyPath<M, [K: V]> & Sendable,
     key: ProtobufValueKind<K>, value: ProtobufValueKind<V>, _ closed: ClosedEnumNumbers<V>
@@ -160,12 +174,14 @@ extension ProtobufField {
       }
       return result
     }
-    /// Typed and unknown entries; an unknown entry wins over a typed one with the same key.
+    /// Typed and unknown entries; a typed entry wins over an unknown one with the same key.
     let effective: @Sendable (M) -> [K: Int32] = { m in
       var entries = m[keyPath: keyPath].mapValues(closed.number)
+      var unknown: [K: Int32] = [:]
       for (k, n) in unknownEntries(m) {
-        entries[k] = n
+        unknown[k] = n
       }
+      entries.merge(unknown) { typed, _ in typed }
       return entries
     }
     let toMapKey = key.toMapKey
@@ -331,6 +347,22 @@ func removingUnknownFields(_ storage: UnknownStorage, _ fieldNumbers: [Int32]) -
     index = end
   }
   return result
+}
+
+/// The message without a field, typed or unknown: decoded again from its encoding without the
+/// field's records.
+func removingField<M: SwiftProtobuf.Message>(_ message: M, _ fieldNumber: Int32, extensions: any ExtensionMap) -> M? {
+  guard let bytes: [UInt8] = try? message.serializedBytes(partial: true) else { return nil }
+  var kept: [UInt8] = []
+  var index = 0
+  while index < bytes.count {
+    guard let (number, end) = consumeField(bytes, at: index) else { return nil }
+    if number != UInt64(fieldNumber) {
+      kept += bytes[index..<end]
+    }
+    index = end
+  }
+  return try? M(serializedBytes: kept, extensions: extensions, partial: true)
 }
 
 /// Replaces a message's unknown fields with `bytes`. swift-protobuf only fills unknown fields while
