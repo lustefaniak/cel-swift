@@ -132,6 +132,9 @@ enum WellKnownTypes {
     }
   }
 
+  /// cel-go `Optional.ConvertToNative` of `optional.none()`.
+  static let optionalNoneDereference = EvalError("optional.none() dereference")
+
   private static func conversionError(_ value: Value, _ type: any SwiftProtobuf.Message.Type)
     -> EvalError
   {
@@ -144,6 +147,11 @@ enum WellKnownTypes {
   ) -> Result<(any SwiftProtobuf.Message)?, EvalError> {
     if case .error(let error) = value {
       return .failure(error)
+    }
+    if case .optional(let wrapped) = value {
+      // cel-go `Optional.ConvertToNative`: the wrapped value converts, none is an error.
+      guard let wrapped else { return .failure(optionalNoneDereference) }
+      return convertErased(wrapped, to: type, types: types)
     }
     func scalar(_ message: (any SwiftProtobuf.Message)?) -> Result<
       (any SwiftProtobuf.Message)?, EvalError
@@ -219,6 +227,9 @@ enum WellKnownTypes {
   static func packAny(_ value: Value, types: ProtobufTypes) -> Result<Google_Protobuf_Any, EvalError> {
     let message: any SwiftProtobuf.Message
     switch value {
+    case .optional(let wrapped):
+      guard let wrapped else { return .failure(optionalNoneDereference) }
+      return packAny(wrapped, types: types)
     case .bool(let b): message = Google_Protobuf_BoolValue(b)
     case .int(let i): message = Google_Protobuf_Int64Value(i)
     case .uint(let u): message = Google_Protobuf_UInt64Value(u)
@@ -247,7 +258,7 @@ enum WellKnownTypes {
       message = proto.message
     case .error(let error):
       return .failure(error)
-    case .type, .optional, .unknown:
+    case .type, .unknown:
       return .failure(conversionError(value, Google_Protobuf_Any.self))
     }
     do {
@@ -310,9 +321,12 @@ enum WellKnownTypes {
       } catch {
         return .failure(EvalError("\(error)"))
       }
+    case .optional(let wrapped):
+      guard let wrapped else { return .failure(optionalNoneDereference) }
+      return jsonValue(wrapped, types: types)
     case .error(let error):
       return .failure(error)
-    case .type, .optional, .unknown:
+    case .type, .unknown:
       return .failure(conversionError(value, Google_Protobuf_Value.self))
     }
     return .success(json)
@@ -338,6 +352,10 @@ enum WellKnownTypes {
     var result = Google_Protobuf_Struct()
     for key in map.keys {
       guard case .string(let name) = key else {
+        // The key's ConvertToNative message: cel-go `Bool` words it unlike `Int` and `Uint`.
+        if case .bool = key {
+          return .failure(EvalError("type conversion error from bool to 'string'"))
+        }
         return .failure(
           EvalError("unsupported type conversion from '\(key.value.runtimeTypeName)' to string"))
       }

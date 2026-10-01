@@ -123,9 +123,7 @@ enum Messages {
     return "message:\(name){\(text)}"
   }
 
-  /// The message's text format after a round trip through protobuf JSON, which normalises it the way the
-  /// oracle's protojson output is: a `google.protobuf.NullValue` field holding any number reads back as
-  /// `NULL_VALUE` (cel-go stores the number but protojson writes `null`).
+  /// The message's text format with NullValue numbers normalised (see ``normalisingNullValues(_:)``).
   private static func textFormat<M: SwiftProtobuf.Message>(_ type: M.Type, _ value: Value) -> String? {
     guard let message = try? types.message(from: value, as: type) else { return nil }
     return normalisingNullValues(message.textFormatString())
