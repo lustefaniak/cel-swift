@@ -362,17 +362,25 @@ struct Machine {
   ) -> Int32 {
     var t = spare
     var pendingRestores = 0
-    work.removeAll(keepingCapacity: true)
-    work.append(.explore(pc0))
-    while let w = work.popLast() {
+    // The work stack is empty between calls; the first pc is explored without pushing it.
+    var next: UInt32? = pc0
+    while true {
       var pc: UInt32
-      switch w {
-      case .restore(let arg, let opos):
-        caps[Int(capRef) * ncap + Int(arg)] = opos
-        pendingRestores -= 1
-        continue
-      case .explore(let p):
-        pc = p
+      if let n = next {
+        pc = n
+        next = nil
+      } else {
+        guard let w = work.popLast() else {
+          break
+        }
+        switch w {
+        case .restore(let arg, let opos):
+          caps[Int(capRef) * ncap + Int(arg)] = opos
+          pendingRestores -= 1
+          continue
+        case .explore(let p):
+          pc = p
+        }
       }
       again: while true {
         if pc == 0 {
