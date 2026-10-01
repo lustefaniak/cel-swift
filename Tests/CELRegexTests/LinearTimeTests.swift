@@ -42,6 +42,27 @@ struct LinearTimeTests {
     }
   }
 
+  /// Go's NFA allocates a thread, with its capture slots, when a queue entry needs one, so memory
+  /// follows the threads alive at once. Allocating slots for the bound of 2n threads up front
+  /// takes (2n + 2) * ncap words per match: quadratic in the pattern for capture-heavy patterns,
+  /// gigabytes for a few thousand groups.
+  @Test func captureSlotsFollowLiveThreads() throws {
+    let groups = 500
+    let re = try Regexp.compile(String(repeating: "(a)", count: groups))
+    let input = Array(String(repeating: "a", count: groups).utf8)
+    re.flat.withPointers { p in
+      var m = Machine(re, p, ncap: 2 * (re.numSubexp + 1))
+      defer { m.deallocate() }
+      let matched = input.withUnsafeBufferPointer { m.match(Input(buf: $0), 0) }
+      #expect(matched)
+      #expect(m.matchcap[2 * groups + 1] == groups)
+      // One thread per step is alive here; Go allocates a handful.
+      withKnownIssue("capture slots for 2n + 2 threads are allocated up front") {
+        #expect(m.allocatedThreads <= 16, "\(m.allocatedThreads) threads for \(groups) groups")
+      }
+    }
+  }
+
   /// Doubling the input should roughly double the time, never square it.
   @Test func runtimeGrowsLinearly() throws {
     let re = try Regexp.compile(#"(a*)*b"#)

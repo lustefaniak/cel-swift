@@ -281,6 +281,9 @@ struct Machine {
 
   var matchcap: [Int] { Array(UnsafeBufferPointer(start: caps, count: ncap)) }
 
+  /// The number of threads whose capture slots are allocated.
+  var allocatedThreads: Int { maxThreads }
+
   @inline(__always)
   private mutating func free(_ t: Int32) {
     pool[poolCount] = t
