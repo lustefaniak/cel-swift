@@ -53,6 +53,10 @@ enum GoTables {
     return rows
   }()
 
+  /// The rows without Go-valued fields: the ones the harness can run. A stored property rather than
+  /// a closure in `@Test(arguments:)`, which crashes the Swift 6.0 compiler.
+  static let runnableRows: [GoTableRow] = rows.filter { $0.goFields.isEmpty }
+
   static func environment(_ name: String) throws -> Environment {
     switch name {
     case "strings": return try Environment(.standardLibrary, .library(.strings))
@@ -87,7 +91,7 @@ private let unsupported: [String: String] = {
 }()
 
 struct GoTableTests {
-  @Test(arguments: GoTables.rows.filter { $0.goFields.isEmpty })
+  @Test(arguments: GoTables.runnableRows)
   func row(_ row: GoTableRow) throws {
     if let reason = unsupported[row.entry] {
       withKnownIssue(Comment(rawValue: reason)) { Issue.record("\(row.entry)") }
