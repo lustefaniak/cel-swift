@@ -215,6 +215,12 @@ extension Program {
       Option { $0.timeLimit = duration }
     }
 
+    /// Evaluates with the attributes matching ``Variables/unknowns`` treated as unknown
+    /// (cel-go `OptPartialEval`): the result is `.unknown` when it depends on them.
+    public static var partialEvaluation: Option {
+      Option { $0.evalOptions.insert(.partialEval) }
+    }
+
     /// Returns evaluation errors as `.error` values in ``EvaluationResult/value`` instead of
     /// throwing them, so cost and state stay available.
     public static var errorsAsValues: Option {
@@ -236,6 +242,10 @@ public struct Variables: Sendable, ExpressibleByDictionaryLiteral {
   private var values: [String: Value]
   private var lazyValues: [String: @Sendable () -> Value] = [:]
   private var resolver: (@Sendable (String) -> Value?)?
+
+  /// Patterns of attributes whose values are not known yet; they take effect in programs created
+  /// with ``Program/Option/partialEvaluation``.
+  public var unknowns: [UnknownPattern] = []
 
   /// Creates variables from values by name.
   public init(_ values: [String: Value] = [:]) {
@@ -274,10 +284,14 @@ public struct Variables: Sendable, ExpressibleByDictionaryLiteral {
   }
 
   package func makeActivation() -> any Activation {
-    if lazyValues.isEmpty && resolver == nil {
-      return MapActivation(values)
+    let activation: any Activation =
+      lazyValues.isEmpty && resolver == nil
+      ? MapActivation(values)
+      : ResolvingActivation(values: values, lazyValues: lazyValues, resolver: resolver)
+    if unknowns.isEmpty {
+      return activation
     }
-    return ResolvingActivation(values: values, lazyValues: lazyValues, resolver: resolver)
+    return PartialActivationWrapper(activation, unknowns: unknowns.map(\.pattern))
   }
 }
 

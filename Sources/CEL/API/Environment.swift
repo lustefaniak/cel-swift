@@ -97,11 +97,21 @@ public struct Environment: Sendable {
   /// - Parameter options: Additional declarations, libraries and features.
   /// - Throws: ``DeclarationError`` when a new declaration conflicts with an existing one.
   public func extending(options: [Option]) throws(DeclarationError) -> Environment {
-    try Environment(configuration: configuration, options: options)
+    try Environment(base: self, configuration: configuration, options: options)
   }
 
   package init(configuration: Configuration, options: [Option]) throws(DeclarationError) {
+    try self.init(base: nil, configuration: configuration, options: options)
+  }
+
+  /// Applies `options` to `configuration`. When `base` is the environment `configuration` came
+  /// from and the options leave its functions alone, the new checker environment inherits the
+  /// base's validated declarations and the dispatcher is shared, as cel-go `Extend` does with
+  /// `checker.ValidatedDeclarations`: declaring the functions again is the expensive part of
+  /// building an environment.
+  package init(base: Environment?, configuration: Configuration, options: [Option]) throws(DeclarationError) {
     var configuration = configuration
+    let functionsGeneration = configuration.functionsGeneration
     for option in options {
       do {
         try option.apply(&configuration)
@@ -117,14 +127,22 @@ public struct Environment: Sendable {
     } catch {
       throw DeclarationError(error.description)
     }
+    let inherited = configuration.functionsGeneration == functionsGeneration ? base : nil
     do {
+      var checkerOptions = configuration.checkerOptions
+      if let inherited {
+        checkerOptions.append(.validatedDeclarations(inherited.checkerEnv))
+      }
       var env = CheckerEnv(
-        container: configuration.container, provider: configuration.registry,
-        options: configuration.checkerOptions)
+        container: configuration.container, provider: configuration.registry, options: checkerOptions)
       try env.addIdents(configuration.variables)
-      try env.addFunctions(configuration.functions)
+      if let inherited {
+        self.dispatcher = inherited.dispatcher
+      } else {
+        try env.addFunctions(configuration.functions.filter { !$0.isDeclarationDisabled })
+        self.dispatcher = try Dispatcher(functions: configuration.functions)
+      }
       self.checkerEnv = env
-      self.dispatcher = try Dispatcher(functions: configuration.functions)
     } catch let error as DeclarationError {
       throw error
     } catch {
