@@ -14,8 +14,8 @@
 
 // Ported from cel-go common/ast/ast.go (non-protobuf parts).
 //
-// The checked parts of cel-go's AST (type map, reference map) belong to the checker and are attached
-// there; `AST` here carries the parsed expression and its source metadata.
+// The checked parts of cel-go's AST (type map, reference map) are filled in by the checker; their
+// accessors and `ReferenceInfo` are in ReferenceInfo.swift.
 
 /// A parsed expression together with its source metadata.
 package struct AST: Sendable {
@@ -23,6 +23,10 @@ package struct AST: Sendable {
   package var expr: Expr
   /// Offsets, line information and macro calls for the expression.
   package var sourceInfo: SourceInfo
+  /// Checked types by expression id; empty until the AST is type-checked (cel-go `TypeMap`).
+  package var typeMap: [Int64: CELType] = [:]
+  /// Resolved identifiers and overloads by expression id (cel-go `ReferenceMap`).
+  package var referenceMap: [Int64: ReferenceInfo] = [:]
 
   package init(expr: Expr, sourceInfo: SourceInfo) {
     self.expr = expr
