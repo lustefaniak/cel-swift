@@ -161,6 +161,36 @@ struct APITests {
     #expect(throws: EvalError.self) { try outcome.get() }
   }
 
+  @Test func partialEvaluation() throws {
+    let env = try Environment(.variable("a", .bool), .variable("b", .map(key: .string, value: .bool)))
+    let program = try env.program(env.compile("a && b.x"), options: [.partialEvaluation])
+    let unknown = try program.evaluate(Variables(["a": true], unknowns: [UnknownPattern("b").qualified(by: "x")]))
+    #expect(unknown.value.isUnknown)
+    let decided = try program.evaluate(Variables(["a": false], unknowns: [UnknownPattern("b")]))
+    #expect(decided.value == false)
+    let partial = env.partialVariables(["a": true])
+    #expect(partial.unknowns.map(\.description) == ["b"])
+    #expect(try program.evaluate(partial).value.isUnknown)
+    #expect(UnknownPattern("a").qualified(by: .int(1)).wildcard().description == "a[1].*")
+  }
+
+  @Test func costEstimate() throws {
+    let env = try Environment(.variable("s", .string), .variable("l", .list(.string)))
+    let constant = try env.compile("1 + 2 == 3")
+    #expect(env.estimateCost(constant) == 2...2)
+    let unbounded = try env.compile("l.all(x, x.startsWith(s))")
+    #expect(env.estimateCost(unbounded).upperBound == UInt64.max)
+    let bounded = env.estimateCost(unbounded, sizeHints: ["l": 0...10, "l.@items": 0...20, "s": 0...5])
+    #expect(bounded.upperBound < 1000)
+  }
+
+  @Test func extendingWithoutFunctionsReusesDeclarations() throws {
+    let parent = try Environment(.function("f", .overload("f_int", argTypes: [.int], resultType: .int)))
+    let child = try parent.extending(.variable("x", .int), .container("c"))
+    #expect(child.hasFunction(named: "f"))
+    #expect(try child.compile("f(x)").outputType == .int)
+  }
+
   @Test func unparse() throws {
     let env = try Environment()
     #expect(try env.parse("a+b*2").description == "a + b * 2")

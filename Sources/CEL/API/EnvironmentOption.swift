@@ -22,7 +22,12 @@ extension Environment {
     package var container = Container.default
     package var variables: [VariableDecl] = []
     /// Functions in declaration order; options declaring an existing name merge into it.
-    package var functions: [FunctionDecl] = []
+    package var functions: [FunctionDecl] = [] {
+      didSet { functionsGeneration &+= 1 }
+    }
+    /// Incremented whenever ``functions`` changes, so an extended environment knows whether it
+    /// can reuse its parent's checker declarations and dispatcher.
+    package var functionsGeneration = 0
     package var macros: [Macro] = []
     package var registry = TypeRegistry()
     package var libraryNames: [String] = []
@@ -271,6 +276,12 @@ extension Environment {
     /// and the `optMap` / `optFlatMap` macros (cel-go `OptionalTypes`).
     public static var optionalTypes: Option {
       library(.optionalTypes())
+    }
+
+    /// Adds parser macros; a macro replaces an earlier one with the same name, argument count
+    /// and receiver style (cel-go `Macros`).
+    package static func macros(_ macros: [Macro]) -> Option {
+      Option { $0.macros += macros }
     }
 
     /// Removes every macro, including the standard ones (cel-go `ClearMacros`).
