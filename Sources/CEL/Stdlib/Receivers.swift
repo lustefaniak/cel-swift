@@ -35,7 +35,7 @@ extension Value {
         case Overloads.timeGetHours: return .int(d.hours)
         case Overloads.timeGetMinutes: return .int(d.minutes)
         case Overloads.timeGetSeconds: return .int(d.seconds)
-        case Overloads.timeGetMilliseconds: return .int(d.milliseconds)
+        case Overloads.timeGetMilliseconds: return .int(d.millisecondsOfSecond)
         default: break
         }
       }

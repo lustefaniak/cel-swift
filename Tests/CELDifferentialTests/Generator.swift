@@ -653,7 +653,9 @@ struct Generator {
         return Node("%0.\(getter)()", [g.gen(.timestamp, d)], .int)
       }
     }
-    for getter in ["getHours", "getMinutes", "getSeconds", "getMilliseconds"] {
+    // Not duration getMilliseconds: cel-swift returns the spec's milliseconds portion, cel-go the whole
+    // duration in milliseconds (docs/divergences.md).
+    for getter in ["getHours", "getMinutes", "getSeconds"] {
       addIf(&o, true, 1, "du_\(getter)") { g in Node("%0.\(getter)()", [g.gen(.duration, d)], .int) }
     }
     addIf(&o, comprehensionDepth < 2, 2, "size_filter") { g in

@@ -167,7 +167,8 @@ struct StdlibTests {
     #expect(try call("getHours", d) == 1)
     #expect(try call("getMinutes", d) == 62)
     #expect(try call("getSeconds", d) == 3723)
-    #expect(try call("getMilliseconds", d) == 3_723_456)
+    // The milliseconds portion per the spec; cel-go returns 3723456 (docs/divergences.md).
+    #expect(try call("getMilliseconds", d) == 456)
     #expect(try call("getHours", "x") == .error(EvalError("no such overload: getHours(string)")))
   }
 

@@ -670,7 +670,8 @@ package enum StandardLibrary {
           "timestamp('2023-07-14T10:30:45.123Z').getMilliseconds() // 123",
           "timestamp('2023-07-14T10:30:45.123Z').getMilliseconds('America/Los_Angeles') // 123"
         ),
-        duration: (O.durationToMilliseconds, nil, { $0.milliseconds })
+        // The spec's milliseconds portion, not cel-go's conversion (docs/divergences.md).
+        duration: (O.durationToMilliseconds, nil, { $0.millisecondsOfSecond })
       ) { $0.nanosecond / 1_000_000 },
     ]
   }

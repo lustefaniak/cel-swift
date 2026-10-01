@@ -4508,6 +4508,8 @@ checked timestamps/duration_conversions/type_comparison
 parse-only timestamps/duration_conversions/type_comparison
 checked timestamps/duration_converters/get_hours
 parse-only timestamps/duration_converters/get_hours
+checked timestamps/duration_converters/get_milliseconds
+parse-only timestamps/duration_converters/get_milliseconds
 checked timestamps/duration_converters/get_minutes
 parse-only timestamps/duration_converters/get_minutes
 checked timestamps/duration_converters/get_seconds

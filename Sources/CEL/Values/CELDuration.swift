@@ -56,6 +56,11 @@ public struct CELDuration: Sendable, Hashable, Comparable {
   var seconds: Int64 { nanoseconds / CELDuration.nanosPerSecond }
   /// The whole milliseconds, truncated toward zero.
   var milliseconds: Int64 { nanoseconds / CELDuration.nanosPerMillisecond }
+  /// The milliseconds within the current second, truncated toward zero (`duration('1.234s')` has 234):
+  /// what the spec's `getMilliseconds` returns. cel-go returns ``milliseconds`` (docs/divergences.md).
+  var millisecondsOfSecond: Int64 {
+    (nanoseconds % CELDuration.nanosPerSecond) / CELDuration.nanosPerMillisecond
+  }
 
   /// The duration in seconds as a double, computed as Go `Duration.Seconds` does.
   var secondsAsDouble: Double {

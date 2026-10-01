@@ -304,7 +304,11 @@ struct DurationValueTests {
     #expect(d.receive(function: "getHours", overload: "duration_to_hours", args: []) == 2)
     #expect(d.receive(function: "getMinutes", overload: "duration_to_minutes", args: []) == 125)
     #expect(d.receive(function: "getSeconds", overload: "duration_to_seconds", args: []) == 7506)
-    #expect(d.receive(function: "getMilliseconds", overload: "duration_to_milliseconds", args: []) == 7_506_000)
+    // cel-go TestDurationGetMilliseconds expects 7506000 (the whole duration in milliseconds); the spec's
+    // milliseconds portion is 0 (docs/divergences.md).
+    #expect(d.receive(function: "getMilliseconds", overload: "duration_to_milliseconds", args: []) == 0)
+    #expect(dur(1, 234_000_000).receive(function: "getMilliseconds", overload: "", args: []) == 234)
+    #expect(dur(-1, -234_000_000).receive(function: "getMilliseconds", overload: "", args: []) == -234)
     #expect(dur(0, 1).isZeroValue == false)
     #expect(dur(0).isZeroValue)
   }

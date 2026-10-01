@@ -511,11 +511,13 @@ struct APICelTests {
 
   @Test func defaultUTCTimeZoneInExtendedEnvironment() throws {
     let env = try Environment(.variable("x", .timestamp), .variable("y", .duration)).extending()
+    // cel-go expects y.getMilliseconds() == 7235000; the spec's milliseconds portion is 0
+    // (docs/divergences.md).
     let out = try interpret(
       env,
       """
       x.getFullYear() == 1970 && y.getHours() == 2 && y.getMinutes() == 120 && y.getSeconds() == 7235
-      && y.getMilliseconds() == 7235000
+      && y.getMilliseconds() == 0
       """,
       ["x": Self.localTimestamp, "y": .duration(CELDuration(nanoseconds: 7235 * 1_000_000_000))])
     #expect(out == true)

@@ -98,6 +98,10 @@ by fixtures generated from cel-go (`tools/value-fixtures`). The differences:
   when the directory is unreadable (iOS sandboxes). FoundationEssentials alone cannot resolve zone names on
   Linux, which is why Foundation is not used there. Zones are not cached: each accessor call with a zone
   name reads the TZif file.
+- **`duration.getMilliseconds()` is the milliseconds portion** (`duration('1.234s')` gives 234), as the
+  spec defines it and cel-cpp implements it (`timestamps/duration_converters/get_milliseconds`). cel-go
+  converts the whole duration to milliseconds (1234) and skips that conformance test. Negative durations
+  give a negative portion (`-1.5s` gives -500).
 
 ## Type checker
 
