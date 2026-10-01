@@ -154,6 +154,36 @@ struct StringsCostTests {
   }
 }
 
+/// Edge cases of the size arithmetic (wrapping subtractions, negative and empty arguments), with
+/// the estimate and the runtime cost (also of evaluations that fail) taken from tools/oracle.
+struct CostEdgeCaseTests {
+  @Test(arguments: [
+    // end - start wraps when start > end.
+    ("strings", "'hello'.substring(4, 2)", UInt64.max...UInt64.max, UInt64(3)),
+    ("lists", "[1, 2, 3].slice(2, 1)", UInt64.max...UInt64.max, 22),
+    // Negative literals count as 0.
+    ("lists", "lists.range(-1)", 11...11, 12),
+    ("lists", "[[1,2],[3]].flatten(-1)", 43...43, 42),
+    ("lists", "[1,2,3].slice(-1, 2)", 23...23, 22),
+    ("regex", "regex.replace('abc', 'b', '')", 1...4, 3),
+    ("regex", "regex.extractAll('', '')", 11...11, 13),
+    ("strings", "'abc'.split('')", 12...15, 15),
+    ("strings", "'abc'.replace('', 'xy')", 5...14, 13),
+    ("strings", "''.charAt(0)", 2...2, 2),
+  ])
+  func edgeCase(_ library: String, _ expr: String, _ estimate: ClosedRange<UInt64>, _ runtime: UInt64) throws {
+    let env: Environment
+    switch library {
+    case "strings": env = try Environment(.library(.strings))
+    case "lists": env = try Environment(.library(.lists))
+    default: env = try Environment(.optionalTypes, .library(.regex))
+    }
+    let checked = try env.compile(expr)
+    #expect(env.estimateCost(checked) == estimate)
+    #expect(try env.program(checked, options: [.trackCost, .errorsAsValues]).evaluate().cost == runtime)
+  }
+}
+
 struct EncodersCostTests {
   /// cel-go `TestJSONEncodeCostUnbounded`.
   @Test func jsonEncodeCostUnbounded() throws {
