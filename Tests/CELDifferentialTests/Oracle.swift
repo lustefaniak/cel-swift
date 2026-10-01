@@ -74,11 +74,18 @@ enum Oracle {
     defer { try? FileManager.default.removeItem(at: inputFile) }
     let process = Process()
     process.executableURL = url
-    process.standardInput = try FileHandle(forReadingFrom: inputFile)
+    let inputHandle = try FileHandle(forReadingFrom: inputFile)
+    process.standardInput = inputHandle
     let out = Pipe()
     process.standardOutput = out
     process.standardError = FileHandle.nullDevice
+    // Close every descriptor explicitly: minimisation runs thousands of oracle processes.
+    defer {
+      try? inputHandle.close()
+      try? out.fileHandleForReading.close()
+    }
     try process.run()
+    try? out.fileHandleForWriting.close()
     let data = out.fileHandleForReading.readDataToEndOfFile()
     process.waitUntilExit()
     let lines = String(decoding: data, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: true)

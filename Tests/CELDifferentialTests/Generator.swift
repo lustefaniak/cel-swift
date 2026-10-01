@@ -147,7 +147,7 @@ enum Profile: String, Sendable {
   /// applied.
   static let extensionVersions: [(String, Int)] = [
     ("optional", 2), ("strings", 5), ("math", 3), ("lists", 3), ("sets", 2), ("encoders", 2), ("bindings", 2),
-    ("two-var-comprehensions", 2), ("regex", 2),
+    ("two-var-comprehensions", 2), ("regex", 2), ("network", 0),
   ]
 
   var declarations: [(String, GType)] {
@@ -320,6 +320,23 @@ struct Generator {
     if depth > 1 && rng.chance(20) { return gen(.int, depth - 1) }
     let v = rng.range(-1, 6)
     return Node("\(v)", [], .int, op: v < 0)
+  }
+
+  static let ips: [String] = [
+    "192.168.0.1", "10.0.0.1", "127.0.0.1", "::1", "2001:db8::1", "fe80::1", "0.0.0.0", "::", "::ffff:192.168.0.1",
+    "256.1.1.1", "1.2.3", "192.168.0.1%eth0", "2001:DB8::1", "01.2.3.4", "224.0.0.1", "ff02::1", "169.254.1.1",
+    "8.8.8.8", "",
+  ]
+  static let cidrs: [String] = [
+    "192.168.0.0/24", "10.0.0.0/8", "::1/128", "2001:db8::/32", "192.168.0.1/24", "0.0.0.0/0", "1.2.3.4/33",
+    "abc/12", "::ffff:10.0.0.0/104", "127.0.0.1/32", "fe80::/10", "10.0.0.0/08", "::/0", "192.168.1.0/24",
+  ]
+
+  /// An IP address or CIDR string for the network extension: mostly literals (valid and invalid), sometimes
+  /// computed.
+  mutating func ipString(_ depth: Int, cidr: Bool) -> Node {
+    if depth > 1 && rng.chance(15) { return gen(.string, depth - 1) }
+    return Node(Self.quote(rng.pick(cidr ? Self.cidrs : Self.ips)), [], .string)
   }
 
   /// A list index, mostly 0 or 1 so lookups usually succeed.
@@ -876,6 +893,11 @@ struct Generator {
       let kids = (0..<n).map { _ in g.gen(.int, d) }
       return Node("\(fn)(" + (0..<n).map { "$\($0)" }.joined(separator: ", ") + ")", kids, .int, ext: true)
     }
+    addIf(&o, full, 1, "net_int") { g in
+      g.rng.chance(50)
+        ? Node("ip($0).family()", [g.ipString(d, cidr: false)], .int, ext: true)
+        : Node("cidr($0).prefixLength()", [g.ipString(d, cidr: true)], .int, ext: true)
+    }
     for fn in ["math.abs", "math.sign", "math.bitNot"] {
       addIf(&o, full, 1, fn) { g in Node("\(fn)($0)", [g.gen(.int, d)], .int, ext: true) }
     }
@@ -989,6 +1011,13 @@ struct Generator {
     addIf(&o, full, 1, "str_join") { g in
       if g.rng.chance(50) { return Node("%0.join()", [g.gen(.list(.string), d)], .string, ext: true) }
       return Node("%0.join($1)", [g.gen(.list(.string), d), g.gen(.string, d)], .string, ext: true)
+    }
+    addIf(&o, full, 1, "net_string") { g in
+      switch g.rng.below(3) {
+      case 0: return Node("string(ip($0))", [g.ipString(d, cidr: false)], .string, ext: true)
+      case 1: return Node("string(cidr($0).masked())", [g.ipString(d, cidr: true)], .string, ext: true)
+      default: return Node("string(cidr($0).ip())", [g.ipString(d, cidr: true)], .string, ext: true)
+      }
     }
     addIf(&o, full, 1, "strings.quote") { g in Node("strings.quote($0)", [g.gen(.string, d)], .string, ext: true) }
     addIf(&o, full, 2, "str_format") { g in
@@ -1143,6 +1172,33 @@ struct Generator {
         let e = g.randomType(nesting: 1)
         return Node("\(fn)($0, $1)", [g.gen(.list(e), d), g.gen(.list(e), d)], .bool, ext: true)
       }
+    }
+    for fn in ["isIP", "isCIDR", "ip.isCanonical"] {
+      addIf(&o, full, 1, "net_\(fn)") { g in Node("\(fn)($0)", [g.ipString(d, cidr: fn == "isCIDR")], .bool, ext: true)
+      }
+    }
+    for fn in ["isLoopback", "isGlobalUnicast", "isLinkLocalMulticast", "isLinkLocalUnicast", "isUnspecified"] {
+      addIf(&o, full, 1, "net_\(fn)") { g in Node("ip($0).\(fn)()", [g.ipString(d, cidr: false)], .bool, ext: true) }
+    }
+    addIf(&o, full, 1, "net_contains") { g in
+      switch g.rng.below(3) {
+      case 0:
+        return Node(
+          "cidr($0).containsIP(ip($1))", [g.ipString(d, cidr: true), g.ipString(d, cidr: false)], .bool, ext: true)
+      case 1:
+        return Node(
+          "cidr($0).containsIP($1)", [g.ipString(d, cidr: true), g.ipString(d, cidr: false)], .bool, ext: true)
+      default:
+        return Node(
+          "cidr($0).containsCIDR(cidr($1))", [g.ipString(d, cidr: true), g.ipString(d, cidr: true)], .bool, ext: true)
+      }
+    }
+    addIf(&o, full, 1, "net_eq") { g in
+      g.rng.chance(50)
+        ? Node(
+          "ip($0) == ip($1)", [g.ipString(d, cidr: false), g.ipString(d, cidr: false)], .bool, op: true, ext: true)
+        : Node(
+          "cidr($0) == cidr($1)", [g.ipString(d, cidr: true), g.ipString(d, cidr: true)], .bool, op: true, ext: true)
     }
     for fn in ["math.isInf", "math.isNaN", "math.isFinite"] {
       addIf(&o, full, 1, fn) { g in Node("\(fn)($0)", [g.gen(.double, d)], .bool, ext: true) }
