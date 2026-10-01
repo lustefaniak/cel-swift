@@ -127,8 +127,15 @@ struct YAMLLimitsTests {
     let accepted = try #require(try YAMLNode.parseDocument(Self.laughs(levels: 3, fanout: 10)))
     #expect(try accepted.decodeValue() != nil)
     let excessive = try #require(try YAMLNode.parseDocument(Self.laughs(levels: 4, fanout: 10)))
-    withKnownIssue("aliases are expanded without a bound") {
-      #expect(Self.decodeError(excessive) == "yaml: document contains excessive aliasing")
+    #expect(Self.decodeError(excessive) == "yaml: document contains excessive aliasing")
+    // A billion scalars (387 million here) fail as soon as the ratio is exceeded.
+    let laughs = Self.laughs(levels: 9, fanout: 9)
+    let billion = try #require(try YAMLNode.parseDocument(laughs))
+    #expect(Self.decodeError(billion) == "yaml: document contains excessive aliasing")
+    #expect(throws: YAMLError(message: "yaml: document contains excessive aliasing")) {
+      try EnvironmentConfig(
+        yaml: "anchors:\n" + Self.laughs(levels: 9, fanout: 9, indent: "  ")
+          + "validators:\n- name: v\n  config:\n    laughs: *a8\n")
     }
   }
 

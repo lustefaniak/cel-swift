@@ -101,6 +101,12 @@ package struct YAMLDecoder {
   package private(set) var errors: [String] = []
   /// The number of collections being decoded.
   private var depth = 0
+  /// The nodes decoded so far, and how many of them were reached through an alias (go-yaml's
+  /// `decodeCount` and `aliasCount`).
+  private var decodeCount = 0
+  private var aliasCount = 0
+  /// The number of aliases being decoded.
+  private var aliasDepth = 0
 
   package init() {}
 
@@ -131,6 +137,63 @@ package struct YAMLDecoder {
   package static func isNull(_ node: YAMLNode) -> Bool {
     guard let n = content(of: node) else { return true }
     return n.kind == .scalar && n.shortTag == YAMLTags.null
+  }
+
+  /// go-yaml's `allowedAliasRatio`: the share of decoded nodes that may come from alias expansion.
+  static func allowedAliasRatio(_ decodeCount: Int) -> Double {
+    // 400,000 decode operations is ~500kb of dense object declarations, or
+    // ~5kb of dense object declarations with 10000% alias expansion
+    let low = 400_000
+    // 4,000,000 decode operations is ~5MB of dense object declarations, or
+    // ~4.5MB of dense object declarations with 10% alias expansion
+    let high = 4_000_000
+    if decodeCount <= low {
+      // allow 99% to come from alias expansion for small-to-medium documents
+      return 0.99
+    }
+    if decodeCount >= high {
+      // allow 10% to come from alias expansion for very large documents
+      return 0.10
+    }
+    // scale smoothly from 99% down to 10% over the range.
+    return 0.99 - 0.89 * (Double(decodeCount - low) / Double(high - low))
+  }
+
+  /// The bookkeeping go-yaml's `unmarshal` does for each node, and its `document` and `alias`
+  /// steps: counts the node, fails a decode that is mostly alias expansion, and unwraps documents
+  /// and aliases. Returns the node to decode (`nil` for an empty document) and the number of
+  /// aliases followed, which the caller passes to ``leave(_:)`` once the node is decoded.
+  private mutating func enter(_ node: YAMLNode) throws(YAMLError) -> (YAMLNode?, Int) {
+    var current = node
+    var aliases = 0
+    while true {
+      decodeCount += 1
+      if aliasDepth > 0 {
+        aliasCount += 1
+      }
+      if aliasCount > 100 && decodeCount > 1000
+        && Double(aliasCount) / Double(decodeCount) > Self.allowedAliasRatio(decodeCount)
+      {
+        aliasDepth -= aliases
+        throw YAMLError(message: "yaml: document contains excessive aliasing")
+      }
+      switch current.kind {
+      case .document:
+        guard current.content.count == 1 else { return (nil, aliases) }
+        current = current.content[0]
+      case .alias:
+        guard let target = current.alias else { return (nil, aliases) }
+        aliasDepth += 1
+        aliases += 1
+        current = target
+      default:
+        return (current, aliases)
+      }
+    }
+  }
+
+  private mutating func leave(_ aliases: Int) {
+    aliasDepth -= aliases
   }
 
   /// Enters a collection's content; balanced by ``ascend()``.
@@ -177,7 +240,9 @@ package struct YAMLDecoder {
 
   /// Decodes a string; any scalar decodes as its text.
   package mutating func decodeString(_ node: YAMLNode, typeName: String = "string") throws(YAMLError) -> String? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     switch n.kind {
     case .scalar:
       let (tag, resolved) = try resolveScalar(n)
@@ -201,7 +266,9 @@ package struct YAMLDecoder {
   /// Decodes a boolean, accepting the YAML 1.1 words (`yes`, `off`, ...) go-yaml allows for typed
   /// booleans.
   package mutating func decodeBool(_ node: YAMLNode) throws(YAMLError) -> Bool? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     guard n.kind == .scalar else {
       terror(n, n.kind == .sequence ? YAMLTags.seq : YAMLTags.map, "bool")
       return nil
@@ -227,7 +294,9 @@ package struct YAMLDecoder {
 
   /// Decodes a signed integer.
   package mutating func decodeInt64(_ node: YAMLNode, typeName: String = "int64") throws(YAMLError) -> Int64? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     guard n.kind == .scalar else {
       terror(n, n.kind == .sequence ? YAMLTags.seq : YAMLTags.map, typeName)
       return nil
@@ -251,7 +320,9 @@ package struct YAMLDecoder {
 
   /// Decodes a value without a target type, as go-yaml decodes into `any`.
   package mutating func decodeValue(_ node: YAMLNode) throws(YAMLError) -> YAMLValue? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     switch n.kind {
     case .scalar:
       let (tag, resolved) = try resolveScalar(n)
@@ -299,7 +370,9 @@ package struct YAMLDecoder {
     typeName: String,
     element: (inout YAMLDecoder, YAMLNode) throws(YAMLError) -> T?
   ) throws(YAMLError) -> [T]? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     switch n.kind {
     case .sequence:
       try descend()
@@ -330,7 +403,9 @@ package struct YAMLDecoder {
     typeName: String,
     value: (inout YAMLDecoder, YAMLNode) throws(YAMLError) -> T?
   ) throws(YAMLError) -> [String: T]? {
-    guard let n = Self.content(of: node) else { return nil }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return nil }
     switch n.kind {
     case .mapping:
       guard checkUniqueKeys(n) else { return nil }
@@ -376,7 +451,9 @@ package struct YAMLDecoder {
     fields: Set<String>,
     field: (inout YAMLDecoder, String, YAMLNode) throws(YAMLError) -> Void
   ) throws(YAMLError) -> Bool {
-    guard let n = Self.content(of: node) else { return false }
+    let (entered, aliases) = try enter(node)
+    defer { leave(aliases) }
+    guard let n = entered else { return false }
     switch n.kind {
     case .mapping:
       guard checkUniqueKeys(n) else { return false }
