@@ -1,0 +1,1 @@
+duration('600s') + duration('50s') == duration('650s')

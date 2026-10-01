@@ -1,0 +1,1 @@
+has(TestAllTypes{single_int32: -32}.single_int32)

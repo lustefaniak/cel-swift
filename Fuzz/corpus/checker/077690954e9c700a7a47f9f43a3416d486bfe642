@@ -1,0 +1,1 @@
+FloatValue{value: 3.0} == dyn(Int64Value{value: 3})

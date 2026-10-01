@@ -1,0 +1,1 @@
+has(m.c) && m.c[0] == true

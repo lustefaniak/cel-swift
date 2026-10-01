@@ -1,0 +1,1 @@
+t.getHours('America/New_York') + dur.getMinutes()

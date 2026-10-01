@@ -1,0 +1,1 @@
+cel.block([{"key": "test"}, optional.of("test"), {?"key": cel.index(1)}, cel.index(2)[?"bogus"], cel.index(0)[?"bogus"], cel.index(3).or(cel.index(4)), cel.index(0)["key"], cel.index(5).orValue(cel.index(6))], cel.index(7))

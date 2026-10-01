@@ -1,0 +1,1 @@
+'tacoc"at'.indexOf('at', 3) == 5

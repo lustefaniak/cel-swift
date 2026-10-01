@@ -1,0 +1,1 @@
+'tacocat'.substring(0, false) == ''

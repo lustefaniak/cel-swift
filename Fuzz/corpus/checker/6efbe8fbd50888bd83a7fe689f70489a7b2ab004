@@ -1,0 +1,1 @@
+TestAllTypes{repeated_any: [1, null]}.repeated_any == [1, null]

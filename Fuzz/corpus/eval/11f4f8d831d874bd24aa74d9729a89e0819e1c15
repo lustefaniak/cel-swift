@@ -1,0 +1,1 @@
+cel.block([{"a": true}, has(cel.index(0).a), cel.index(0)["a"]], cel.index(1) && cel.index(2))

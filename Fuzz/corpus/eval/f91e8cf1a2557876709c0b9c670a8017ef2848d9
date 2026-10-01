@@ -1,0 +1,1 @@
+cel.block([optional.none(), [?cel.index(0), ?optional.of(opt_x)], [5], [10, ?cel.index(0), cel.index(1), cel.index(1)], [10, cel.index(2), cel.index(2)]], cel.index(3) == cel.index(4))

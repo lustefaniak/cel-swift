@@ -1,0 +1,1 @@
+TestAllTypes{repeated_value: [google.protobuf.Value{bool_value: true}, null]}.repeated_value == [true, null]

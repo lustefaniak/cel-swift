@@ -122,3 +122,22 @@ let package = Package(
     ),
   ]
 )
+
+// libFuzzer targets, only with CEL_FUZZ=1 (Linux, `-sanitize=fuzzer`); see Fuzz/README.md.
+if Context.environment["CEL_FUZZ"] == "1" {
+  package.targets.append(.target(name: "CELFuzzDriver"))
+  package.targets.append(
+    .target(
+      name: "CELFuzzSupport",
+      dependencies: ["CEL", "CELProtobuf", "CELSpecProtos", "CELFuzzDriver"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ))
+  for name in ["cel-fuzz-parser", "cel-fuzz-checker", "cel-fuzz-eval"] {
+    package.targets.append(
+      .executableTarget(
+        name: name,
+        dependencies: ["CEL", "CELFuzzSupport"],
+        swiftSettings: [.swiftLanguageMode(.v6), .unsafeFlags(["-parse-as-library"])]
+      ))
+  }
+}
