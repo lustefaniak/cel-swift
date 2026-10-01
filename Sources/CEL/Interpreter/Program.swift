@@ -162,8 +162,10 @@ package struct ProgramEnvironment: Sendable {
   }
 
   /// Plans a program for a checked or parse-only AST (cel-go `newProgram`).
-  package func program(_ ast: AST, options: ProgramOptions = ProgramOptions()) throws -> Program {
-    let dispatcher = try Dispatcher(functions: functions)
+  package func program(
+    _ ast: AST, options: ProgramOptions = ProgramOptions(), dispatcher: Dispatcher? = nil
+  ) throws -> PlannedProgram {
+    let dispatcher = try dispatcher ?? Dispatcher(functions: functions)
     var evalOptions = options.evalOptions
     if options.costLimit != nil {
       evalOptions.insert(.trackCost)
@@ -204,7 +206,7 @@ package struct ProgramEnvironment: Sendable {
     withStack(depth: depth) {
       planned = Result { try planner.plan(ast.expr) }
     }
-    return Program(
+    return PlannedProgram(
       interpretable: try planned.get(), depth: depth,
       interruptCheckFrequency: options.interruptCheckFrequency)
   }
@@ -222,7 +224,7 @@ package struct EvalResult {
 
 /// A planned expression, ready to evaluate any number of times, from any thread (a small
 /// `cel.Program`).
-package struct Program: Sendable {
+package struct PlannedProgram: Sendable {
   package let interpretable: any Interpretable
   /// The expression depth, used to size the evaluation stack.
   package let depth: Int

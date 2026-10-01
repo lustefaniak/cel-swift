@@ -80,7 +80,7 @@ struct CELConformanceRunner: ConformanceRunner {
       case .failure(let reason): return .notImplemented(reason.message)
       }
     }
-    let program: Program
+    let program: PlannedProgram
     do {
       program = try env.program(ast)
     } catch {

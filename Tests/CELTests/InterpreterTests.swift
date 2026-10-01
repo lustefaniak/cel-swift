@@ -593,7 +593,7 @@ func interpreterEnvironment(_ tc: InterpreterCase) throws -> ProgramEnvironment 
 }
 
 /// Plans the test case with the given evaluation options.
-func interpreterProgram(_ tc: InterpreterCase, _ evalOptions: EvalOptions = []) throws -> Program {
+func interpreterProgram(_ tc: InterpreterCase, _ evalOptions: EvalOptions = []) throws -> PlannedProgram {
   let env = try interpreterEnvironment(tc)
   var ast = try env.parse(tc.expr)
   if !tc.unchecked {

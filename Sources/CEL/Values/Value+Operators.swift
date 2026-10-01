@@ -247,7 +247,7 @@ extension Value {
   }
 
   /// Whether the value is `null`.
-  var isNull: Bool {
+  public var isNull: Bool {
     if case .null = self { return true }
     return false
   }
