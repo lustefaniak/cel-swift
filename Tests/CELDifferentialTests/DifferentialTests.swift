@@ -275,6 +275,10 @@ struct DifferentialTests {
     base.profile = .full
     base.extensions = Profile.extensionVersions.map { ($0.0, "latest") }
     base.checked = Self.env["CEL_DIFF_UNCHECKED"] != "1"
+    base.unknowns = (Self.env["CEL_DIFF_UNKNOWN"] ?? "").split(separator: ",").map {
+      .object([("variable", .string(String($0))), ("path", .array([]))])
+    }
+    base.costLimit = (Self.env["CEL_DIFF_COST_LIMIT"]).flatMap { UInt64($0) }
     var swift = SwiftSide()
     for text in texts {
       let request = base.request.setting("expr", .string(text))

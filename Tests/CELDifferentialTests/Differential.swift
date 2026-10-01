@@ -19,6 +19,9 @@ struct DiffCase: Sendable {
   var checked: Bool
   /// Extension names and versions (`latest` or a number).
   var extensions: [(String, String)]
+  /// Attribute patterns evaluated as unknown, in the oracle's form.
+  var unknowns: [JSON] = []
+  var costLimit: UInt64?
 
   var expr: String { root.rendered }
 
@@ -54,6 +57,12 @@ struct DiffCase: Sendable {
     } else {
       fields.append(("check", false))
     }
+    if !unknowns.isEmpty {
+      fields.append(("unknowns", .array(unknowns)))
+    }
+    if let costLimit {
+      fields.append(("cost_limit", .number(String(costLimit))))
+    }
     if root.anyUsesExtension {
       fields.append(("uses_extensions", true))
     }
@@ -75,9 +84,31 @@ struct DiffCase: Sendable {
     }
     var generator = Generator(seed: caseSeed, profile: profile)
     let (root, bindings) = generator.makeCase()
-    return DiffCase(
+    var c = DiffCase(
       id: "s\(seed)-c\(index)", profile: profile, root: root, bindings: bindings, checked: checked,
       extensions: extensions)
+    if pick.chance(10) {
+      // Partial evaluation: one or two attribute patterns over the declared variables.
+      for _ in 0..<pick.range(1, 2) {
+        let (name, type) = pick.pick(profile.declarations)
+        var path: [JSON] = []
+        switch type {
+        case .map(.string, _) where pick.chance(60):
+          path.append(pick.chance(20) ? "*" : GValue.string(pick.pick(Generator.mapKeys)).json)
+        case .map(.int, _) where pick.chance(60), .list where pick.chance(60):
+          path.append(GValue.int(Int64(pick.range(0, 2))).json)
+        case .map(.bool, _) where pick.chance(60):
+          path.append(GValue.bool(pick.chance(50)).json)
+        default: break
+        }
+        c.unknowns.append(.object([("variable", .string(name)), ("path", .array(path))]))
+      }
+    }
+    if !root.anyUsesExtension && pick.chance(10) {
+      // A cost limit somewhere around the cost of a typical case.
+      c.costLimit = UInt64(pick.range(0, 120))
+    }
+    return c
   }
 }
 
@@ -103,6 +134,11 @@ struct Outcome: Sendable, Equatable {
         value = Codec.canonical(json: v)
       } else if let e = result["error"]?.stringValue {
         evalError = e
+      } else if let ids = result["unknown"]?.arrayValue {
+        value =
+          "unknown:"
+          + ids.map { id -> String in if case .number(let n) = id { return n } else { return id.rendered } }
+          .joined(separator: ",")
       } else {
         evalError = "unknown result \(result.rendered)"
       }
@@ -260,6 +296,32 @@ struct SwiftSide {
     }
     let text = request["expr"]?.stringValue ?? ""
     let checked = request["check"]?.boolValue ?? true
+    var programOptions: [Program.Option] = [.trackCost, .errorsAsValues]
+    var unknowns: [UnknownPattern] = []
+    do {
+      for u in request["unknowns"]?.arrayValue ?? [] {
+        var pattern = UnknownPattern(u["variable"]?.stringValue ?? "")
+        for q in u["path"]?.arrayValue ?? [] {
+          if q == "*" {
+            pattern = pattern.wildcard()
+            continue
+          }
+          switch try Codec.value(q) {
+          case .string(let s): pattern = pattern.qualified(by: .string(s))
+          case .int(let i): pattern = pattern.qualified(by: .int(i))
+          case .uint(let u): pattern = pattern.qualified(by: .uint(u))
+          case .bool(let b): pattern = pattern.qualified(by: .bool(b))
+          default: throw CodecError(description: "bad qualifier \(q.rendered)")
+          }
+        }
+        unknowns.append(pattern)
+      }
+    } catch {
+      outcome.harnessError = "\(error)"
+      return outcome
+    }
+    if !unknowns.isEmpty { programOptions.append(.partialEvaluation) }
+    if let limit = request["cost_limit"]?.uint64Value { programOptions.append(.costLimit(limit)) }
     let program: Program
     do {
       if checked {
@@ -267,9 +329,9 @@ struct SwiftSide {
         outcome.type = expression.outputType.checkerDescription
         let estimate = env.estimateCost(expression, sizeHints: hints)
         outcome.estimate = "\(estimate.lowerBound)..\(estimate.upperBound)"
-        program = try env.program(expression, options: [.trackCost, .errorsAsValues])
+        program = try env.program(expression, options: programOptions)
       } else {
-        program = try env.program(try env.parse(text), options: [.trackCost, .errorsAsValues])
+        program = try env.program(try env.parse(text), options: programOptions)
       }
     } catch {
       outcome.compileError = error.description
@@ -278,7 +340,7 @@ struct SwiftSide {
       return outcome
     }
     do {
-      let result = try program.evaluate(Variables(bindings))
+      let result = try program.evaluate(Variables(bindings, unknowns: unknowns))
       if case .error(let e) = result.value {
         outcome.evalError = e.message
       } else {

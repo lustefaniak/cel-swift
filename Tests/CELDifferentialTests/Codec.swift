@@ -393,7 +393,7 @@ enum Codec {
       return "{" + entries.sorted().joined(separator: ", ") + "}"
     case .object(let o): return "message:\(o.celType.runtimeTypeName)"
     case .error(let e): return "error:\(e.message)"
-    case .unknown: return "unknown"
+    case .unknown(let u): return "unknown:" + u.exprIDs.sorted().map(String.init).joined(separator: ",")
     }
   }
 }
