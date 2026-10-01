@@ -162,7 +162,7 @@ struct DifferentialTests {
     for (signature, failure) in signatures.sorted(by: { $0.key < $1.key }).prefix(Self.maxMinimize) {
       guard let category = failure.mismatches.first?.category else { continue }
       let reduced = try Reducer.reduce(failure.testCase, category: category, checker: &checker)
-      let request = reduced.request
+      let request = Self.pruned(reduced.request)
       let answer = try Oracle.evaluate([request])[0]
       let observed = checker.swift.run(request)
       let mismatches = Mismatch.compare(
@@ -182,6 +182,22 @@ struct DifferentialTests {
       let details = f.mismatches.map(\.description).joined(separator: "\n  ")
       Issue.record("\(f.testCase.id) \(f.testCase.expr)\n  \(details)")
     }
+  }
+
+  /// The request without the variables its expression does not mention.
+  static func pruned(_ request: JSON) -> JSON {
+    let text = request["expr"]?.stringValue ?? ""
+    func keep(_ name: String) -> Bool { Reducer.mentions(text, name) }
+    var config = request["config"] ?? .object([])
+    let variables = (config["variables"]?.arrayValue ?? []).filter { keep($0["name"]?.stringValue ?? "") }
+    config = config.setting("variables", .array(variables))
+    var out = request.setting("config", config)
+    for key in ["bindings", "size_hints"] {
+      if let fields = request[key]?.objectValue {
+        out = out.setting(key, .object(fields.filter { keep($0.0) }))
+      }
+    }
+    return out
   }
 
   static func writeReport(_ failures: [Failure]) throws {
