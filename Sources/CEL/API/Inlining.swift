@@ -15,7 +15,7 @@
 // Ported from cel-go cel/inlining.go (InlineVariable, inliningOptimizer).
 
 /// A variable, or a qualified field selection, to replace with an expression by the
-/// ``ExpressionOptimizer/inlining(_:)`` optimizer (cel-go `InlineVariable`).
+/// ``ExpressionOptimizer/inlining(_:)-([InlinedVariable])`` optimizer (cel-go `InlineVariable`).
 public struct InlinedVariable: Sendable {
   /// The variable or qualified field selection to replace, such as `a` or `a.b.c`.
   public let name: String

@@ -23,7 +23,7 @@ import CELRegex
 /// A check run on every expression an environment type-checks, reporting extra issues
 /// (cel-go `ASTValidator`).
 ///
-/// Add validators with ``Environment/Option/validators(_:)``. Validators are singletons by
+/// Add validators with ``Environment/Option/validators(_:)-([ExpressionValidator])``. Validators are singletons by
 /// ``name``: adding one with the name of an existing validator keeps the first.
 public struct ExpressionValidator: Sendable {
   /// The unique validator name, such as `cel.validator.duration`.

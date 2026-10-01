@@ -109,7 +109,7 @@ public struct CompiledPolicy: Sendable {
   /// Creates a program evaluating the policy.
   ///
   /// - Parameter options: Evaluation options such as cost limits and state tracking.
-  /// - Throws: ``CompileError`` when the expression cannot be planned, for example because a
+  /// - Throws: `CompileError` when the expression cannot be planned, for example because a
   ///   declared function has no implementation.
   public func program(options: [Program.Option] = []) throws(CompileError) -> Program {
     try environment.program(expression, options: options)

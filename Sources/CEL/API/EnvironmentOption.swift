@@ -214,7 +214,7 @@ extension Environment {
     ///
     /// A ``TypeRegistry`` replaces the environment's registry; any other provider, such as the
     /// protobuf types of the `CELProtobuf` module, is consulted after the registry's own types.
-    /// Use this option before ``types(_:)``.
+    /// Use this option before ``types(_:)-([CELType])``.
     public static func typeProvider(_ provider: any TypeProvider) -> Option {
       Option { config in
         if let registry = provider as? TypeRegistry {
@@ -320,8 +320,8 @@ extension Environment {
       Option { $0.macroCallTracking = true }
     }
 
-    /// Allows backtick-quoted field names such as ``a.`b-c` `` (cel-go
-    /// `EnableIdentifierEscapeSyntax`).
+    /// Allows field names quoted in backticks, such as the field `b-c` selected from `a` by
+    /// writing it between backticks after `a.` (cel-go `EnableIdentifierEscapeSyntax`).
     public static func identifierEscapeSyntax(_ enabled: Bool = true) -> Option {
       Option { $0.identifierEscapeSyntax = enabled }
     }
