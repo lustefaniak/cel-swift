@@ -52,6 +52,13 @@ public struct Library: Sendable {
   /// key, as cel-go's `cel.Macros` does).
   package var macros: [Macro]
 
+  /// Parser options the library needs, such as optional syntax.
+  package var parserOptions: [ParserOption] = []
+
+  /// Planner decorators applied to every program (cel-go `ProgramOptions` with
+  /// `CustomDecorator`), such as the `cel.@block` evaluation.
+  package var decorators: [ProgramDecorator] = []
+
   /// Names of libraries that must be configured in the same environment, with the error an
   /// environment reports when one is missing (cel-go checks this with an `EnvOption`).
   package var requiredLibraries: [(name: String, error: String)]
