@@ -97,6 +97,41 @@ struct YAMLLimitsTests {
     }
   }
 
+  // MARK: Alias expansion
+
+  /// The billion laughs document: `levels` anchors, each a list of `fanout` aliases of the
+  /// previous one, so the last one expands to `fanout^levels` scalars.
+  static func laughs(levels: Int, fanout: Int, indent: String = "") -> String {
+    var text = indent + "a0: &a0 [" + Array(repeating: "lol", count: fanout).joined(separator: ", ") + "]\n"
+    for level in 1..<levels {
+      text += indent + "a\(level): &a\(level) ["
+        + Array(repeating: "*a\(level - 1)", count: fanout).joined(separator: ", ") + "]\n"
+    }
+    return text
+  }
+
+  /// The message of the error decoding `node` throws, or `nil` when it decodes.
+  static func decodeError(_ node: YAMLNode) -> String? {
+    do {
+      _ = try node.decodeValue()
+      return nil
+    } catch {
+      return error.message
+    }
+  }
+
+  /// go-yaml stops a decode when alias expansion does most of its work (`allowedAliasRatio`:
+  /// more than 99% of the nodes decoded for documents under 400000 decodes, scaling down to 10%
+  /// at 4000000). Expected results from go-yaml v3.0.4 on the same documents.
+  @Test func aliasExpansionIsBounded() throws {
+    let accepted = try #require(try YAMLNode.parseDocument(Self.laughs(levels: 3, fanout: 10)))
+    #expect(try accepted.decodeValue() != nil)
+    let excessive = try #require(try YAMLNode.parseDocument(Self.laughs(levels: 4, fanout: 10)))
+    withKnownIssue("aliases are expanded without a bound") {
+      #expect(Self.decodeError(excessive) == "yaml: document contains excessive aliasing")
+    }
+  }
+
   /// A policy whose rules nest `depth` levels, each through a match with a nested rule.
   static func nestedRules(_ depth: Int) -> String {
     var text = "name: nested\nrule:\n"
