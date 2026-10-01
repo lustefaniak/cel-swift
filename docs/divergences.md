@@ -173,3 +173,34 @@ messages, error node ids, observed ids and runtime cost). The differences:
 - **Deep expressions are planned, checked and evaluated on a large stack.** Like the parser (see
   `LargeStack`), `ProgramEnvironment` runs the checker, the planner and evaluation on a thread with a stack
   sized for the expression depth when the calling thread's stack may not suffice; Go has growable stacks.
+
+## Extensions (`CELExtensions`)
+
+- **`string.format` before strings version 4 formats `%f` and `%e` with en-US symbols only.** cel-go
+  formats them through `golang.org/x/text/message` with the CLDR symbols of the configured locale
+  (`ext.StringsLocale`, e.g. `de_DE` prints `3,140`). The `locale` argument of `Library.strings` is
+  accepted, but only the en-US tables are ported; the x/text quirks (`%e` ignoring the precision for
+  digits, superscript exponents, unsigned negative zero) are kept. From version 4 the clauses follow the
+  spec and no locale applies, as in cel-go.
+- **`%s` of bytes that are not valid UTF-8 prints U+FFFD** (strings version 4 and later). cel-go appends
+  the raw bytes to a Go string, which may then hold invalid UTF-8; Swift strings cannot, so each invalid
+  sequence becomes the replacement character.
+- **`ext.NativeTypes` is not ported.** It exposes Go structs to CEL through reflection; Swift clients
+  implement `ObjectValue` (or use `CELProtobuf`) instead. The ported `ext` test rows that use
+  `ext.TestAllTypes` are recorded as known issues for that reason.
+
+## Public API and optimizers
+
+- **`Library.standard(subset:)` throws.** cel-go validates a `StdLibSubset` when the library option is
+  applied to an environment; here the factory validates it, so an invalid subset is reported where it is
+  built, with cel-go's messages.
+- **Constant folding writes folded values in literal syntax as soon as they are folded.** cel-go keeps a
+  folded value in a literal node that can hold any value and converts all of them to CEL syntax
+  (`[1, 2]`, `duration("1s")`, `optional.of(1)`) in a final pass. `Constant` holds only scalars, so the
+  folder records each folded node's value by id and gives the node its literal syntax at once; the
+  matchers treat recorded nodes as literals and never look inside them, which reproduces cel-go's
+  decisions. The optimized output of every ported `folding_test.go` and `inlining_test.go` row is the
+  same.
+- **No `OptimizeWithSource` and no custom `ASTOptimizer`s.** The optimizer context needs the package-level
+  AST, which is not public (an open API decision), so only the built-in folding and inlining optimizers
+  are available.

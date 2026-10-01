@@ -187,12 +187,89 @@ Checker.print(checked.expr, checked: checked)    // checker_test.go debug format
 - Tests: `Tests/CELTests/CheckerTests.swift` runs cel-go's full `checker_test.go` table, generated into
   `Fixtures/CheckerCases.swift` by `tools/checker-cases/gen.sh`, against CELProtobuf's `CELGoTestProtos`.
 
-## What the interpreter must implement (not here)
+## Interpreter (`Sources/CEL/Interpreter`)
 
-Planner/attributes (variable resolution against `Container`, qualifiers, `index out of bounds`), the
-special forms above, comprehensions (with a mutable accumulator), list/map/message literals (map key type
-validation as cel-go; `TypeProvider.newValue` for messages), optional field selection, the
-dispatcher over `FunctionBinding`s, error labelling, unknown propagation and state tracking, cost.
+Ported from cel-go `interpreter/` node for node; `docs/divergences.md` § Interpreter lists the differences.
+
+- **Planning** (`Planner.swift`, cel-go `planner.go`): `Planner.plan(expr)` walks a parsed or checked AST
+  once and builds a tree of `Interpretable`s (`Interpretable.swift`): `EvalConst`, `EvalAnd` / `EvalOr`,
+  `EvalEq` / `EvalNe`, `EvalUnary` / `EvalBinary` / `EvalVarArgs` / `EvalZeroArity` calls, list / map /
+  message constructors, `EvalFold` for comprehensions, and `EvalAttr` for anything that reads a variable.
+  Checked ASTs supply overload ids and fully qualified names through `referenceMap`; parse-only ASTs fall
+  back to the function name and container-relative "maybe" attributes. Every node passes through the
+  decorators (`Decorators.swift`: `OptOptimize` constant folding of literals and `in` lists, exhaustive
+  evaluation, state observation, the regex program size limit, library decorators such as `optional.or`).
+- **Interpretables are immutable final classes** with one entry point, `eval(_ frame: ExecutionFrame)`,
+  so a planned program is `Sendable` and can be evaluated concurrently. `ExecutionFrame` holds the
+  activation, comprehension-local variables (a frame per comprehension scope) and the shared `EvalContext`
+  (state, cost tracker, interrupt check).
+- **Attributes** (`Attributes.swift`, `AttributePatterns.swift`): absolute, maybe, relative and
+  conditional attributes with constant (field or value) and computed qualifiers resolve
+  `a.b["c"][0]` against the activation in one pass, produce cel-go's `no such key` / `index out of
+  bounds` errors, and, with partial evaluation, match `AttributePattern`s to return `UnknownSet`s. Adding a
+  qualifier returns a new attribute.
+- **Activations** (`Activation.swift`): `MapActivation`, `LazyActivation` (bindings computed on first
+  use), `HierarchicalActivation` and `PartialActivationWrapper` (unknown patterns). The public `Variables`
+  builds one.
+- **Dispatch** (`Dispatcher.swift`): overload id or function name to `FunctionBinding`, built once per
+  environment; see "How the interpreter calls a function" above.
+- **Comprehensions** (`EvalFold`) accumulate into `MutableList` / `MutableMap` (`MutableValues.swift`)
+  and check the interrupt every `interruptCheckFrequency` iterations; two-variable comprehensions use the
+  same node. `cel.@block` is a decorator contributed by `CELExtensions`.
+- **Cost** (`RuntimeCost.swift`): the runtime cost tracker of cel-go `runtimecost.go`, with library
+  trackers by overload id and the cost limit; the static estimator is `Checker/Cost*.swift`.
+- **State and residuals**: `EvalState.swift` records per-node values for `trackState`;
+  `Prune.swift` (cel-go `PruneAst`) turns an evaluated AST plus its state into a residual AST.
+- `Program.swift` holds the package-level `ProgramEnvironment` (`parse` / `check` / `program`), which the
+  public `Environment` wraps and the conformance runner and older tests use directly.
+
+## Libraries (`Sources/CEL/Library`, `Sources/CELExtensions`)
+
+A `Library` (cel-go `Library` / `SingletonLibrary`) is a value describing what an environment option
+would install: function declarations with their bindings, variables, types to register, parser macros
+and parser options, planner decorators, static cost estimators and runtime cost trackers, AST validators,
+required libraries, and the functions exempt from the homogeneous-literal validator. Its public surface is
+only `name` (`cel.lib.ext.strings`), `alias` (`strings`, the config-file name) and `version`; everything
+else is `package`, so `CELExtensions` and `CELPolicy` can build libraries and clients cannot.
+
+- `Environment.Configuration.apply(_:)` installs a library: libraries are singletons by name (the first
+  wins, as in cel-go), required libraries must already be configured, functions merge into existing
+  declarations, macros are appended (a later macro with the same key replaces an earlier one).
+- `Library.standard` is the standard library; `Library.standard(subset:)` restricts it with a
+  `Library.Subset` (cel-go `StdLibSubset` / `env.LibrarySubset`: include or exclude macros, and
+  functions or single overloads by id). `Library.optionalTypes(version:)` lives in `CEL` because the
+  parser and the checker know about optionals.
+- `CELExtensions` adds the cel-go `ext` libraries as static factories on `Library` (`.strings(version:)`,
+  `.lists`, `.math`, `.sets`, `.encoders`, `.bindings`, `.twoVarComprehensions`, `.protos`, `.network`,
+  `.regex`), their macros and validators. The ported Go standard library pieces they need
+  (`strings`, `strconv` float formatting, `net/netip`, base64) are in that target too.
+
+## Public API (`Sources/CEL/API`)
+
+`Environment` (cel-go `Env`) is an immutable value built from `Environment.Option`s: the checker
+environment, parser and dispatcher are built eagerly, so declaration errors are thrown by the initializer
+and `extending(_:)` reuses the parent's validated declarations when no function changed.
+`parse` / `check` / `compile` return `ParsedExpression` / `CheckedExpression` (both wrap the package `AST`
+and source), `program(_:options:)` returns a `Sendable` `Program`, and `evaluate` returns an
+`EvaluationResult` (value, cost, state). Errors are `CompileError` (cel-go `Issues`) and `EvalError`.
+`partialVariables`, `UnknownPattern` and `estimateCost(_:sizeHints:)` cover partial evaluation and cost.
+
+Optimizers (cel-go `StaticOptimizer`, `optimizer.go`, `folding.go`, `inlining.go`):
+`env.optimize(checked, .constantFolding(), .inlining(...))` applies `ExpressionOptimizer`s in order,
+renumbering ids and type-checking again after each. The `OptimizerContext` owns the AST being optimized
+and addresses nodes by id: cel-go mutates shared nodes in place (`SetKindCase`), here `updateExpr(_:_:)`
+replaces the node with a given id, keeps the macro-call metadata consistent the way cel-go's `UpdateExpr`
+does, and the factory methods (`newCall`, `newBindMacro`, `copyASTAndMetadata`, ...) mirror cel-go's
+`optimizerExprFactory`. Constant folding records the value of each folded node by id
+(`literalValues`), which stands in for cel-go literal nodes that can hold any value.
+
+## Command line tool (`Sources/cel-swift`)
+
+`cel-swift eval | check | parse | repl`, built on the public API plus a few `package` debug printers.
+Each subcommand is a `Command` value listed in `Command.all`; `Arguments` is a small stdlib-only parser and
+`Session` builds the environment from the shared options (`--container`, `--ext NAME[:VERSION]`,
+`--declare NAME:TYPE`, `--let NAME=EXPR`, `--json FILE`). The REPL follows cel-go `repl` for variables
+(`%let`, `%declare`, `%delete`, `%eval`, `%parse`, `%compile`, `%option`, `%status`).
 
 ## Protobuf (`Sources/CELProtobuf`, `Sources/protoc-gen-cel-swift`)
 

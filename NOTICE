@@ -45,6 +45,12 @@ Copyright The Go Authors, licensed under the BSD 3-Clause License:
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+Parts of Go's standard library that the CELExtensions target needs are ported
+there under the same Go BSD notice: Sources/CELExtensions/GoStrings.swift
+(strings, unicode.IsSpace), GoFloat.swift (strconv float formatting),
+NetIP.swift (net/netip) and the Base64 codec in Encoders.swift
+(encoding/base64).
+
 Sources/CEL/Parser/ANTLR ports the parts of the ANTLR 4 Go runtime
 (https://github.com/antlr4-go/antlr, v4.13.1) that cel-go's generated parser
 uses for prediction and error recovery, and Sources/CEL/Common/GoStrconv.swift
