@@ -16,110 +16,121 @@
 // (Variable.AsCELVariable, Function.AsCELFunction, Overload.AsFunctionOption, TypeDesc.AsCELType,
 // SerializeTypeDesc) and policy/config.go.
 //
-// Not ported: AST validators named in the config (they need cel-go's validator framework, which
-// the core does not have yet; see docs/divergences.md), the `context_variable` declaration (no
-// message descriptor walk without the public API), and the `max_ast_depth` /
-// `regex_program_size` limits.
+// Not ported: the `max_ast_depth` and `regex_program_size` limits, which the core has no switch
+// for.
 
 import CEL
 
-extension PolicyEnvironment {
-  /// Extends the environment with the declarations, libraries and options of a config (cel-go
-  /// `cel.FromConfig` with `ext.ExtensionOptionFactory`, i.e. `policy.FromConfig`).
+extension Environment.Option {
+  /// Declares the container, imports, standard library subset, extensions, variables,
+  /// functions, features, limits and validators of an environment config (cel-go
+  /// `policy.FromConfig`, i.e. `cel.FromConfig` with `ext.ExtensionOptionFactory`).
   ///
-  /// - Throws: ``EnvironmentError`` with cel-go's message.
-  package mutating func apply(_ config: EnvironmentConfig) throws {
+  /// Extensions are resolved by their config names (`strings`, `lists`, `bindings`, ...) to the
+  /// libraries of `CELExtensions`; `optional` enables optional types.
+  ///
+  /// - Parameter config: The environment config, typically decoded from a `config.yaml` file.
+  /// - Returns: An option that fails environment creation with cel-go's message when the config
+  ///   is invalid or names an unknown type or extension.
+  public static func environmentConfig(_ config: EnvironmentConfig) -> Environment.Option {
+    Environment.Option { configuration in
+      try configuration.apply(config)
+    }
+  }
+}
+
+extension Environment.Configuration {
+  /// Port of cel-go `configToEnvOptions` applied in order.
+  mutating func apply(_ config: EnvironmentConfig) throws {
     do {
       try config.validate()
     } catch {
       throw EnvironmentError(error.description)
     }
-    var next = self
     if let subset = config.standardLibrary {
-      if next.hasLibrary("cel.lib.std") {
+      if libraryNames.contains("cel.lib.std") {
         throw EnvironmentError("invalid subset of stdlib: create a custom env")
       }
       if !subset.isDisabled {
-        try next.addLibrary(.standard(subset: subset))
+        try apply(Library.standard(subset: subset))
       }
     } else {
-      try next.addLibrary(.standard())
+      try apply(Library.standard)
     }
     if !config.container.isEmpty {
-      try next.wrapping { try $0.setContainer(config.container) }
+      container = try container.extended(.name(config.container))
     }
     for imp in config.imports {
-      try next.wrapping { try $0.addAbbreviations([imp.name]) }
+      container = try container.extended(.abbreviations(imp.name))
     }
     for feature in config.features {
-      next.setFeature(feature.name, enabled: feature.isEnabled)
+      setFeature(feature.name, enabled: feature.isEnabled)
     }
     if let context = config.contextVariable {
-      if next.provider.findStructType(context.typeName) == nil {
+      guard registry.findStructType(context.typeName) != nil,
+        let fields = registry.findStructFieldNames(context.typeName)
+      else {
         throw EnvironmentError("invalid context proto type: \(goQuote(context.typeName))")
       }
-      try next.declareContext(typeName: context.typeName)
+      for field in fields {
+        if let fieldType = registry.findStructFieldType(context.typeName, fieldName: field) {
+          variables.append(VariableDecl(name: field, type: fieldType.type))
+        }
+      }
     }
-    if !config.variables.isEmpty {
-      let provider = next.provider
-      let vars = try config.variables.map { try $0.asVariableDecl(provider) }
-      try next.wrapping { try $0.declare(variables: vars) }
+    for v in config.variables {
+      variables.append(try v.asVariableDecl(registry))
     }
-    if !config.functions.isEmpty {
-      let provider = next.provider
-      let fns = try config.functions.map { try $0.asFunctionDecl(provider) }
-      try next.wrapping { try $0.declare(functions: fns) }
+    for f in config.functions {
+      try declare(try f.asFunctionDecl(registry))
     }
     for limit in config.limits {
-      next.setLimit(limit.name, value: limit.value)
+      setLimit(limit.name, value: limit.value)
+    }
+    for v in config.validators {
+      var limit: Int?
+      if case .int(let l)? = v.config["limit"] {
+        limit = Int(l)
+      }
+      if let validator = ExpressionValidator.named(v.name, limit: limit),
+        !validators.contains(where: { $0.name == validator.name })
+      {
+        validators.append(validator)
+      }
     }
     for ext in config.extensions {
       let version = (try? ext.versionNumber()) ?? 0
       if ext.name == "optional" {
-        try next.addLibrary(.optionalTypes(version: version))
+        try apply(Library.optionalTypes(version: version))
         continue
       }
-      guard let lib = next.resolveExtension(ext.name, version: version) else {
+      guard let lib = PolicyExtensions.resolve(ext.name, version: version) else {
         throw EnvironmentError("unrecognized extension: \(ext.name)")
       }
-      try next.addLibrary(lib)
-    }
-    self = next
-  }
-
-  /// Runs a mutation and rethrows declaration errors as environment errors.
-  private mutating func wrapping(_ body: (inout PolicyEnvironment) throws -> Void) throws {
-    do {
-      try body(&self)
-    } catch let error as EnvironmentError {
-      throw error
-    } catch let error as DeclarationError {
-      throw EnvironmentError(error.description)
-    } catch {
-      throw EnvironmentError("\(error)")
+      try apply(lib)
     }
   }
 
-  func resolveExtension(_ name: String, version: UInt32) -> Library? {
-    if let lib = PolicyExtensions.resolve(name, version: version) {
-      return lib
+  /// Applies a feature flag by name (cel-go `features`); unknown names are ignored.
+  mutating func setFeature(_ name: String, enabled: Bool) {
+    switch name {
+    case "cel.feature.macro_call_tracking": macroCallTracking = enabled
+    case "cel.feature.cross_type_numeric_comparisons": crossTypeNumericComparisons = enabled
+    case "cel.feature.backtick_escape_syntax": identifierEscapeSyntax = enabled
+    case "cel.feature.json_field_names": jsonFieldNames = enabled
+    default: break
     }
-    return extensionResolver?(name, version)
   }
 
-  /// Declares the fields of a message type as variables (cel-go `DeclareContextProto`).
-  mutating func declareContext(typeName: String) throws {
-    guard let fields = provider.findStructFieldNames(typeName) else {
-      throw EnvironmentError("invalid context proto type: \(goQuote(typeName))")
+  /// Applies a limit by name (cel-go `setLimit`); unknown names are ignored.
+  mutating func setLimit(_ name: String, value: Int) {
+    switch name {
+    case "cel.limit.expression_code_points": expressionSizeCodePointLimit = value
+    case "cel.limit.parse_error_recovery": parserErrorRecoveryLimit = value
+    case "cel.limit.parse_recursion_depth": parserRecursionLimit = value
+    case "cel.limit.expression_node_count": expressionNodeCountLimit = value
+    default: break
     }
-    var vars: [VariableDecl] = []
-    for field in fields {
-      guard let fieldType = provider.findStructFieldType(typeName, fieldName: field) else {
-        continue
-      }
-      vars.append(VariableDecl(name: field, type: fieldType.type))
-    }
-    try wrapping { try $0.declare(variables: vars) }
   }
 }
 
@@ -290,41 +301,5 @@ extension EnvironmentConfig.TypeDescriptor {
     default: break
     }
     self.init(name, parameters: type.parameters.map { EnvironmentConfig.TypeDescriptor($0) })
-  }
-}
-
-extension PolicyEnvironment {
-  /// Applies a feature flag by name (cel-go `features`); unknown names are ignored.
-  package mutating func setFeature(_ name: String, enabled: Bool) {
-    switch name {
-    case "cel.feature.macro_call_tracking":
-      if enabled {
-        enableMacroCallTracking()
-      }
-    case "cel.feature.cross_type_numeric_comparisons":
-      addCheckerOption(.crossTypeNumericComparisons(enabled))
-    case "cel.feature.backtick_escape_syntax":
-      addParserOption(.enableIdentEscapeSyntax(enabled))
-    case "cel.feature.json_field_names":
-      addCheckerOption(.jsonFieldNames(enabled))
-    default:
-      break
-    }
-  }
-
-  /// Applies a limit by name (cel-go `setLimit`); unknown names are ignored.
-  package mutating func setLimit(_ name: String, value: Int) {
-    switch name {
-    case "cel.limit.expression_code_points":
-      addParserOption(.expressionSizeCodePointLimit(value))
-    case "cel.limit.parse_error_recovery":
-      addParserOption(.errorRecoveryLimit(value))
-    case "cel.limit.parse_recursion_depth":
-      addParserOption(.maxRecursionDepth(value))
-    case "cel.limit.expression_node_count":
-      addParserOption(.maxExpressionNodeCount(value))
-    default:
-      break
-    }
   }
 }

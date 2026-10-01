@@ -19,7 +19,7 @@ import CEL
 /// Stitches the rules of a compiled policy into a single `cel.@block` expression
 /// (cel-go `RuleComposer`).
 package struct RuleComposer: Sendable {
-  let env: PolicyEnvironment
+  let env: Environment
   /// The height at which nested expressions are split into `cel.@block` slots
   /// (cel-go `ExpressionUnnestHeight`).
   let exprUnnestHeight: Int
@@ -27,7 +27,7 @@ package struct RuleComposer: Sendable {
   /// Creates a composer.
   ///
   /// - Throws: ``EnvironmentError`` when the unnest height is not positive.
-  package init(env: PolicyEnvironment, exprUnnestHeight: Int = 25) throws {
+  package init(env: Environment, exprUnnestHeight: Int = 25) throws {
     if exprUnnestHeight <= 0 {
       throw EnvironmentError("invalid unnest height: value must be positive: \(exprUnnestHeight)")
     }
@@ -35,14 +35,14 @@ package struct RuleComposer: Sendable {
     self.exprUnnestHeight = exprUnnestHeight
   }
 
-  package init(env: PolicyEnvironment) {
+  package init(env: Environment) {
     self.env = env
     self.exprUnnestHeight = 25
   }
 
   /// Composes a compiled rule into a single checked AST (cel-go `Compose`).
   package func compose(_ rule: CompiledRule) -> (ast: AST?, errors: CELErrors) {
-    let (ruleRoot, rootErrors) = env.compile("true")
+    let (ruleRoot, rootErrors) = env.compileSource(TextSource("true"))
     let source: any Source = rule.source ?? TextSource("true")
     guard let ruleRoot else {
       return (nil, rootErrors)

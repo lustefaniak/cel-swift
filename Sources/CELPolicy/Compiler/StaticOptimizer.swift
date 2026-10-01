@@ -54,12 +54,12 @@ final class IDGenerator {
 /// The state shared by an optimization pass: environment, expression factory, source info and
 /// issues (cel-go `OptimizerContext`).
 final class OptimizerContext {
-  var env: PolicyEnvironment
+  var env: Environment
   var sourceInfo: SourceInfo
   var errors: CELErrors
   private let ids: IDGenerator
 
-  init(env: PolicyEnvironment, sourceInfo: SourceInfo, seed: Int64, source: any Source) {
+  init(env: Environment, sourceInfo: SourceInfo, seed: Int64, source: any Source) {
     self.env = env
     self.sourceInfo = sourceInfo
     self.errors = CELErrors(source: source)
@@ -78,7 +78,7 @@ final class OptimizerContext {
   }
 
   func extendEnv(variables: [VariableDecl]) throws {
-    try env.declare(variables: variables)
+    env = try env.declaring(variables)
   }
 
   // MARK: Factory
@@ -240,7 +240,7 @@ protocol ASTOptimizer {
 ///   - sourceOverride: Replaces the AST's source and discards its source info
 ///     (cel-go `OptimizeWithSource`).
 func optimize(
-  _ optimizer: some ASTOptimizer, env: PolicyEnvironment, ast: AST, source: any Source,
+  _ optimizer: some ASTOptimizer, env: Environment, ast: AST, source: any Source,
   sourceOverride: (any Source)? = nil
 ) -> (ast: AST?, errors: CELErrors, source: any Source) {
   let effectiveSource = sourceOverride ?? source
@@ -255,7 +255,7 @@ func optimize(
   var info = result.sourceInfo
   normalizeIDs(fresh.renumberStable, &expr, &info)
   cleanupMacroRefs(expr, &info)
-  let (checked, errors) = ctx.env.check(AST(expr: expr, sourceInfo: info), source: effectiveSource)
+  let (checked, errors) = ctx.env.checkAST(AST(expr: expr, sourceInfo: info), source: effectiveSource)
   return (checked, errors, effectiveSource)
 }
 

@@ -143,7 +143,7 @@ package typealias CompileMatchOutput =
 
 /// What a match output compiler can use (cel-go `MatchCompiler`).
 package struct MatchCompiler {
-  package let env: PolicyEnvironment
+  package let env: Environment
   let relSource: (Policy.ValueString) -> RelativeSource
 
   /// The source of a policy string, positioned within the policy file (cel-go `RelSource`).
@@ -152,23 +152,9 @@ package struct MatchCompiler {
   }
 }
 
-/// Compiles a policy into a single checked expression (cel-go `policy.Compile`).
-package func compilePolicy(
-  _ policy: Policy, env: PolicyEnvironment, options: PolicyCompilerOptions = PolicyCompilerOptions()
-) -> (ast: AST?, errors: PolicyError) {
-  let (rule, errors) = compileRule(policy, env: env, options: options)
-  guard let rule, errors.isEmpty else {
-    return (nil, errors)
-  }
-  let (ast, composeErrors) = RuleComposer(env: env).compose(rule)
-  var result = PolicyError(source: policy.source)
-  result.errors = result.errors.appending(composeErrors.errors)
-  return (ast, result)
-}
-
 /// Compiles a policy's rule tree (cel-go `policy.CompileRule`).
 package func compileRule(
-  _ policy: Policy, env: PolicyEnvironment, options: PolicyCompilerOptions = PolicyCompilerOptions()
+  _ policy: Policy, env: Environment, options: PolicyCompilerOptions = PolicyCompilerOptions()
 ) -> (rule: CompiledRule?, errors: PolicyError) {
   var c = PolicyRuleCompiler(policy: policy, env: env, options: options)
   if options.maxNestedExpressions <= 0 {
@@ -190,7 +176,9 @@ package func compileRule(
       }
     }
     do {
-      try c.env.addAbbreviations(importNames)
+      for name in importNames {
+        c.env = try c.env.extending(.abbreviations(name))
+      }
     } catch {
       c.reportError(atID: policy.imports[0].sourceID, "error configuring imports: \(error)")
     }
@@ -208,12 +196,12 @@ let policyVariablePrefix = "variables"
 /// Port of cel-go's `compiler` struct.
 struct PolicyRuleCompiler {
   let policy: Policy
-  var env: PolicyEnvironment
+  var env: Environment
   let options: PolicyCompilerOptions
   var errors: PolicyError
   var nestedCount = 0
 
-  init(policy: Policy, env: PolicyEnvironment, options: PolicyCompilerOptions) {
+  init(policy: Policy, env: Environment, options: PolicyCompilerOptions) {
     self.policy = policy
     self.env = env
     self.options = options
@@ -228,7 +216,7 @@ struct PolicyRuleCompiler {
     errors.errors = errors.errors.appending(errs.errors)
   }
 
-  mutating func compile(_ r: Policy.Rule, ruleEnv: PolicyEnvironment, hasAggregateAncestor: Bool) -> CompiledRule {
+  mutating func compile(_ r: Policy.Rule, ruleEnv: Environment, hasAggregateAncestor: Bool) -> CompiledRule {
     var ruleEnv = ruleEnv
     if hasAggregateAncestor && r.semantic == .aggregate {
       reportError(atID: r.sourceID, "nested aggregate rules are not allowed")
@@ -236,7 +224,7 @@ struct PolicyRuleCompiler {
     var compiledVars: [CompiledVariable] = []
     for v in r.variables {
       let exprSrc = relSource(v.expression)
-      let (varAST, exprErrs) = ruleEnv.compile(exprSrc)
+      let (varAST, exprErrs) = ruleEnv.compileSource(exprSrc)
       let varName = v.name.value
       var varType = CELType.dyn
       if let varAST {
@@ -246,7 +234,7 @@ struct PolicyRuleCompiler {
       }
       let decl = VariableDecl(name: "\(policyVariablePrefix).\(varName)", type: varType)
       do {
-        try ruleEnv.declare(variables: [decl])
+        ruleEnv = try ruleEnv.declaring([decl])
       } catch {
         reportError(atID: v.sourceID, "invalid variable declaration: \(error)")
       }
@@ -261,7 +249,7 @@ struct PolicyRuleCompiler {
     var compiledMatches: [CompiledMatch] = []
     for m in r.matches {
       let condSrc = relSource(m.condition)
-      let (condAST, condErrs) = ruleEnv.compile(condSrc)
+      let (condAST, condErrs) = ruleEnv.compileSource(condSrc)
       append(condErrs)
       if m.output != nil && m.rule != nil {
         reportError(atID: m.condition.id, "either output or rule may be set but not both")
@@ -273,7 +261,7 @@ struct PolicyRuleCompiler {
           let mc = MatchCompiler(env: ruleEnv, relSource: { [self] in self.relSource($0) })
           (outAST, outErrs) = custom(mc, m, policy)
         } else {
-          let (a, e) = ruleEnv.compile(relSource(output))
+          let (a, e) = ruleEnv.compileSource(relSource(output))
           (outAST, outErrs) = (a, e)
         }
         if let outErrs {
