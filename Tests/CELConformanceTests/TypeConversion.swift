@@ -120,16 +120,15 @@ enum TypeConversion {
     }
   }
 
-  /// Adds a `type_env` declaration to the environment (cel-go `ProtoAsDeclaration`).
-  static func declare(_ d: Cel_Expr_Decl, in env: inout ProgramEnvironment) throws {
+  /// The environment option declaring a `type_env` declaration (cel-go `ProtoAsDeclaration`).
+  static func option(for d: Cel_Expr_Decl) throws -> Environment.Option {
     switch d.declKind {
     case .ident(let ident)?:
       let t = try toCELType(ident.type).get()
       if ident.hasValue {
-        try env.declare([VariableDecl(constant: d.name, type: t, value: try constant(ident.value).get())])
-      } else {
-        try env.declare([VariableDecl(name: d.name, type: t)])
+        return .constant(d.name, t, value: try constant(ident.value).get())
       }
+      return .variable(d.name, t)
     case .function(let fn)?:
       var options: [FunctionDecl.Option] = []
       for o in fn.overloads {
@@ -140,7 +139,7 @@ enum TypeConversion {
             ? .memberOverload(o.overloadID, argTypes: args, resultType: result)
             : .overload(o.overloadID, argTypes: args, resultType: result))
       }
-      try env.declare(functions: [FunctionDecl(d.name, options: options)])
+      return .functions([try FunctionDecl(d.name, options: options)])
     case nil:
       throw ConversionFailure(message: "unsupported decl: \(d)")
     }
