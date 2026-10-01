@@ -1,0 +1,9 @@
+# Conformance tests that cannot pass yet, with the reason and the tracking issue.
+#
+#   <path> | <mode> | <reason> | <issue>
+#
+# path: test name prefix on '/' boundaries (file, file/section or file/section/test), as cel-go's --skip_tests.
+# mode: checked, parse-only or *.
+# Every field is required, every entry must match at least one test. A test that is merely not implemented
+# yet needs no entry: it is simply absent from passing.txt. Skip only what cannot or should not pass, and
+# remove entries as they are fixed.

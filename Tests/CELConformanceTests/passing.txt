@@ -1,0 +1,3 @@
+# Conformance tests expected to pass, one "<mode> <file/section/test>" per line, sorted by name.
+# A listed test that fails fails the suite. Regenerate with:
+#   CEL_CONFORMANCE_UPDATE=1 swift test --filter CELConformanceTests
