@@ -35,8 +35,7 @@ extension Environment {
   public func estimateCost(
     _ expression: CheckedExpression, sizeHints: [String: ClosedRange<UInt64>] = [:]
   ) -> ClosedRange<UInt64> {
-    let estimate = Checker.estimateCost(
-      expression.ast, estimator: SizeHintEstimator(hints: sizeHints))
+    let estimate = estimateCostDetails(expression, estimator: SizeHintEstimator(hints: sizeHints))
     return estimate.min...Swift.max(estimate.min, estimate.max)
   }
 }

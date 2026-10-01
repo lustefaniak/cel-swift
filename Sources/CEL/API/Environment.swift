@@ -274,7 +274,7 @@ public struct Environment: Sendable {
 
   /// Estimates the cost of a checked expression with the environment's library cost estimators
   /// (cel-go `Env.EstimateCost`).
-  package func estimateCost(
+  package func estimateCostDetails(
     _ expression: CheckedExpression, estimator: any CostEstimator = DefaultCostEstimator(),
     presenceTestHasCost: Bool = true
   ) -> CostEstimate {

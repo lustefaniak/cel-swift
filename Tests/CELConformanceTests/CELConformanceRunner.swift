@@ -48,8 +48,16 @@ struct CELConformanceRunner: ConformanceRunner {
 
   /// cel-go does not run network_ext (its conformance environment lacks the network library); these
   /// tests run with the base environment plus `ext.Network()`, as the oracle's `network` extension does.
+  /// The library's literal validators are left out: like cel-go's, they reject invalid `ip("...")` /
+  /// `cidr("...")` literals at check time, while the spec tests expect the runtime error.
   static let networkEnvironment = makeEnvironment(
-    baseOptions + [.macros(Macro.allMacros), .library(.network)])
+    baseOptions + [.macros(Macro.allMacros), .library(networkWithoutValidators)])
+
+  static var networkWithoutValidators: Library {
+    var library = Library.network
+    library.validators = []
+    return library
+  }
 
   static func makeEnvironment(_ options: [Environment.Option]) -> Result<Environment, DeclarationError> {
     Result { () throws(DeclarationError) in try Environment(options: options) }

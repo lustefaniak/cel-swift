@@ -59,7 +59,7 @@ private func elapsedSeconds(_ body: () throws -> Void) rethrows -> Double {
     let estimate = env.estimateCost(expr)
     let result = try env.program(expr, options: [.trackCost]).evaluate()
     let cost = try #require(result.cost)
-    #expect(estimate.min <= cost && cost <= estimate.max)
+    #expect(estimate.contains(cost))
   }
 
   @Test func timeLimitInterruptsLongEvaluation() throws {
