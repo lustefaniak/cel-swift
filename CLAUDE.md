@@ -73,4 +73,6 @@ This is a library other packages depend on, so the public surface is the product
 
 - `third_party/cel-spec` is a submodule pinned to a release tag (currently v0.25.3). Bump deliberately, with
   the conformance dashboard diff in the commit.
-- Private repo, single committer: commits go straight to `main`.
+- **Commit straight to `main`, no branches or PRs, until the repo is made public.** Run `swift build` and
+  `swift test` first; CI runs on every push. Once public, switch to small PRs per feature area (see
+  `docs/plan.md` § Working method).

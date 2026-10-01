@@ -322,7 +322,8 @@ The repo's `CLAUDE.md` sets the porting rules, so any agent session follows the 
   exit criteria hold, not when most tests pass.
 - **Skip list discipline**: adding an entry needs a reason and an issue; removing entries is the goal of
   every milestone.
-- **Small PRs per feature area**, each with the dashboard delta in the description.
+- **Small PRs per feature area** once the repo is public, each with the dashboard delta in the description.
+  Until then, commits go straight to `main` with the dashboard delta in the commit message.
 - Swift conventions: strict concurrency, `Sendable` everywhere, value types, no force unwraps outside tests,
   no `Foundation` in hot paths, `golines`-style formatting via `swift-format` config in the repo.
 
