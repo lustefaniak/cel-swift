@@ -252,7 +252,9 @@ and `extending(_:)` reuses the parent's validated declarations when no function 
 `parse` / `check` / `compile` return `ParsedExpression` / `CheckedExpression` (both wrap the package `AST`
 and source), `program(_:options:)` returns a `Sendable` `Program`, and `evaluate` returns an
 `EvaluationResult` (value, cost, state). Errors are `CompileError` (cel-go `Issues`) and `EvalError`.
-`partialVariables`, `UnknownPattern` and `estimateCost(_:sizeHints:)` cover partial evaluation and cost.
+`partialVariables`, `UnknownPattern`, `residual(of:state:)` (cel-go `ResidualAst`) and
+`estimateCost(_:sizeHints:)` cover partial evaluation and cost; `Program.Option.globals` gives variables
+default values. `Library.standard(subset:)` is the standard library restricted by a `Library.Subset`.
 
 Optimizers (cel-go `StaticOptimizer`, `optimizer.go`, `folding.go`, `inlining.go`):
 `env.optimize(checked, .constantFolding(), .inlining(...))` applies `ExpressionOptimizer`s in order,
@@ -265,7 +267,8 @@ does, and the factory methods (`newCall`, `newBindMacro`, `copyASTAndMetadata`, 
 
 ## Command line tool (`Sources/cel-swift`)
 
-`cel-swift eval | check | parse | repl`, built on the public API plus a few `package` debug printers.
+`cel-swift eval | check | parse | repl | policy test`, built on the public API plus a few `package` debug
+printers; `policy test` lives in `CELCommandLine` so `CELTestTests` can run it too.
 Each subcommand is a `Command` value listed in `Command.all`; `Arguments` is a small stdlib-only parser and
 `Session` builds the environment from the shared options (`--container`, `--ext NAME[:VERSION]`,
 `--declare NAME:TYPE`, `--let NAME=EXPR`, `--json FILE`). The REPL follows cel-go `repl` for variables

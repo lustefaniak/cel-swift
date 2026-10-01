@@ -3,7 +3,7 @@
 Handoff for the next working session. Update it when a milestone moves; `docs/plan.md` has the milestones and exit
 criteria, `docs/architecture.md` the design, `docs/divergences.md` every deliberate difference from cel-go.
 
-Snapshot: 2026-10-01, `main` after `edae596`.
+Snapshot: 2026-10-01; the API, CLI and docs rows after `bd4f5d0`.
 
 ## Conformance (cel-spec v0.25.3)
 
@@ -32,7 +32,8 @@ toward the spec, each recorded in `docs/divergences.md` (plan: cpp parity is the
 | Checker | `Sources/CEL/Checker` | all 142 `checker_test.go` cases |
 | Interpreter | `Sources/CEL/Interpreter` | planner, attributes, unknown patterns, state, runtime cost, prune (residual ASTs) |
 | Cost and limits | `Sources/CEL/Checker/Cost*`, `Interpreter`, `LimitsTests` | static estimator (96 cases), runtime cost (77), cost/time/cancellation/size limits |
-| Public API | `Sources/CEL/API` | `Environment` → `compile` → `Program` → `evaluate`; partial evaluation, `estimateCost` |
+| Public API (M8 API work) | `Sources/CEL/API`, `Sources/CEL/CEL.docc` | `Environment` → `compile` → `Program` → `evaluate`; partial evaluation and `residual(of:state:)`, `estimateCost`, `globals`; `Library.standard(subset:)`; `optimize` with constant folding and inlining; DocC catalog with a getting-started article whose examples run in `APIDocumentationTests`. Ported through the public API: `cel_test.go` (45 tests), `env_test.go`, `decls_test.go`, `folding_test.go` (all tables), `inlining_test.go`; each test file's header lists what was left out and why. Full suite passes in a `swift:6.0-noble` container (Linux CI installs `tzdata-legacy` for the US/Central conformance tests) |
+| Command line | `Sources/cel-swift` | `cel-swift eval / check / parse [--debug] / repl / policy test`; stdlib-only argument parsing |
 | Extensions | `Sources/CELExtensions`, `Sources/CEL/Library` | all cel-go ext libraries and macros, validators |
 | Regex | `Sources/CELRegex` | Go regexp port, Go test tables |
 | Protobuf | `Sources/CELProtobuf`, `protoc-gen-cel-swift` | generated adapters, WKTs, proto2/3, extensions |
@@ -52,18 +53,16 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    sized; several cel-go size formulas wrap on overflow (use `&+`/`&*` there).
 3. **Fuzzing follow-up** — run each fuzzer 15+ min in docker (`--memory 8g`); investigate memory growth (700–800 MB and
    rising per fuzzer in the first run).
-4. **Public API completion (M8)** — `Library.standard(subset:)` (needed by the config), port `cel/cel_test.go`,
-   `env_test.go`, `decls_test.go`, `folding_test.go`, `inlining_test.go`; folding/inlining optimizers; `cel-swift` CLI
-   (`eval`, `check`, `parse --debug`, `repl`); DocC catalog + README usage; Swift 6.0 Linux check in docker. The policy
-   composer still uses its own internal optimizer (`Sources/CELPolicy/Compiler/StaticOptimizer.swift`); move it onto
-   the public `Environment.optimize` from `64d9f79` once that API settles, and drop the copy.
+4. **Public API follow-ups (M8)** — move the policy composer's internal optimizer
+   (`Sources/CELPolicy/Compiler/StaticOptimizer.swift`) onto `Environment.optimize` and drop the copy; run
+   `swift package diagnose-api-breaking-changes` once a tag exists; decide the open questions below, which block
+   custom macros, custom optimizers and decorators, proto AST conversion and the cel-go tests that need them
+   (listed in the headers of `Tests/CELTests/API*Tests.swift`). The public `enum CEL` (only `specVersion`) shares
+   the module's name, which breaks `CEL.Environment`-style qualification for clients; rename or drop it before 1.0.
 5. **Unknowns and state tracking (M5)** — interpreter pieces exist (attribute patterns, prune, eval state); port the
    remaining cel-go unknowns tests end to end through the public API.
-6. **Docs debt** — interpreter and Library sections in `docs/architecture.md`; divergence notes from the extensions
-   work (pre-v4 `format` locales are en-US only; invalid UTF-8 under `%s` prints U+FFFD; `NativeTypes` not ported);
-   Go strings/strconv/base64/netip ports in `NOTICE`.
-7. **Parity gap** — the spec-over-cel-go cases listed under Conformance; decide each, fix, record the divergence.
-8. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
+6. **Parity gap** — the spec-over-cel-go cases listed under Conformance; decide each, fix, record the divergence.
+7. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
    existential list/map/object payloads dominate. Parser rebuilds the ANTLR prediction cache per parse (~0.5 ms);
    sharing it needs a lock in an `@unchecked Sendable` class (CLAUDE.md asks to raise that first).
 
