@@ -117,7 +117,7 @@ public struct TestRunner: Sendable {
         errorMessage = error.message
       }
       let outcome = matcher(result.value, errorMessage)
-      if case .failed = outcome {
+      if outcome.isFailed {
         return TestResult(name: name, outcome: outcome)
       }
     }
@@ -205,7 +205,7 @@ public struct TestRunner: Sendable {
     if let unknownSet = output.unknownSet {
       return { value, error in
         if error == nil, case .unknown(let unknown) = value {
-          let got = unknown.exprIDs.sorted()
+          let got = unknown.expressionIDs.sorted()
           let want = unknownSet.sorted()
           if got == want {
             return .passed
@@ -240,11 +240,35 @@ public struct TestRunner: Sendable {
 /// The outcome of one test.
 public struct TestResult: Sendable, Hashable {
   /// Whether the test passed, or what was wanted and what went wrong.
-  public enum Outcome: Sendable, Hashable {
+  ///
+  /// A struct rather than an enum so that later kinds of outcome (a skipped test, say) can be added
+  /// without breaking clients: compare with ``passed`` or ask ``isFailed``, and read ``wanted`` and
+  /// ``failure`` for the details.
+  public struct Outcome: Sendable, Hashable {
+    private enum Kind: Sendable, Hashable {
+      case passed
+      case failed
+    }
+
+    private let kind: Kind
+    /// What the test wanted, for a failed test.
+    public let wanted: String?
+    /// What happened instead, for a failed test when known.
+    public let failure: String?
+
     /// The result matched the expected output.
-    case passed
+    public static let passed = Outcome(kind: .passed, wanted: nil, failure: nil)
+
     /// The result did not match: what the test wanted and, when known, what happened instead.
-    case failed(wanted: String?, failure: String?)
+    public static func failed(wanted: String?, failure: String?) -> Outcome {
+      Outcome(kind: .failed, wanted: wanted, failure: failure)
+    }
+
+    /// Whether the result matched the expected output.
+    public var isPassed: Bool { kind == .passed }
+
+    /// Whether the result did not match the expected output.
+    public var isFailed: Bool { kind == .failed }
   }
 
   /// The test name, `<section>/<test>`.
@@ -254,15 +278,15 @@ public struct TestResult: Sendable, Hashable {
 
   /// Whether the test passed.
   public var passed: Bool {
-    outcome == .passed
+    outcome.isPassed
   }
 
   /// The failure rendered as `celtest` does: the test name, what was wanted and the failure.
   public var failureDescription: String? {
-    guard case .failed(let wanted, let failure) = outcome else {
+    guard outcome.isFailed else {
       return nil
     }
-    return "test: \(name) \n wanted: \(wanted ?? "<nil>") \n failed: \(failure ?? "<nil>")"
+    return "test: \(name) \n wanted: \(outcome.wanted ?? "<nil>") \n failed: \(outcome.failure ?? "<nil>")"
   }
 }
 

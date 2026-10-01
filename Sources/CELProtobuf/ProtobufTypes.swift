@@ -288,11 +288,11 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
   }
 
   /// The type of a field or extension of a registered message type.
-  public func findStructFieldType(_ structType: String, fieldName: String) -> CELFieldType? {
+  public func findStructFieldType(_ structType: String, fieldName: String) -> StructFieldType? {
     guard let messageType = messageType(named: structType),
       let field = field(named: fieldName, in: messageType)
     else { return nil }
-    return CELFieldType(
+    return StructFieldType(
       name: field.name,
       type: field.type,
       isJSONField: usesJSONFieldNames && !field.isExtension && fieldName == field.jsonName,

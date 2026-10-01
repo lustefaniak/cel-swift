@@ -15,8 +15,8 @@
 // Ported from cel-go common/types/provider.go (Provider, FieldType), common/types/struct.go
 // (StructTypeDescriptor) and common/types/ref/provider.go (TypeAdapter).
 
-/// The type of a message field and how to read it.
-public struct FieldType: Sendable {
+/// The type of a message field and how to read it (cel-go `types.FieldType`).
+public struct StructFieldType: Sendable {
   /// The declared CEL type of the field.
   public var type: CELType
   /// Whether the field is set on an object, the `has()` test.
@@ -54,7 +54,7 @@ public protocol StructTypeDescriptor: Sendable {
   /// The names of the fields.
   var fieldNames: [String] { get }
   /// The type of a field, or `nil` if the type has no such field.
-  func fieldType(named name: String) -> FieldType?
+  func fieldType(named name: String) -> StructFieldType?
   /// Creates an instance from field values, or an error value such as `no such field: x`.
   func newValue(fields: [String: Value]) -> Value
 }
@@ -77,7 +77,7 @@ public protocol TypeProvider: Sendable {
   func findStructFieldNames(_ structType: String) -> [String]?
 
   /// The type of a struct field.
-  func findStructFieldType(_ structType: String, fieldName: String) -> FieldType?
+  func findStructFieldType(_ structType: String, fieldName: String) -> StructFieldType?
 
   /// Creates an object of a struct type from field values, or an error value.
   func newValue(_ structType: String, fields: [String: Value]) -> Value

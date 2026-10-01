@@ -111,9 +111,9 @@ struct APIConstantFoldingTests {
   func callsWithSideEffects(_ testCase: FoldCase) throws {
     let env = try Environment(
       .optionalTypes, .macroCallTracking,
-      .function("noSideEffect", .overload("noSideEffect_int_int", argTypes: [.int], resultType: .int, .unaryBinding { $0 })),
-      .function("withSideEffect", .overload("withSideEffect_int_int", argTypes: [.int], resultType: .int, .lateBinding)),
-      .function("noImpl", .overload("noImpl_int_int", argTypes: [.int], resultType: .int)))
+      .function("noSideEffect", .overload("noSideEffect_int_int", argumentTypes: [.int], resultType: .int, .unaryBinding { $0 })),
+      .function("withSideEffect", .overload("withSideEffect_int_int", argumentTypes: [.int], resultType: .int, .lateBinding)),
+      .function("noImpl", .overload("noImpl_int_int", argumentTypes: [.int], resultType: .int)))
     let optimized = try env.optimize(env.compile(testCase.expr), .constantFolding())
     #expect(optimized.description == testCase.folded)
   }

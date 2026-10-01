@@ -34,7 +34,7 @@ extension Library {
       try FunctionDecl(
         name,
         .overload(
-          id, argTypes: [listType, listType], resultType: .bool,
+          id, argumentTypes: [listType, listType], resultType: .bool,
           .binaryBinding { a, b in
             guard case .list(let l) = a, case .list(let r) = b else { return noSuchOverload(a, b) }
             return f(l, r)

@@ -21,29 +21,42 @@
 /// written with; the offset only affects ``celString``, never equality or ordering.
 public struct CELTimestamp: Sendable, Hashable, Comparable {
   /// Whole seconds since the Unix epoch, `1970-01-01T00:00:00Z`.
-  public var secondsSinceEpoch: Int64
+  public let secondsSinceEpoch: Int64
   /// The nanosecond within the second, `0..<1_000_000_000`.
-  public var nanoseconds: Int32
+  public let nanoseconds: Int32
   /// The UTC offset in seconds used when formatting; `0` formats as `Z`.
-  public var utcOffsetSeconds: Int32
+  public let utcOffsetSeconds: Int32
 
-  /// Creates a timestamp from seconds and nanoseconds since the Unix epoch.
+  /// Creates a timestamp from whole seconds since the Unix epoch and the nanosecond within that
+  /// second.
   ///
-  /// Nanoseconds outside `0..<1_000_000_000` are carried into the seconds.
-  public init(secondsSinceEpoch: Int64, nanoseconds: Int64 = 0, utcOffsetSeconds: Int32 = 0) {
-    var sec = secondsSinceEpoch
-    var nsec = nanoseconds
-    if nsec < 0 || nsec >= CELDuration.nanosPerSecond {
-      sec &+= nsec / CELDuration.nanosPerSecond
-      nsec %= CELDuration.nanosPerSecond
-      if nsec < 0 {
-        sec &-= 1
-        nsec += CELDuration.nanosPerSecond
-      }
-    }
-    self.secondsSinceEpoch = sec
-    self.nanoseconds = Int32(nsec)
+  /// - Precondition: `nanoseconds` is in `0..<1_000_000_000`. For an instant before the epoch
+  ///   with a fraction, count the seconds down: `-0.5` seconds is `secondsSinceEpoch: -1,
+  ///   nanoseconds: 500_000_000`.
+  public init(secondsSinceEpoch: Int64, nanoseconds: Int32 = 0, utcOffsetSeconds: Int32 = 0) {
+    precondition(
+      nanoseconds >= 0 && Int64(nanoseconds) < CELDuration.nanosPerSecond,
+      "CELTimestamp nanoseconds must be in 0..<1_000_000_000")
+    self.secondsSinceEpoch = secondsSinceEpoch
+    self.nanoseconds = nanoseconds
     self.utcOffsetSeconds = utcOffsetSeconds
+  }
+
+  /// Creates a timestamp from seconds and a nanosecond count that may lie outside one second,
+  /// carrying whole seconds out of the nanoseconds as Go's `time.Unix` does, or `nil` if the
+  /// seconds overflow.
+  package init?(secondsSinceEpoch: Int64, carryingNanoseconds nanoseconds: Int64, utcOffsetSeconds: Int32 = 0) {
+    var carry = nanoseconds / CELDuration.nanosPerSecond
+    var nsec = nanoseconds % CELDuration.nanosPerSecond
+    if nsec < 0 {
+      carry -= 1
+      nsec += CELDuration.nanosPerSecond
+    }
+    let (sec, overflow) = secondsSinceEpoch.addingReportingOverflow(carry)
+    if overflow {
+      return nil
+    }
+    self.init(secondsSinceEpoch: sec, nanoseconds: Int32(nsec), utcOffsetSeconds: utcOffsetSeconds)
   }
 
   /// The earliest valid CEL timestamp in Unix seconds, `0001-01-01T00:00:00Z`.
@@ -362,5 +375,5 @@ func parseRFC3339(_ text: String) -> CELTimestamp? {
     seconds -= offset
   }
   return CELTimestamp(
-    secondsSinceEpoch: seconds, nanoseconds: nsec, utcOffsetSeconds: Int32(offset))
+    secondsSinceEpoch: seconds, nanoseconds: Int32(nsec), utcOffsetSeconds: Int32(offset))
 }

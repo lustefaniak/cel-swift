@@ -311,12 +311,12 @@ struct TypeChecker {
   private mutating func resolveOverload(
     _ call: Expr, _ fn: FunctionDecl, target: Expr?, args: [Expr]
   ) -> (type: CELType, reference: ReferenceInfo)? {
-    var argTypes: [CELType] = []
+    var argumentTypes: [CELType] = []
     if let target {
-      argTypes.append(getType(target))
+      argumentTypes.append(getType(target))
     }
     for arg in args {
-      argTypes.append(getType(arg))
+      argumentTypes.append(getType(arg))
     }
 
     var resultType: CELType?
@@ -337,7 +337,7 @@ struct TypeChecker {
       // AST representations.
       if fn.name == Operators.logicalAnd || fn.name == Operators.logicalOr {
         let ref = ReferenceInfo(overloadIDs: [overload.id])
-        for (i, argType) in argTypes.enumerated() where !isAssignable(argType, .bool) {
+        for (i, argType) in argumentTypes.enumerated() where !isAssignable(argType, .bool) {
           errors.typeMismatch(args[i].id, location(args[i].id), .bool, argType)
           resultType = .error
         }
@@ -347,12 +347,12 @@ struct TypeChecker {
         return (.bool, ref)
       }
 
-      var overloadType = newFunctionType(overload.resultType, overload.argTypes)
-      let typeParams = overload.typeParams
-      if !typeParams.isEmpty {
+      var overloadType = newFunctionType(overload.resultType, overload.argumentTypes)
+      let typeParameters = overload.typeParameters
+      if !typeParameters.isEmpty {
         // Instantiate the overload's type with fresh type variables.
         var substitutions = TypeMapping()
-        for typeParam in typeParams {
+        for typeParam in typeParameters {
           substitutions.add(.typeParam(typeParam), newTypeVar())
         }
         overloadType = substitute(substitutions, overloadType, false)
@@ -360,7 +360,7 @@ struct TypeChecker {
 
       let overloadParams = overloadType.parameters
       let candidateArgTypes = Array(overloadParams.dropFirst())
-      if isAssignableList(argTypes, candidateArgTypes) {
+      if isAssignableList(argumentTypes, candidateArgTypes) {
         if checkedRef == nil {
           checkedRef = ReferenceInfo(overloadIDs: [overload.id])
         } else {
@@ -380,7 +380,7 @@ struct TypeChecker {
     }
 
     guard let resultType, let checkedRef else {
-      let substituted = argTypes.map { substitute(mappings, $0, true) }
+      let substituted = argumentTypes.map { substitute(mappings, $0, true) }
       errors.noMatchingOverload(call.id, location(call), fn.name, substituted, target != nil)
       return nil
     }

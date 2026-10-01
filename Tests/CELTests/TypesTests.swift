@@ -176,10 +176,10 @@ private struct MyStructDescriptor: StructTypeDescriptor {
   var typeName: String { "custom.MyStruct" }
   var fieldNames: [String] { ["Bar", "Foo"] }
 
-  func fieldType(named name: String) -> FieldType? {
+  func fieldType(named name: String) -> StructFieldType? {
     switch name {
-    case "Foo": return FieldType(name: name, type: .string)
-    case "Bar": return FieldType(name: name, type: .int)
+    case "Foo": return StructFieldType(name: name, type: .string)
+    case "Bar": return StructFieldType(name: name, type: .int)
     default: return nil
     }
   }

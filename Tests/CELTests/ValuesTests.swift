@@ -19,7 +19,7 @@ import Testing
 
 @testable import CEL
 
-private func ts(_ seconds: Int64, _ nanos: Int64 = 0) -> Value {
+private func ts(_ seconds: Int64, _ nanos: Int32 = 0) -> Value {
   .timestamp(CELTimestamp(secondsSinceEpoch: seconds, nanoseconds: nanos))
 }
 
@@ -351,7 +351,7 @@ struct TimestampValueTests {
     #expect(
       ts(CELTimestamp.maxSecondsSinceEpoch).subtract(ts(CELTimestamp.minSecondsSinceEpoch))
         == .error(EvalError("integer overflow")))
-    #expect(ts(.min, 1).subtract(ts(0, -999_999_999)) == .error(EvalError("integer overflow")))
+    #expect(ts(.min, 1).subtract(ts(-1, 1)) == .error(EvalError("integer overflow")))
     #expect(ts(1).subtract(.duration(CELDuration(nanoseconds: .min))) == .error(EvalError("integer overflow")))
   }
 
@@ -502,45 +502,45 @@ struct UnknownValueTests {
   }
 
   @Test func contains() {
-    let u3true = UnknownSet(exprID: 3, attribute: trail("a", .bool(true)))
-    let u4b = UnknownSet(exprID: 4, attribute: trail("a", .string("b")))
-    #expect(UnknownSet(exprID: 1).contains(UnknownSet(exprID: 1, attribute: .unspecified)))
+    let u3true = UnknownSet(expressionID: 3, attribute: trail("a", .bool(true)))
+    let u4b = UnknownSet(expressionID: 4, attribute: trail("a", .string("b")))
+    #expect(UnknownSet(expressionID: 1).contains(UnknownSet(expressionID: 1, attribute: .unspecified)))
     #expect(u3true.contains(u4b) == false)
-    #expect(UnknownSet(exprID: 3, attribute: trail("a", .string("b"))).contains(u4b) == false)
+    #expect(UnknownSet(expressionID: 3, attribute: trail("a", .string("b"))).contains(u4b) == false)
     #expect(
-      UnknownSet(exprID: 3, attribute: trail("a", .string("c"))).contains(
-        UnknownSet(exprID: 3, attribute: trail("a", .string("b")))) == false)
+      UnknownSet(expressionID: 3, attribute: trail("a", .string("c"))).contains(
+        UnknownSet(expressionID: 3, attribute: trail("a", .string("b")))) == false)
     #expect(u3true.merging(u4b).contains(u3true))
     #expect(u3true.contains(u3true.merging(u4b)) == false)
   }
 
   @Test func ids() {
-    let merged = UnknownSet(exprID: 4, attribute: trail("a", .string("b")))
-      .merging(UnknownSet(exprID: 3, attribute: trail("a", .bool(true))))
-    #expect(merged.exprIDs == [3, 4])
-    #expect(merged.attributeTrails(forExprID: 3)?.map(\.description) == ["a[true]"])
-    #expect(merged.attributeTrails(forExprID: 4)?.map(\.description) == ["a.b"])
-    #expect(UnknownSet(exprID: 1).exprIDs == [1])
+    let merged = UnknownSet(expressionID: 4, attribute: trail("a", .string("b")))
+      .merging(UnknownSet(expressionID: 3, attribute: trail("a", .bool(true))))
+    #expect(merged.expressionIDs == [3, 4])
+    #expect(merged.attributeTrails(forExpressionID: 3)?.map(\.description) == ["a[true]"])
+    #expect(merged.attributeTrails(forExpressionID: 4)?.map(\.description) == ["a.b"])
+    #expect(UnknownSet(expressionID: 1).expressionIDs == [1])
   }
 
   @Test func string() {
-    #expect(UnknownSet(exprID: 1).description == "<unspecified> (1)")
-    #expect(UnknownSet(exprID: 2, attribute: trail("a")).description == "a (2)")
-    #expect(UnknownSet(exprID: 3, attribute: trail("a", .bool(false))).description == "a[false] (3)")
-    let merged = UnknownSet(exprID: 3, attribute: trail("a", .bool(true)))
-      .merging(UnknownSet(exprID: 4, attribute: trail("a", .string("b"))))
+    #expect(UnknownSet(expressionID: 1).description == "<unspecified> (1)")
+    #expect(UnknownSet(expressionID: 2, attribute: trail("a")).description == "a (2)")
+    #expect(UnknownSet(expressionID: 3, attribute: trail("a", .bool(false))).description == "a[false] (3)")
+    let merged = UnknownSet(expressionID: 3, attribute: trail("a", .bool(true)))
+      .merging(UnknownSet(expressionID: 4, attribute: trail("a", .string("b"))))
     #expect(merged.description == "a[true] (3), a.b (4)")
-    let same = UnknownSet(exprID: 3, attribute: trail("a", .int(0)))
-      .merging(UnknownSet(exprID: 3, attribute: trail("a", .int(0))))
+    let same = UnknownSet(expressionID: 3, attribute: trail("a", .int(0)))
+      .merging(UnknownSet(expressionID: 3, attribute: trail("a", .int(0))))
     #expect(same.description == "a[0] (3)")
-    let two = UnknownSet(exprID: 3, attribute: trail("a", .int(0)))
-      .merging(UnknownSet(exprID: 3, attribute: trail("a", .int(1))))
+    let two = UnknownSet(expressionID: 3, attribute: trail("a", .int(0)))
+      .merging(UnknownSet(expressionID: 3, attribute: trail("a", .int(1))))
     #expect(two.description == "[a[0] a[1]] (3)")
   }
 
   @Test func maybeMergeUnknowns() {
-    let x = UnknownSet(exprID: 2, attribute: trail("x"))
-    let y = UnknownSet(exprID: 1, attribute: trail("y"))
+    let x = UnknownSet(expressionID: 2, attribute: trail("x"))
+    let y = UnknownSet(expressionID: 1, attribute: trail("y"))
     #expect(Value.maybeMergeUnknowns(.string(""), nil).1 == false)
     #expect(Value.maybeMergeUnknowns(.string(""), y).1)
     let (merged, isUnknown) = Value.maybeMergeUnknowns(.unknown(x), y)

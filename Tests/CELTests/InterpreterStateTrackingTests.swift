@@ -92,7 +92,7 @@ let stateTrackingCases: [StateTrackingCase] = [
       VariableDecl(name: "a", type: .map(key: .string, value: .dyn)),
       VariableDecl(name: "m", type: .map(key: .bool, value: .string)),
     ], input: ["a": .map(OrderedMap()), "m": [true: "world"]], unknowns: [AttributePattern("a").qualString("b")],
-    out: .unknown(UnknownSet(exprID: 5, attribute: AttributeTrail(variable: "a", qualifierPath: [.string("b")])))),
+    out: .unknown(UnknownSet(expressionID: 5, attribute: AttributeTrail(variable: "a", qualifierPath: [.string("b")])))),
   // Error node 9 is the `i + 'b'` expression.
   StateTrackingCase(
     expr: "['a', b.val, 'c'].filter(i, i + 'b' != 'ab')",
@@ -124,7 +124,7 @@ struct InterpreterStateTrackingTests {
       #expect(result.value == tc.out)
     case (.error(let want), .error(let got)):
       #expect(got.message == want.message)
-      #expect(got.exprID == tc.errorNodeID)
+      #expect(got.expressionID == tc.errorNodeID)
     default:
       #expect(result.value.celEquals(tc.out) == .bool(true), "got \(result.value), want \(tc.out)")
     }

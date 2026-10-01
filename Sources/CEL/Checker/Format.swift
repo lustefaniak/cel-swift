@@ -41,7 +41,7 @@ extension CELType {
         let params = parameters
         if let result = params.first {
           return formatFunctionDeclType(
-            resultType: result, argTypes: Array(params.dropFirst()), isInstance: false)
+            resultType: result, argumentTypes: Array(params.dropFirst()), isInstance: false)
         }
       }
     case .unspecified:
@@ -59,9 +59,9 @@ extension CELType {
 
 /// Formats a function signature: `(int, string) -> bool`, or `int.(string)` for an instance call
 /// without a result type.
-func formatFunctionDeclType(resultType: CELType?, argTypes: [CELType], isInstance: Bool) -> String {
+func formatFunctionDeclType(resultType: CELType?, argumentTypes: [CELType], isInstance: Bool) -> String {
   var result = ""
-  var args = argTypes[...]
+  var args = argumentTypes[...]
   if isInstance, let target = args.first {
     args = args.dropFirst()
     result += target.checkerDescription

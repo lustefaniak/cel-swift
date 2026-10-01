@@ -58,11 +58,11 @@ struct MathLibrary {
     let scalars: [(String, CELType)] = [("double", .double), ("int", .int), ("uint", .uint)]
     var options: [FunctionDecl.Option] = []
     for (n, t) in scalars {
-      options.append(.overload("\(prefix)_\(n)", argTypes: [t], resultType: t, .unaryBinding(identity)))
+      options.append(.overload("\(prefix)_\(n)", argumentTypes: [t], resultType: t, .unaryBinding(identity)))
     }
     for (n, t) in scalars {
       options.append(
-        .overload("\(prefix)_\(n)_\(n)", argTypes: [t, t], resultType: t, .binaryBinding(pair)))
+        .overload("\(prefix)_\(n)_\(n)", argumentTypes: [t, t], resultType: t, .binaryBinding(pair)))
     }
     let mixed: [(String, CELType, String, CELType)] = [
       ("int", .int, "uint", .uint), ("int", .int, "double", .double),
@@ -71,11 +71,11 @@ struct MathLibrary {
     ]
     for (a, at, b, bt) in mixed {
       options.append(
-        .overload("\(prefix)_\(a)_\(b)", argTypes: [at, bt], resultType: .dyn, .binaryBinding(pair)))
+        .overload("\(prefix)_\(a)_\(b)", argumentTypes: [at, bt], resultType: .dyn, .binaryBinding(pair)))
     }
     for (n, t) in scalars {
       options.append(
-        .overload("\(prefix)_list_\(n)", argTypes: [.list(t)], resultType: t, .unaryBinding(list)))
+        .overload("\(prefix)_list_\(n)", argumentTypes: [.list(t)], resultType: t, .unaryBinding(list)))
     }
     return try FunctionDecl(name, options: options)
   }
@@ -93,7 +93,7 @@ struct MathLibrary {
         try FunctionDecl(
           name,
           .overload(
-            id, argTypes: [.double], resultType: result,
+            id, argumentTypes: [.double], resultType: result,
             .unaryBinding { v in
               guard case .double(let d) = v else { return noSuchOverload(v) }
               return f(d)
@@ -113,13 +113,13 @@ struct MathLibrary {
         try FunctionDecl(
           "math.abs",
           .overload(
-            "math_abs_double", argTypes: [.double], resultType: .double,
+            "math_abs_double", argumentTypes: [.double], resultType: .double,
             .unaryBinding { v in
               guard case .double(let d) = v else { return noSuchOverload(v) }
               return .double(Swift.abs(d))
             }),
           .overload(
-            "math_abs_int", argTypes: [.int], resultType: .int,
+            "math_abs_int", argumentTypes: [.int], resultType: .int,
             .unaryBinding { v in
               guard case .int(let i) = v else { return noSuchOverload(v) }
               if i == .min {
@@ -127,25 +127,25 @@ struct MathLibrary {
               }
               return .int(i >= 0 ? i : -i)
             }),
-          .overload("math_abs_uint", argTypes: [.uint], resultType: .uint, .unaryBinding { $0 })),
+          .overload("math_abs_uint", argumentTypes: [.uint], resultType: .uint, .unaryBinding { $0 })),
         try FunctionDecl(
           "math.sign",
-          .overload("math_sign_double", argTypes: [.double], resultType: .double, .unaryBinding(sign)),
-          .overload("math_sign_int", argTypes: [.int], resultType: .int, .unaryBinding(sign)),
-          .overload("math_sign_uint", argTypes: [.uint], resultType: .uint, .unaryBinding(sign))),
+          .overload("math_sign_double", argumentTypes: [.double], resultType: .double, .unaryBinding(sign)),
+          .overload("math_sign_int", argumentTypes: [.int], resultType: .int, .unaryBinding(sign)),
+          .overload("math_sign_uint", argumentTypes: [.uint], resultType: .uint, .unaryBinding(sign))),
         try bitwise("math.bitAnd", "math_bitAnd", { $0 & $1 }, { $0 & $1 }),
         try bitwise("math.bitOr", "math_bitOr", { $0 | $1 }, { $0 | $1 }),
         try bitwise("math.bitXor", "math_bitXor", { $0 ^ $1 }, { $0 ^ $1 }),
         try FunctionDecl(
           "math.bitNot",
           .overload(
-            "math_bitNot_int_int", argTypes: [.int], resultType: .int,
+            "math_bitNot_int_int", argumentTypes: [.int], resultType: .int,
             .unaryBinding { v in
               guard case .int(let i) = v else { return noSuchOverload(v) }
               return .int(~i)
             }),
           .overload(
-            "math_bitNot_uint_uint", argTypes: [.uint], resultType: .uint,
+            "math_bitNot_uint_uint", argumentTypes: [.uint], resultType: .uint,
             .unaryBinding { v in
               guard case .uint(let u) = v else { return noSuchOverload(v) }
               return .uint(~u)
@@ -158,9 +158,9 @@ struct MathLibrary {
       decls.append(
         try FunctionDecl(
           "math.sqrt",
-          .overload("math_sqrt_double", argTypes: [.double], resultType: .double, .unaryBinding(sqrt)),
-          .overload("math_sqrt_int", argTypes: [.int], resultType: .double, .unaryBinding(sqrt)),
-          .overload("math_sqrt_uint", argTypes: [.uint], resultType: .double, .unaryBinding(sqrt))))
+          .overload("math_sqrt_double", argumentTypes: [.double], resultType: .double, .unaryBinding(sqrt)),
+          .overload("math_sqrt_int", argumentTypes: [.int], resultType: .double, .unaryBinding(sqrt)),
+          .overload("math_sqrt_uint", argumentTypes: [.uint], resultType: .double, .unaryBinding(sqrt))))
     }
     return decls
   }
@@ -172,13 +172,13 @@ struct MathLibrary {
     try FunctionDecl(
       name,
       .overload(
-        "\(prefix)_int_int", argTypes: [.int, .int], resultType: .int,
+        "\(prefix)_int_int", argumentTypes: [.int, .int], resultType: .int,
         .binaryBinding { a, b in
           guard case .int(let l) = a, case .int(let r) = b else { return noSuchOverload(a, b) }
           return .int(intOp(l, r))
         }),
       .overload(
-        "\(prefix)_uint_uint", argTypes: [.uint, .uint], resultType: .uint,
+        "\(prefix)_uint_uint", argumentTypes: [.uint, .uint], resultType: .uint,
         .binaryBinding { a, b in
           guard case .uint(let l) = a, case .uint(let r) = b else { return noSuchOverload(a, b) }
           return .uint(uintOp(l, r))
@@ -192,7 +192,7 @@ struct MathLibrary {
     return try FunctionDecl(
       name,
       .overload(
-        "\(prefix)_int_int", argTypes: [.int, .int], resultType: .int,
+        "\(prefix)_int_int", argumentTypes: [.int, .int], resultType: .int,
         .binaryBinding { a, b in
           guard case .int(let v) = a, case .int(let bits) = b else { return noSuchOverload(a, b) }
           if bits < 0 {
@@ -204,7 +204,7 @@ struct MathLibrary {
           return left ? .int(v << bits) : .int(Int64(bitPattern: UInt64(bitPattern: v) >> UInt64(bits)))
         }),
       .overload(
-        "\(prefix)_uint_int", argTypes: [.uint, .int], resultType: .uint,
+        "\(prefix)_uint_int", argumentTypes: [.uint, .int], resultType: .uint,
         .binaryBinding { a, b in
           guard case .uint(let v) = a, case .int(let bits) = b else { return noSuchOverload(a, b) }
           if bits < 0 {

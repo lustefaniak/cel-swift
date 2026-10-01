@@ -50,7 +50,7 @@ private func funcDecl(_ name: String, _ options: FunctionDecl.Option...) -> Func
 
 private let base64Encode: FunctionDecl = funcDecl(
   "base64.encode",
-  .overload("base64_encode_string", argTypes: [.string], resultType: .string),
+  .overload("base64_encode_string", argumentTypes: [.string], resultType: .string),
   .singletonUnaryBinding { val in
     guard case .string(let s) = val else { return Value.maybeNoSuchOverload(val) }
     return .string(base64(Array(s.utf8)))
@@ -104,7 +104,7 @@ let interpreterCases: [InterpreterCase] = [
     name: "call_no_args", expr: "zero()",
     funcs: [
       funcDecl(
-        "zero", .overload("zero", argTypes: [], resultType: .int),
+        "zero", .overload("zero", argumentTypes: [], resultType: .int),
         .singletonFunctionBinding { _ in .int(0) })
     ], unchecked: true, out: 0),
   .init(
@@ -113,7 +113,7 @@ let interpreterCases: [InterpreterCase] = [
       funcDecl(
         "neg",
         .overload(
-          "neg_int", argTypes: [.int], resultType: .int, .operandTraits(.negator),
+          "neg_int", argumentTypes: [.int], resultType: .int, .operandTraits(.negator),
           .unaryBinding { $0.negate() }))
     ], unchecked: true, out: -1),
   .init(
@@ -122,14 +122,14 @@ let interpreterCases: [InterpreterCase] = [
       funcDecl(
         "concat",
         .memberOverload(
-          "bytes_concat_bytes", argTypes: [.bytes, .bytes], resultType: .bytes, .operandTraits(.adder),
+          "bytes_concat_bytes", argumentTypes: [.bytes, .bytes], resultType: .bytes, .operandTraits(.adder),
           .binaryBinding { $0.add($1) }))
     ], unchecked: true, out: .bytes(Array("abcdef".utf8))),
   .init(
     name: "call_four_args", expr: "addall(a, b, c, d) == 10",
     funcs: [
       funcDecl(
-        "addall", .overload("addall_four", argTypes: [.int, .int, .int, .int], resultType: .int),
+        "addall", .overload("addall_four", argumentTypes: [.int, .int, .int, .int], resultType: .int),
         .disableTypeGuards(true),
         .singletonFunctionBinding(
           { args in
@@ -431,7 +431,7 @@ let interpreterCases: [InterpreterCase] = [
       funcDecl(
         "try",
         .overload(
-          "try_dyn", argTypes: [.dyn], resultType: .dyn, .nonStrict,
+          "try_dyn", argumentTypes: [.dyn], resultType: .dyn, .nonStrict,
           .unaryBinding { arg in
             if case .error(let e) = arg { return .string("error: \(e.message)") }
             return arg
@@ -443,7 +443,7 @@ let interpreterCases: [InterpreterCase] = [
       funcDecl(
         "try",
         .overload(
-          "try_dyn", argTypes: [.dyn, .dyn], resultType: .list(.dyn), .nonStrict,
+          "try_dyn", argumentTypes: [.dyn, .dyn], resultType: .list(.dyn), .nonStrict,
           .binaryBinding { a, b in
             if case .error(let e) = a { return .string("error: \(e.message)") }
             return .list(ArrayList([a, b]))
@@ -455,7 +455,7 @@ let interpreterCases: [InterpreterCase] = [
       funcDecl(
         "try",
         .overload(
-          "try_dyn", argTypes: [.dyn, .dyn, .dyn], resultType: .list(.dyn), .nonStrict,
+          "try_dyn", argumentTypes: [.dyn, .dyn, .dyn], resultType: .list(.dyn), .nonStrict,
           .functionBinding { args in
             if case .error(let e) = args[0] { return .string("error: \(e.message)") }
             return .list(ArrayList(args))
@@ -473,31 +473,31 @@ let interpreterCases: [InterpreterCase] = [
     err: "cannot initialize optional list element from non-optional value 123"),
   .init(
     name: "unknown_optional_map", expr: "{?'hi': a}", vars: [VariableDecl(name: "a", type: .optional(.int))],
-    unknowns: [AttributePattern("a")], out: .unknown(UnknownSet(exprID: 4, attribute: AttributeTrail(variable: "a")))),
+    unknowns: [AttributePattern("a")], out: .unknown(UnknownSet(expressionID: 4, attribute: AttributeTrail(variable: "a")))),
   .init(
     name: "unknown_optional_list", expr: "[?a]", vars: [VariableDecl(name: "a", type: .optional(.int))],
-    unknowns: [AttributePattern("a")], out: .unknown(UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a")))),
+    unknowns: [AttributePattern("a")], out: .unknown(UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a")))),
   .init(
     name: "unknown_optional_list_multiple", expr: "[?a, ?b]",
     vars: [VariableDecl(name: "a", type: .optional(.int)), VariableDecl(name: "b", type: .optional(.int))],
     unknowns: [AttributePattern("a"), AttributePattern("b")],
     out: .unknown(
-      UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a")).merging(
-        UnknownSet(exprID: 3, attribute: AttributeTrail(variable: "b"))))),
+      UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a")).merging(
+        UnknownSet(expressionID: 3, attribute: AttributeTrail(variable: "b"))))),
   .init(
     name: "unknown_eq_multiple", expr: "a == b",
     vars: [VariableDecl(name: "a", type: .int), VariableDecl(name: "b", type: .int)],
     unknowns: [AttributePattern("a"), AttributePattern("b")],
     out: .unknown(
-      UnknownSet(exprID: 1, attribute: AttributeTrail(variable: "a")).merging(
-        UnknownSet(exprID: 3, attribute: AttributeTrail(variable: "b"))))),
+      UnknownSet(expressionID: 1, attribute: AttributeTrail(variable: "a")).merging(
+        UnknownSet(expressionID: 3, attribute: AttributeTrail(variable: "b"))))),
   .init(
     name: "unknown_ne_multiple", expr: "a != b",
     vars: [VariableDecl(name: "a", type: .int), VariableDecl(name: "b", type: .int)],
     unknowns: [AttributePattern("a"), AttributePattern("b")],
     out: .unknown(
-      UnknownSet(exprID: 1, attribute: AttributeTrail(variable: "a")).merging(
-        UnknownSet(exprID: 3, attribute: AttributeTrail(variable: "b"))))),
+      UnknownSet(expressionID: 1, attribute: AttributeTrail(variable: "a")).merging(
+        UnknownSet(expressionID: 3, attribute: AttributeTrail(variable: "b"))))),
   .init(
     name: "unknown_eq_error_precedence", expr: "a == (1/0)", vars: [VariableDecl(name: "a", type: .int)],
     unknowns: [AttributePattern("a")], err: "division by zero"),
@@ -509,8 +509,8 @@ let interpreterCases: [InterpreterCase] = [
     vars: [VariableDecl(name: "a", type: .optional(.int)), VariableDecl(name: "b", type: .optional(.int))],
     unknowns: [AttributePattern("a"), AttributePattern("b")],
     out: .unknown(
-      UnknownSet(exprID: 4, attribute: AttributeTrail(variable: "a")).merging(
-        UnknownSet(exprID: 7, attribute: AttributeTrail(variable: "b"))))),
+      UnknownSet(expressionID: 4, attribute: AttributeTrail(variable: "a")).merging(
+        UnknownSet(expressionID: 7, attribute: AttributeTrail(variable: "b"))))),
   .init(
     name: "unknown_optional_map_error_precedence", expr: "{?'hi': a, ?'world': {'x': 1/0}.?missing}",
     vars: [VariableDecl(name: "a", type: .optional(.int))], unknowns: [AttributePattern("a")],
@@ -527,16 +527,16 @@ let interpreterCases: [InterpreterCase] = [
   .init(
     name: "unknown_attribute", expr: "a[0]", vars: [VariableDecl(name: "a", type: .map(key: .int, value: .bool))],
     input: ["a": map((1, true))], unknowns: [AttributePattern("a").qualInt(0)],
-    out: .unknown(UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0)])))),
+    out: .unknown(UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0)])))),
   .init(
     name: "macro_has_map_key_unknown_propagates", expr: "has(a.b)",
     vars: [VariableDecl(name: "a", type: .map(key: .string, value: .bool))], unknowns: [AttributePattern("a")],
-    out: .unknown(UnknownSet(exprID: 4, attribute: AttributeTrail(variable: "a")))),
+    out: .unknown(UnknownSet(expressionID: 4, attribute: AttributeTrail(variable: "a")))),
   .init(
     name: "unknown_attribute_mixed_qualifier", expr: "a[dyn(0u)]",
     vars: [VariableDecl(name: "a", type: .map(key: .int, value: .bool))], input: ["a": map((1, true))],
     unknowns: [AttributePattern("a").qualInt(0)],
-    out: .unknown(UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.uint(0)])))),
+    out: .unknown(UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.uint(0)])))),
   .init(
     name: "invalid_presence_test_on_int_literal", expr: "has(dyn(1).invalid)", errorOnBadPresenceTest: true,
     err: "no such key: invalid"),
@@ -630,7 +630,7 @@ struct InterpreterTests {
       }
       #expect(e.message.contains(err), "\(mode): got error \(e.message), want \(err)")
       if requireNodeID {
-        #expect(e.exprID != 0, "\(mode): error without an AST node id: \(e)")
+        #expect(e.expressionID != 0, "\(mode): error without an AST node id: \(e)")
       }
     } else {
       #expect(got.celEquals(tc.out) == .bool(true), "\(mode): got \(got), want \(tc.out)")

@@ -131,7 +131,7 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   }
 
   /// The type of a field of a registered struct type.
-  public func findStructFieldType(_ structType: String, fieldName: String) -> FieldType? {
+  public func findStructFieldType(_ structType: String, fieldName: String) -> StructFieldType? {
     let name = sanitizeStructTypeName(structType)
     if let descriptor = structTypes[name] {
       if let field = descriptor.fieldType(named: fieldName) {

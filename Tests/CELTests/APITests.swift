@@ -66,7 +66,7 @@ struct APITests {
       .function(
         "shout",
         .memberOverload(
-          "string_shout", argTypes: [.string], resultType: .string,
+          "string_shout", argumentTypes: [.string], resultType: .string,
           .unaryBinding { value in
             guard let s = value.asString else { return .error(EvalError("bad")) }
             return Value(s.uppercased() + "!")
@@ -185,7 +185,7 @@ struct APITests {
   }
 
   @Test func extendingWithoutFunctionsReusesDeclarations() throws {
-    let parent = try Environment(.function("f", .overload("f_int", argTypes: [.int], resultType: .int)))
+    let parent = try Environment(.function("f", .overload("f_int", argumentTypes: [.int], resultType: .int)))
     let child = try parent.extending(.variable("x", .int), .container("c"))
     #expect(child.hasFunction(named: "f"))
     #expect(try child.compile("f(x)").outputType == .int)

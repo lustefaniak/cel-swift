@@ -75,7 +75,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "charAt",
         .memberOverload(
-          "string_char_at_int", argTypes: [.string, .int], resultType: .string,
+          "string_char_at_int", argumentTypes: [.string, .int], resultType: .string,
           .binaryBinding { str, ind in
             guard case .string(let s) = str, case .int(let i) = ind else {
               return noSuchOverload(str, ind)
@@ -85,7 +85,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "indexOf",
         .memberOverload(
-          "string_index_of_string", argTypes: [.string, .string], resultType: .int,
+          "string_index_of_string", argumentTypes: [.string, .string], resultType: .int,
           .binaryBinding { str, sub in
             guard case .string(let s) = str, case .string(let sub) = sub else {
               return noSuchOverload(str, sub)
@@ -93,7 +93,7 @@ struct StringsLibrary {
             return intOrError(indexOf(s, sub, 0))
           }),
         .memberOverload(
-          "string_index_of_string_int", argTypes: [.string, .string, .int], resultType: .int,
+          "string_index_of_string_int", argumentTypes: [.string, .string, .int], resultType: .int,
           .functionBinding { args in
             guard args.count == 3, case .string(let s) = args[0], case .string(let sub) = args[1],
               case .int(let offset) = args[2]
@@ -103,7 +103,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "lastIndexOf",
         .memberOverload(
-          "string_last_index_of_string", argTypes: [.string, .string], resultType: .int,
+          "string_last_index_of_string", argumentTypes: [.string, .string], resultType: .int,
           .binaryBinding { str, sub in
             guard case .string(let s) = str, case .string(let sub) = sub else {
               return noSuchOverload(str, sub)
@@ -111,7 +111,7 @@ struct StringsLibrary {
             return intOrError(lastIndexOf(s, sub))
           }),
         .memberOverload(
-          "string_last_index_of_string_int", argTypes: [.string, .string, .int], resultType: .int,
+          "string_last_index_of_string_int", argumentTypes: [.string, .string, .int], resultType: .int,
           .functionBinding { args in
             guard args.count == 3, case .string(let s) = args[0], case .string(let sub) = args[1],
               case .int(let offset) = args[2]
@@ -121,7 +121,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "lowerAscii",
         .memberOverload(
-          "string_lower_ascii", argTypes: [.string], resultType: .string,
+          "string_lower_ascii", argumentTypes: [.string], resultType: .string,
           .unaryBinding { str in
             guard case .string(let s) = str else { return noSuchOverload(str) }
             return .string(mapASCII(s, lower: true))
@@ -129,7 +129,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "replace",
         .memberOverload(
-          "string_replace_string_string", argTypes: [.string, .string, .string],
+          "string_replace_string_string", argumentTypes: [.string, .string, .string],
           resultType: .string,
           .functionBinding { args in
             guard args.count == 3, case .string(let s) = args[0], case .string(let old) = args[1],
@@ -138,7 +138,7 @@ struct StringsLibrary {
             return .string(GoStrings.replace(s, old, new, -1))
           }),
         .memberOverload(
-          "string_replace_string_string_int", argTypes: [.string, .string, .string, .int],
+          "string_replace_string_string_int", argumentTypes: [.string, .string, .string, .int],
           resultType: .string,
           .functionBinding { args in
             guard args.count == 4, case .string(let s) = args[0], case .string(let old) = args[1],
@@ -149,7 +149,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "split",
         .memberOverload(
-          "string_split_string", argTypes: [.string, .string], resultType: .list(.string),
+          "string_split_string", argumentTypes: [.string, .string], resultType: .list(.string),
           .binaryBinding { str, sep in
             guard case .string(let s) = str, case .string(let sep) = sep else {
               return noSuchOverload(str, sep)
@@ -157,7 +157,7 @@ struct StringsLibrary {
             return listStringOrError(.success(GoStrings.split(s, sep, -1)))
           }),
         .memberOverload(
-          "string_split_string_int", argTypes: [.string, .string, .int],
+          "string_split_string_int", argumentTypes: [.string, .string, .int],
           resultType: .list(.string),
           .functionBinding { args in
             guard args.count == 3, case .string(let s) = args[0], case .string(let sep) = args[1],
@@ -168,7 +168,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "substring",
         .memberOverload(
-          "string_substring_int", argTypes: [.string, .int], resultType: .string,
+          "string_substring_int", argumentTypes: [.string, .int], resultType: .string,
           .binaryBinding { str, offset in
             guard case .string(let s) = str, case .int(let start) = offset else {
               return noSuchOverload(str, offset)
@@ -176,7 +176,7 @@ struct StringsLibrary {
             return stringOrError(substring(s, start))
           }),
         .memberOverload(
-          "string_substring_int_int", argTypes: [.string, .int, .int], resultType: .string,
+          "string_substring_int_int", argumentTypes: [.string, .int, .int], resultType: .string,
           .functionBinding { args in
             guard args.count == 3, case .string(let s) = args[0], case .int(let start) = args[1],
               case .int(let end) = args[2]
@@ -186,7 +186,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "trim",
         .memberOverload(
-          "string_trim", argTypes: [.string], resultType: .string,
+          "string_trim", argumentTypes: [.string], resultType: .string,
           .unaryBinding { str in
             guard case .string(let s) = str else { return noSuchOverload(str) }
             return .string(GoStrings.trimSpace(s))
@@ -194,7 +194,7 @@ struct StringsLibrary {
       try FunctionDecl(
         "upperAscii",
         .memberOverload(
-          "string_upper_ascii", argTypes: [.string], resultType: .string,
+          "string_upper_ascii", argumentTypes: [.string], resultType: .string,
           .unaryBinding { str in
             guard case .string(let s) = str else { return noSuchOverload(str) }
             return .string(mapASCII(s, lower: false))
@@ -212,7 +212,7 @@ struct StringsLibrary {
         try FunctionDecl(
           "format",
           .memberOverload(
-            "string_format", argTypes: [.string, .list(.dyn)], resultType: .string,
+            "string_format", argumentTypes: [.string, .list(.dyn)], resultType: .string,
             .functionBinding { args in
               guard args.count == 2, case .string(let s) = args[0], case .list(let list) = args[1]
               else { return .noSuchOverload }
@@ -224,7 +224,7 @@ struct StringsLibrary {
         try FunctionDecl(
           "strings.quote",
           .overload(
-            "strings_quote", argTypes: [.string], resultType: .string,
+            "strings_quote", argumentTypes: [.string], resultType: .string,
             .unaryBinding { str in
               guard case .string(let s) = str else { return noSuchOverload(str) }
               return .string(quote(s))
@@ -237,13 +237,13 @@ struct StringsLibrary {
       try FunctionDecl(
         "join",
         .memberOverload(
-          "list_join", argTypes: [.list(.string)], resultType: .string,
+          "list_join", argumentTypes: [.list(.string)], resultType: .string,
           .unaryBinding { list in
             guard case .list(let l) = list else { return noSuchOverload(list) }
             return join(l, "", checkElements: joinChecksElements)
           }),
         .memberOverload(
-          "list_join_string", argTypes: [.list(.string), .string], resultType: .string,
+          "list_join_string", argumentTypes: [.list(.string), .string], resultType: .string,
           .binaryBinding { list, delim in
             guard case .list(let l) = list, case .string(let d) = delim else {
               return noSuchOverload(list, delim)
@@ -255,7 +255,7 @@ struct StringsLibrary {
         try FunctionDecl(
           "reverse",
           .memberOverload(
-            "string_reverse", argTypes: [.string], resultType: .string,
+            "string_reverse", argumentTypes: [.string], resultType: .string,
             .unaryBinding { str in
               guard case .string(let s) = str else { return noSuchOverload(str) }
               return .string(String(scalars: s.unicodeScalars.reversed()))

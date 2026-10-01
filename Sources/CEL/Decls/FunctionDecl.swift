@@ -29,7 +29,7 @@ final class SingletonBinding: Sendable {
 ///
 /// ```swift
 /// let shout = try FunctionDecl("shout",
-///   .memberOverload("string_shout", argTypes: [.string], resultType: .string,
+///   .memberOverload("string_shout", argumentTypes: [.string], resultType: .string,
 ///     .unaryBinding { value in
 ///       guard case .string(let s) = value else { return .error(EvalError("no such overload")) }
 ///       return .string(s.uppercased())
@@ -289,22 +289,22 @@ extension FunctionDecl {
 
     /// Adds a global overload, called as `function(args)`.
     public static func overload(
-      _ id: String, argTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
+      _ id: String, argumentTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
     ) -> Option {
       Option { f in
         try f.addOverload(
-          OverloadDecl(id: id, argTypes: argTypes, resultType: resultType, options: options))
+          OverloadDecl(id: id, argumentTypes: argumentTypes, resultType: resultType, options: options))
       }
     }
 
     /// Adds a member (receiver-style) overload, called as `args[0].function(args[1...])`.
     public static func memberOverload(
-      _ id: String, argTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
+      _ id: String, argumentTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
     ) -> Option {
       Option { f in
         try f.addOverload(
           OverloadDecl(
-            id: id, argTypes: argTypes, resultType: resultType, isMemberFunction: true,
+            id: id, argumentTypes: argumentTypes, resultType: resultType, isMemberFunction: true,
             options: options))
       }
     }

@@ -308,7 +308,7 @@ enum Codec {
       if let s = payload.stringValue, let n = parseDuration(s) { return .duration(CELDuration(nanoseconds: n)) }
     case "timestamp":
       if let s = payload.stringValue, let (sec, n) = parseTimestamp(s) {
-        return .timestamp(CELTimestamp(secondsSinceEpoch: sec, nanoseconds: Int64(n)))
+        return .timestamp(CELTimestamp(secondsSinceEpoch: sec, nanoseconds: n))
       }
     case "optional":
       if payload == .null { return .optional(nil) }
@@ -408,7 +408,7 @@ enum Codec {
       return "{" + entries.sorted().joined(separator: ", ") + "}"
     case .object(let o): return Messages.canonical(o)
     case .error(let e): return "error:\(e.message)"
-    case .unknown(let u): return "unknown:" + u.exprIDs.sorted().map(String.init).joined(separator: ",")
+    case .unknown(let u): return "unknown:" + u.expressionIDs.sorted().map(String.init).joined(separator: ",")
     }
   }
 }

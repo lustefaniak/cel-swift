@@ -167,7 +167,7 @@ struct InterpreterBehaviorTests {
     let mapInsert = try FunctionDecl(
       "cel.@mapInsert",
       .overload(
-        "cel.@mapInsert", argTypes: [.map(key: .int, value: .string), .int, .string],
+        "cel.@mapInsert", argumentTypes: [.map(key: .int, value: .string), .int, .string],
         resultType: .map(key: .int, value: .string)),
       .singletonFunctionBinding { args in
         guard case .map(let m) = args[0], let mutable = m as? MutableMap else { return .noSuchOverload }

@@ -40,7 +40,7 @@ extension Library {
       let paramT = CELType.typeParam("T")
       functions = makeDeclarations([
         try FunctionDecl(
-          blockFunction, .overload("cel_block_list", argTypes: [.list(.dyn), paramT], resultType: paramT))
+          blockFunction, .overload("cel_block_list", argumentTypes: [.list(.dyn), paramT], resultType: paramT))
       ])
     }
     var lib = Library(
@@ -68,13 +68,13 @@ extension Library {
       try FunctionDecl(
         ComprehensionMacros.mapInsert,
         .overload(
-          "@mapInsert_map_key_value", argTypes: [mapKV, k, v], resultType: mapKV,
+          "@mapInsert_map_key_value", argumentTypes: [mapKV, k, v], resultType: mapKV,
           .functionBinding { args in
             guard args.count == 3, case .map(let m) = args[0] else { return .noSuchOverload }
             return insertMapKeyValue(m, args[1], args[2])
           }),
         .overload(
-          "@mapInsert_map_map", argTypes: [mapKV, mapKV], resultType: mapKV,
+          "@mapInsert_map_map", argumentTypes: [mapKV, mapKV], resultType: mapKV,
           .binaryBinding { target, update in
             guard case .map(var tm) = target, case .map(let um) = update else {
               return noSuchOverload(target, update)

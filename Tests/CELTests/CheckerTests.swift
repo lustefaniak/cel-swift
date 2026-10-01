@@ -96,7 +96,7 @@ import Testing
         "optional_index",
         .overload(
           "optional_map_key_value",
-          argTypes: [.map(key: .typeParam("K"), value: .typeParam("V")), .typeParam("K")],
+          argumentTypes: [.map(key: .typeParam("K"), value: .typeParam("V")), .typeParam("K")],
           resultType: .optional(.typeParam("V"))))
     }
     try env.addFunctions(optIndex())
@@ -168,7 +168,7 @@ import Testing
   @Test func overlappingMacro() throws {
     var env = CheckerEnv(provider: TypeRegistry())
     try env.addFunctions(StandardLibrary.functions)
-    let hasFn = try FunctionDecl("has", .overload("has", argTypes: [.string], resultType: .bool))
+    let hasFn = try FunctionDecl("has", .overload("has", argumentTypes: [.string], resultType: .bool))
     #expect {
       try env.addFunctions(hasFn)
     } throws: { error in

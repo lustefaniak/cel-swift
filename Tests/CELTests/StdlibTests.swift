@@ -194,13 +194,13 @@ struct StdlibTests {
 
   @Test func strictness() throws {
     let err = Value.error(EvalError("boom"))
-    let unknown1 = Value.unknown(UnknownSet(exprID: 1))
-    let unknown2 = Value.unknown(UnknownSet(exprID: 2))
+    let unknown1 = Value.unknown(UnknownSet(expressionID: 1))
+    let unknown2 = Value.unknown(UnknownSet(expressionID: 2))
     #expect(try call("_+_", err, unknown1) == err)
     #expect(try call("_+_", unknown1, err) == err)
     #expect(
       try call("_+_", unknown1, unknown2)
-        == .unknown(UnknownSet(exprID: 1).merging(UnknownSet(exprID: 2))))
+        == .unknown(UnknownSet(expressionID: 1).merging(UnknownSet(expressionID: 2))))
     #expect(try call("size", unknown1) == unknown1)
     #expect(try call("@not_strictly_false", err) == true)
     #expect(try call("@not_strictly_false", unknown1) == true)

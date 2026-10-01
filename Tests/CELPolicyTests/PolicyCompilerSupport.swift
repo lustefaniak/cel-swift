@@ -25,7 +25,7 @@ enum TestFunctions {
   static let locationCode = Environment.Option.function(
     "locationCode",
     .overload(
-      "locationCode_string", argTypes: [.string], resultType: .string,
+      "locationCode_string", argumentTypes: [.string], resultType: .string,
       .unaryBinding { ip in
         switch ip {
         case .string("10.0.0.1"): return .string("us")
@@ -44,11 +44,11 @@ enum TestFunctions {
   static let agentFunctions: [Environment.Option] = [
     .function(
       "hasCreditCard",
-      .overload("hasCreditCard", argTypes: [.dyn], resultType: .bool, .unaryBinding { mapContains($0, ["cc"]) })),
+      .overload("hasCreditCard", argumentTypes: [.dyn], resultType: .bool, .unaryBinding { mapContains($0, ["cc"]) })),
     .function(
       "hasEmailOrPhone",
       .overload(
-        "hasEmailOrPhone", argTypes: [.dyn], resultType: .bool,
+        "hasEmailOrPhone", argumentTypes: [.dyn], resultType: .bool,
         .unaryBinding { mapContains($0, ["email", "phone"]) })),
   ]
 }

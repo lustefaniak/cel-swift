@@ -124,7 +124,7 @@ func addTimeDurationChecked(_ x: CELTimestamp, _ y: CELDuration) -> Result<CELTi
     return .failure(.timestampOverflow)
   }
   return .success(
-    CELTimestamp(secondsSinceEpoch: sec, nanoseconds: nsec, utcOffsetSeconds: x.utcOffsetSeconds))
+    CELTimestamp(secondsSinceEpoch: sec, nanoseconds: Int32(nsec), utcOffsetSeconds: x.utcOffsetSeconds))
 }
 
 /// Subtracts two timestamps with overflow detection.

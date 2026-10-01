@@ -74,7 +74,7 @@ enum FormatterV2 {
       out += Array(GoFloat.shortestFixed(seconds).utf8)
       out.append(UInt8(ascii: "s"))
     case .timestamp(let t):
-      let utc = CELTimestamp(secondsSinceEpoch: t.secondsSinceEpoch, nanoseconds: Int64(t.nanoseconds))
+      let utc = CELTimestamp(secondsSinceEpoch: t.secondsSinceEpoch, nanoseconds: t.nanoseconds)
       out += Array(utc.celString.utf8)
     case .null:
       out += Array("null".utf8)

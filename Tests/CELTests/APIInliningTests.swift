@@ -86,7 +86,7 @@ struct APIInliningTests {
         .optionalTypes, .macroCallTracking,
         .function(
           "productsToConsumers",
-          .overload("productsToConsumers_list", argTypes: [.list(.int)], resultType: .list(.int))),
+          .overload("productsToConsumers_list", argumentTypes: [.list(.int)], resultType: .list(.int))),
       ], declareVars: true)
   }
 

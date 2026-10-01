@@ -88,7 +88,7 @@ let env = try Environment(
   .function(
     "shout",
     .memberOverload(
-      "string_shout", argTypes: [.string], resultType: .string,
+      "string_shout", argumentTypes: [.string], resultType: .string,
       .unaryBinding { value in
         guard let text = value.asString else { return .error(EvalError("expected a string")) }
         return Value(text.uppercased() + "!")

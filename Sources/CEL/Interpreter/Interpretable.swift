@@ -288,7 +288,7 @@ final class EvalUnary: InterpretableCall {
     if argVal.traits.contains(.receiver) {
       return argVal.receive(function: function, overload: overloadID, args: []).labellingError(with: id)
     }
-    return .error(EvalError("no such overload: \(function)", exprID: id))
+    return .error(EvalError("no such overload: \(function)", expressionID: id))
   }
 }
 
@@ -343,7 +343,7 @@ final class EvalBinary: InterpretableCall {
     if lVal.traits.contains(.receiver) {
       return lVal.receive(function: function, overload: overloadID, args: [rVal]).labellingError(with: id)
     }
-    return .error(EvalError("no such overload: \(function)", exprID: id))
+    return .error(EvalError("no such overload: \(function)", expressionID: id))
   }
 }
 
@@ -389,7 +389,7 @@ final class EvalVarArgs: InterpretableCall {
       return .unknown(unknown)
     }
     guard let arg0 = argVals.first else {
-      return .error(EvalError("no such overload: \(function) \(id)", exprID: id))
+      return .error(EvalError("no such overload: \(function) \(id)", expressionID: id))
     }
     if let impl, implApplies(trait, strict, arg0) {
       return impl(argVals).labellingError(with: id)
@@ -398,7 +398,7 @@ final class EvalVarArgs: InterpretableCall {
       return arg0.receive(function: function, overload: overloadID, args: Array(argVals.dropFirst()))
         .labellingError(with: id)
     }
-    return .error(EvalError("no such overload: \(function) \(id)", exprID: id))
+    return .error(EvalError("no such overload: \(function) \(id)", expressionID: id))
   }
 }
 
@@ -518,7 +518,7 @@ final class EvalMap: InterpretableConstructor {
         continue
       }
       guard let key = MapKey(keyVal) else {
-        keyError = Value.error(EvalError("unsupported key type: \(keyVal.runtimeTypeName)", exprID: id))
+        keyError = Value.error(EvalError("unsupported key type: \(keyVal.runtimeTypeName)", expressionID: id))
         continue
       }
       if isNone {
@@ -526,7 +526,7 @@ final class EvalMap: InterpretableConstructor {
         continue
       }
       if entries.find(keyVal) != nil {
-        keyError = Value.error(EvalError("Failed with repeated key: \(formatGoValue(keyVal))", exprID: id))
+        keyError = Value.error(EvalError("Failed with repeated key: \(formatGoValue(keyVal))", expressionID: id))
         continue
       }
       entries[key] = valVal
@@ -658,7 +658,7 @@ final class EvalFold: Interpretable {
         }
       default:
         return .error(
-          EvalError("unsupported comprehension range type: \(goTypeName(foldRange))", exprID: id))
+          EvalError("unsupported comprehension range type: \(goTypeName(foldRange))", expressionID: id))
       }
       return folder.evalResult(child)
     }

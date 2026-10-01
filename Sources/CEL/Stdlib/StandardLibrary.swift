@@ -67,7 +67,7 @@ package enum StandardLibrary {
       ]
       var options: [FunctionDecl.Option] = [.documentation(docs)]
       for (id, (lhs, rhs)) in zip(ids, signatures) {
-        options.append(.overload(id, argTypes: [lhs, rhs], resultType: .bool))
+        options.append(.overload(id, argumentTypes: [lhs, rhs], resultType: .bool))
       }
       options.append(
         .singletonBinaryBinding(
@@ -93,7 +93,7 @@ package enum StandardLibrary {
           "The ternary operator tests a boolean predicate and returns the left-hand side "
             + "(truthy) expression if true, or the right-hand side (falsy) expression if false"),
         .overload(
-          O.conditional, argTypes: [.bool, paramA, paramA], resultType: paramA, .nonStrict,
+          O.conditional, argumentTypes: [.bool, paramA, paramA], resultType: paramA, .nonStrict,
           .examples(
             "'hello'.contains('lo') ? 'hi' : 'bye' // 'hi'",
             "32 % 3 == 0 ? 'divisible' : 'not divisible' // 'not divisible'")),
@@ -105,7 +105,7 @@ package enum StandardLibrary {
           "logically AND two boolean values. Errors and unknown values",
           "are valid inputs and will not halt evaluation."),
         .overload(
-          O.logicalAnd, argTypes: [.bool, .bool], resultType: .bool, .nonStrict,
+          O.logicalAnd, argumentTypes: [.bool, .bool], resultType: .bool, .nonStrict,
           .examples(
             "true && true   // true", "true && false  // false", "error && true  // error",
             "error && false // false")),
@@ -117,7 +117,7 @@ package enum StandardLibrary {
           "logically OR two boolean values. Errors and unknown values",
           "are valid inputs and will not halt evaluation."),
         .overload(
-          O.logicalOr, argTypes: [.bool, .bool], resultType: .bool, .nonStrict,
+          O.logicalOr, argumentTypes: [.bool, .bool], resultType: .bool, .nonStrict,
           .examples(
             "true || false // true", "false || false // false", "error || true // true",
             "error || error // true")),
@@ -127,7 +127,7 @@ package enum StandardLibrary {
         Operators.logicalNot,
         .documentation("logically negate a boolean value."),
         .overload(
-          O.logicalNot, argTypes: [.bool], resultType: .bool,
+          O.logicalNot, argumentTypes: [.bool], resultType: .bool,
           .examples("!true // false", "!false // true", "!error // error")),
         .singletonUnaryBinding { val in
           guard case .bool(let b) = val else { return Value.maybeNoSuchOverload(val) }
@@ -138,14 +138,14 @@ package enum StandardLibrary {
       try FunctionDecl(
         Operators.notStrictlyFalse,
         .overload(
-          O.notStrictlyFalse, argTypes: [.bool], resultType: .bool, .nonStrict,
+          O.notStrictlyFalse, argumentTypes: [.bool], resultType: .bool, .nonStrict,
           .unaryBinding(notStrictlyFalse))),
       // Deprecated: __not_strictly_false__
       try FunctionDecl(
         Operators.oldNotStrictlyFalse,
         .disableDeclaration(true),
         .overload(
-          Operators.oldNotStrictlyFalse, argTypes: [.bool], resultType: .bool, .nonStrict,
+          Operators.oldNotStrictlyFalse, argumentTypes: [.bool], resultType: .bool, .nonStrict,
           .unaryBinding(notStrictlyFalse))),
 
       // Equality / inequality. Special-cased in the interpreter.
@@ -153,7 +153,7 @@ package enum StandardLibrary {
         Operators.equals,
         .documentation("compare two values of the same type for equality"),
         .overload(
-          O.equals, argTypes: [paramA, paramA], resultType: .bool,
+          O.equals, argumentTypes: [paramA, paramA], resultType: .bool,
           .examples(
             "1 == 1 // true", "'hello' == 'world' // false", "bytes('hello') == b'hello' // true",
             "duration('1h') == duration('60m') // true", "dyn(3.0) == 3 // true")),
@@ -162,7 +162,7 @@ package enum StandardLibrary {
         Operators.notEquals,
         .documentation("compare two values of the same type for inequality"),
         .overload(
-          O.notEquals, argTypes: [paramA, paramA], resultType: .bool,
+          O.notEquals, argumentTypes: [paramA, paramA], resultType: .bool,
           .examples("1 != 2     // true", "\"a\" != \"a\" // false", "3.0 != 3.1 // true")),
         .singletonBinaryBinding { _, _ in .noSuchOverload }),
 
@@ -171,64 +171,64 @@ package enum StandardLibrary {
         Operators.add,
         .documentation("adds two numeric values or concatenates two strings, bytes,", "or lists."),
         .overload(
-          O.addBytes, argTypes: [.bytes, .bytes], resultType: .bytes,
+          O.addBytes, argumentTypes: [.bytes, .bytes], resultType: .bytes,
           .examples("b'hi' + bytes('ya') // b'hiya'")),
         .overload(
-          O.addDouble, argTypes: [.double, .double], resultType: .double,
+          O.addDouble, argumentTypes: [.double, .double], resultType: .double,
           .examples("3.14 + 1.59 // 4.73")),
         .overload(
-          O.addDurationDuration, argTypes: [.duration, .duration], resultType: .duration,
+          O.addDurationDuration, argumentTypes: [.duration, .duration], resultType: .duration,
           .examples("duration('1m') + duration('1s') // duration('1m1s')")),
         .overload(
-          O.addDurationTimestamp, argTypes: [.duration, .timestamp], resultType: .timestamp,
+          O.addDurationTimestamp, argumentTypes: [.duration, .timestamp], resultType: .timestamp,
           .examples(
             "duration('24h') + timestamp('2023-01-01T00:00:00Z') // timestamp('2023-01-02T00:00:00Z')"
           )),
         .overload(
-          O.addTimestampDuration, argTypes: [.timestamp, .duration], resultType: .timestamp,
+          O.addTimestampDuration, argumentTypes: [.timestamp, .duration], resultType: .timestamp,
           .examples(
             "timestamp('2023-01-01T00:00:00Z') + duration('24h1m2s') // timestamp('2023-01-02T00:01:02Z')"
           )),
-        .overload(O.addInt64, argTypes: [.int, .int], resultType: .int, .examples("1 + 2 // 3")),
+        .overload(O.addInt64, argumentTypes: [.int, .int], resultType: .int, .examples("1 + 2 // 3")),
         .overload(
-          O.addList, argTypes: [listOfA, listOfA], resultType: listOfA,
+          O.addList, argumentTypes: [listOfA, listOfA], resultType: listOfA,
           .examples("[1] + [2, 3] // [1, 2, 3]")),
         .overload(
-          O.addString, argTypes: [.string, .string], resultType: .string,
+          O.addString, argumentTypes: [.string, .string], resultType: .string,
           .examples("\"Hello, \" + \"world!\" // \"Hello, world!\"")),
         .overload(
-          O.addUint64, argTypes: [.uint, .uint], resultType: .uint, .examples("22u + 33u // 55u")),
+          O.addUint64, argumentTypes: [.uint, .uint], resultType: .uint, .examples("22u + 33u // 55u")),
         .singletonBinaryBinding({ lhs, rhs in lhs.add(rhs) }, traits: .adder)),
 
       try FunctionDecl(
         Operators.divide,
         .documentation("divide two numbers"),
         .overload(
-          O.divideDouble, argTypes: [.double, .double], resultType: .double,
+          O.divideDouble, argumentTypes: [.double, .double], resultType: .double,
           .examples("7.0 / 2.0 // 3.5")),
-        .overload(O.divideInt64, argTypes: [.int, .int], resultType: .int, .examples("10 / 2 // 5")),
+        .overload(O.divideInt64, argumentTypes: [.int, .int], resultType: .int, .examples("10 / 2 // 5")),
         .overload(
-          O.divideUint64, argTypes: [.uint, .uint], resultType: .uint, .examples("42u / 2u // 21u")),
+          O.divideUint64, argumentTypes: [.uint, .uint], resultType: .uint, .examples("42u / 2u // 21u")),
         .singletonBinaryBinding({ lhs, rhs in lhs.divide(rhs) }, traits: .divider)),
 
       try FunctionDecl(
         Operators.modulo,
         .documentation("compute the modulus of one integer into another"),
-        .overload(O.moduloInt64, argTypes: [.int, .int], resultType: .int, .examples("3 % 2 // 1")),
+        .overload(O.moduloInt64, argumentTypes: [.int, .int], resultType: .int, .examples("3 % 2 // 1")),
         .overload(
-          O.moduloUint64, argTypes: [.uint, .uint], resultType: .uint, .examples("6u % 3u // 0u")),
+          O.moduloUint64, argumentTypes: [.uint, .uint], resultType: .uint, .examples("6u % 3u // 0u")),
         .singletonBinaryBinding({ lhs, rhs in lhs.modulo(rhs) }, traits: .modder)),
 
       try FunctionDecl(
         Operators.multiply,
         .documentation("multiply two numbers"),
         .overload(
-          O.multiplyDouble, argTypes: [.double, .double], resultType: .double,
+          O.multiplyDouble, argumentTypes: [.double, .double], resultType: .double,
           .examples("3.5 * 40.0 // 140.0")),
         .overload(
-          O.multiplyInt64, argTypes: [.int, .int], resultType: .int, .examples("-2 * 6 // -12")),
+          O.multiplyInt64, argumentTypes: [.int, .int], resultType: .int, .examples("-2 * 6 // -12")),
         .overload(
-          O.multiplyUint64, argTypes: [.uint, .uint], resultType: .uint,
+          O.multiplyUint64, argumentTypes: [.uint, .uint], resultType: .uint,
           .examples("13u * 3u // 39u")),
         .singletonBinaryBinding({ lhs, rhs in lhs.multiply(rhs) }, traits: .multiplier)),
 
@@ -236,8 +236,8 @@ package enum StandardLibrary {
         Operators.negate,
         .documentation("negate a numeric value"),
         .overload(
-          O.negateDouble, argTypes: [.double], resultType: .double, .examples("-(3.14) // -3.14")),
-        .overload(O.negateInt64, argTypes: [.int], resultType: .int, .examples("-(5) // -5")),
+          O.negateDouble, argumentTypes: [.double], resultType: .double, .examples("-(3.14) // -3.14")),
+        .overload(O.negateInt64, argumentTypes: [.int], resultType: .int, .examples("-(5) // -5")),
         .singletonUnaryBinding(
           { val in
             if case .bool = val {
@@ -250,24 +250,24 @@ package enum StandardLibrary {
         Operators.subtract,
         .documentation("subtract two numbers, or two time-related values"),
         .overload(
-          O.subtractDouble, argTypes: [.double, .double], resultType: .double,
+          O.subtractDouble, argumentTypes: [.double, .double], resultType: .double,
           .examples("10.5 - 2.0 // 8.5")),
         .overload(
-          O.subtractDurationDuration, argTypes: [.duration, .duration], resultType: .duration,
+          O.subtractDurationDuration, argumentTypes: [.duration, .duration], resultType: .duration,
           .examples("duration('1m') - duration('1s') // duration('59s')")),
-        .overload(O.subtractInt64, argTypes: [.int, .int], resultType: .int, .examples("5 - 3 // 2")),
+        .overload(O.subtractInt64, argumentTypes: [.int, .int], resultType: .int, .examples("5 - 3 // 2")),
         .overload(
-          O.subtractTimestampDuration, argTypes: [.timestamp, .duration], resultType: .timestamp,
+          O.subtractTimestampDuration, argumentTypes: [.timestamp, .duration], resultType: .timestamp,
           .examples(
             "timestamp('2023-01-10T12:00:00Z')\n  - duration('12h') // timestamp('2023-01-10T00:00:00Z')"
           )),
         .overload(
-          O.subtractTimestampTimestamp, argTypes: [.timestamp, .timestamp], resultType: .duration,
+          O.subtractTimestampTimestamp, argumentTypes: [.timestamp, .timestamp], resultType: .duration,
           .examples(
             "timestamp('2023-01-10T12:00:00Z')\n  - timestamp('2023-01-10T00:00:00Z') // duration('12h')"
           )),
         .overload(
-          O.subtractUint64, argTypes: [.uint, .uint], resultType: .uint,
+          O.subtractUint64, argumentTypes: [.uint, .uint], resultType: .uint,
           .examples(
             "// the subtraction result must be positive, otherwise an overflow\n// error is generated.\n42u - 3u // 39u"
           )),
@@ -319,10 +319,10 @@ package enum StandardLibrary {
         Operators.index,
         .documentation("select a value from a list by index, or value from a map by key"),
         .overload(
-          O.indexList, argTypes: [listOfA, .int], resultType: paramA,
+          O.indexList, argumentTypes: [listOfA, .int], resultType: paramA,
           .examples("[1, 2, 3][1] // 2")),
         .overload(
-          O.indexMap, argTypes: [mapOfAB, paramA], resultType: paramB,
+          O.indexMap, argumentTypes: [mapOfAB, paramA], resultType: paramB,
           .examples("{'key': 'value'}['key'] // 'value'", "{'key': 'value'}['missing'] // error")),
         .singletonBinaryBinding({ lhs, rhs in lhs.get(rhs) }, traits: .indexer)),
 
@@ -331,10 +331,10 @@ package enum StandardLibrary {
         Operators.in,
         .documentation("test whether a value exists in a list, or a key exists in a map"),
         .overload(
-          O.inList, argTypes: [paramA, listOfA], resultType: .bool,
+          O.inList, argumentTypes: [paramA, listOfA], resultType: .bool,
           .examples("2 in [1, 2, 3] // true", "\"a\" in [\"b\", \"c\"] // false")),
         .overload(
-          O.inMap, argTypes: [paramA, mapOfAB], resultType: .bool,
+          O.inMap, argumentTypes: [paramA, mapOfAB], resultType: .bool,
           .examples(
             "'key1' in {'key1': 'value1', 'key2': 'value2'} // true",
             "3 in {1: \"one\", 2: \"two\"} // false")),
@@ -342,14 +342,14 @@ package enum StandardLibrary {
       try FunctionDecl(
         Operators.oldIn,
         .disableDeclaration(true),
-        .overload(O.inList, argTypes: [paramA, listOfA], resultType: .bool),
-        .overload(O.inMap, argTypes: [paramA, mapOfAB], resultType: .bool),
+        .overload(O.inList, argumentTypes: [paramA, listOfA], resultType: .bool),
+        .overload(O.inMap, argumentTypes: [paramA, mapOfAB], resultType: .bool),
         .singletonBinaryBinding(inAggregate)),
       try FunctionDecl(
         O.deprecatedIn,
         .disableDeclaration(true),
-        .overload(O.inList, argTypes: [paramA, listOfA], resultType: .bool),
-        .overload(O.inMap, argTypes: [paramA, mapOfAB], resultType: .bool),
+        .overload(O.inList, argumentTypes: [paramA, listOfA], resultType: .bool),
+        .overload(O.inMap, argumentTypes: [paramA, mapOfAB], resultType: .bool),
         .singletonBinaryBinding(inAggregate)),
 
       try FunctionDecl(
@@ -358,24 +358,24 @@ package enum StandardLibrary {
           "compute the size of a list or map, the number of characters in a string,",
           "or the number of bytes in a sequence"),
         .overload(
-          O.sizeBytes, argTypes: [.bytes], resultType: .int, .examples("size(b'123') // 3")),
+          O.sizeBytes, argumentTypes: [.bytes], resultType: .int, .examples("size(b'123') // 3")),
         .memberOverload(
-          O.sizeBytesInst, argTypes: [.bytes], resultType: .int, .examples("b'123'.size() // 3")),
+          O.sizeBytesInst, argumentTypes: [.bytes], resultType: .int, .examples("b'123'.size() // 3")),
         .overload(
-          O.sizeList, argTypes: [listOfA], resultType: .int, .examples("size([1, 2, 3]) // 3")),
+          O.sizeList, argumentTypes: [listOfA], resultType: .int, .examples("size([1, 2, 3]) // 3")),
         .memberOverload(
-          O.sizeListInst, argTypes: [listOfA], resultType: .int,
+          O.sizeListInst, argumentTypes: [listOfA], resultType: .int,
           .examples("[1, 2, 3].size() // 3")),
         .overload(
-          O.sizeMap, argTypes: [mapOfAB], resultType: .int,
+          O.sizeMap, argumentTypes: [mapOfAB], resultType: .int,
           .examples("size({'a': 1, 'b': 2}) // 2")),
         .memberOverload(
-          O.sizeMapInst, argTypes: [mapOfAB], resultType: .int,
+          O.sizeMapInst, argumentTypes: [mapOfAB], resultType: .int,
           .examples("{'a': 1, 'b': 2}.size() // 2")),
         .overload(
-          O.sizeString, argTypes: [.string], resultType: .int, .examples("size('hello') // 5")),
+          O.sizeString, argumentTypes: [.string], resultType: .int, .examples("size('hello') // 5")),
         .memberOverload(
-          O.sizeStringInst, argTypes: [.string], resultType: .int,
+          O.sizeStringInst, argumentTypes: [.string], resultType: .int,
           .examples("'hello'.size() // 5")),
         .singletonUnaryBinding({ val in val.size() }, traits: .sizer)),
 
@@ -384,7 +384,7 @@ package enum StandardLibrary {
         O.typeConvertType,
         .documentation("convert a value to its type identifier"),
         .overload(
-          O.typeConvertType, argTypes: [paramA], resultType: .type(paramA),
+          O.typeConvertType, argumentTypes: [paramA], resultType: .type(paramA),
           .examples("type(1) // int", "type('hello') // string", "type(int) // type", "type(type) // type")),
         .singletonUnaryBinding(convertToType(.type(nil)))),
 
@@ -393,10 +393,10 @@ package enum StandardLibrary {
         O.typeConvertBool,
         .documentation("convert a value to a boolean"),
         .overload(
-          O.boolToBool, argTypes: [.bool], resultType: .bool, .examples("bool(true) // true"),
+          O.boolToBool, argumentTypes: [.bool], resultType: .bool, .examples("bool(true) // true"),
           .unaryBinding(identity)),
         .overload(
-          O.stringToBool, argTypes: [.string], resultType: .bool,
+          O.stringToBool, argumentTypes: [.string], resultType: .bool,
           .examples("bool('true') // true", "bool('false') // false"),
           .unaryBinding(convertToType(.bool)))),
 
@@ -405,10 +405,10 @@ package enum StandardLibrary {
         O.typeConvertBytes,
         .documentation("convert a value to bytes"),
         .overload(
-          O.bytesToBytes, argTypes: [.bytes], resultType: .bytes,
+          O.bytesToBytes, argumentTypes: [.bytes], resultType: .bytes,
           .examples("bytes(b'abc') // b'abc'"), .unaryBinding(identity)),
         .overload(
-          O.stringToBytes, argTypes: [.string], resultType: .bytes,
+          O.stringToBytes, argumentTypes: [.string], resultType: .bytes,
           .examples("bytes('hello') // b'hello'"), .unaryBinding(convertToType(.bytes)))),
 
       // Double conversions.
@@ -416,16 +416,16 @@ package enum StandardLibrary {
         O.typeConvertDouble,
         .documentation("convert a value to a double"),
         .overload(
-          O.doubleToDouble, argTypes: [.double], resultType: .double,
+          O.doubleToDouble, argumentTypes: [.double], resultType: .double,
           .examples("double(1.23) // 1.23"), .unaryBinding(identity)),
         .overload(
-          O.intToDouble, argTypes: [.int], resultType: .double, .examples("double(123) // 123.0"),
+          O.intToDouble, argumentTypes: [.int], resultType: .double, .examples("double(123) // 123.0"),
           .unaryBinding(convertToType(.double))),
         .overload(
-          O.stringToDouble, argTypes: [.string], resultType: .double,
+          O.stringToDouble, argumentTypes: [.string], resultType: .double,
           .examples("double('1.23') // 1.23"), .unaryBinding(convertToType(.double))),
         .overload(
-          O.uintToDouble, argTypes: [.uint], resultType: .double,
+          O.uintToDouble, argumentTypes: [.uint], resultType: .double,
           .examples("double(123u) // 123.0"), .unaryBinding(convertToType(.double)))),
 
       // Duration conversions.
@@ -433,10 +433,10 @@ package enum StandardLibrary {
         O.typeConvertDuration,
         .documentation("convert a value to a google.protobuf.Duration"),
         .overload(
-          O.durationToDuration, argTypes: [.duration], resultType: .duration,
+          O.durationToDuration, argumentTypes: [.duration], resultType: .duration,
           .examples("duration(duration('1s')) // duration('1s')"), .unaryBinding(identity)),
         .overload(
-          O.stringToDuration, argTypes: [.string], resultType: .duration,
+          O.stringToDuration, argumentTypes: [.string], resultType: .duration,
           .examples("duration('1h2m3s') // duration('3723s')"),
           .unaryBinding(convertToType(.duration)))),
 
@@ -444,7 +444,7 @@ package enum StandardLibrary {
       try FunctionDecl(
         O.typeConvertDyn,
         .documentation("indicate that the type is dynamic for type-checking purposes"),
-        .overload(O.toDyn, argTypes: [paramA], resultType: .dyn, .examples("dyn(1) // 1")),
+        .overload(O.toDyn, argumentTypes: [paramA], resultType: .dyn, .examples("dyn(1) // 1")),
         .singletonUnaryBinding(identity)),
 
       // Int conversions.
@@ -452,24 +452,24 @@ package enum StandardLibrary {
         O.typeConvertInt,
         .documentation("convert a value to an int"),
         .overload(
-          O.intToInt, argTypes: [.int], resultType: .int, .examples("int(123) // 123"),
+          O.intToInt, argumentTypes: [.int], resultType: .int, .examples("int(123) // 123"),
           .unaryBinding(identity)),
         .overload(
-          O.doubleToInt, argTypes: [.double], resultType: .int, .examples("int(123.45) // 123"),
+          O.doubleToInt, argumentTypes: [.double], resultType: .int, .examples("int(123.45) // 123"),
           .unaryBinding(convertToType(.int))),
         .overload(
-          O.durationToInt, argTypes: [.duration], resultType: .int,
+          O.durationToInt, argumentTypes: [.duration], resultType: .int,
           .examples("int(duration('1s')) // 1000000000"), .unaryBinding(convertToType(.int))),
         .overload(
-          O.stringToInt, argTypes: [.string], resultType: .int,
+          O.stringToInt, argumentTypes: [.string], resultType: .int,
           .examples("int('123') // 123", "int('-456') // -456"),
           .unaryBinding(convertToType(.int))),
         .overload(
-          O.timestampToInt, argTypes: [.timestamp], resultType: .int,
+          O.timestampToInt, argumentTypes: [.timestamp], resultType: .int,
           .examples("int(timestamp('1970-01-01T00:00:01Z')) // 1"),
           .unaryBinding(convertToType(.int))),
         .overload(
-          O.uintToInt, argTypes: [.uint], resultType: .int, .examples("int(123u) // 123"),
+          O.uintToInt, argumentTypes: [.uint], resultType: .int, .examples("int(123u) // 123"),
           .unaryBinding(convertToType(.int)))),
 
       // String conversions.
@@ -477,29 +477,29 @@ package enum StandardLibrary {
         O.typeConvertString,
         .documentation("convert a value to a string"),
         .overload(
-          O.stringToString, argTypes: [.string], resultType: .string,
+          O.stringToString, argumentTypes: [.string], resultType: .string,
           .examples("string('hello') // 'hello'"), .unaryBinding(identity)),
         .overload(
-          O.boolToString, argTypes: [.bool], resultType: .string,
+          O.boolToString, argumentTypes: [.bool], resultType: .string,
           .examples("string(true) // 'true'"), .unaryBinding(convertToType(.string))),
         .overload(
-          O.bytesToString, argTypes: [.bytes], resultType: .string,
+          O.bytesToString, argumentTypes: [.bytes], resultType: .string,
           .examples("string(b'hello') // 'hello'"), .unaryBinding(convertToType(.string))),
         .overload(
-          O.doubleToString, argTypes: [.double], resultType: .string,
+          O.doubleToString, argumentTypes: [.double], resultType: .string,
           .unaryBinding(convertToType(.string)), .examples("string(-1.23e4) // '-12300'")),
         .overload(
-          O.durationToString, argTypes: [.duration], resultType: .string,
+          O.durationToString, argumentTypes: [.duration], resultType: .string,
           .examples("string(duration('1h30m')) // '5400s'"), .unaryBinding(convertToType(.string))),
         .overload(
-          O.intToString, argTypes: [.int], resultType: .string,
+          O.intToString, argumentTypes: [.int], resultType: .string,
           .examples("string(-123) // '-123'"), .unaryBinding(convertToType(.string))),
         .overload(
-          O.timestampToString, argTypes: [.timestamp], resultType: .string,
+          O.timestampToString, argumentTypes: [.timestamp], resultType: .string,
           .examples("string(timestamp('1970-01-01T00:00:00Z')) // '1970-01-01T00:00:00Z'"),
           .unaryBinding(convertToType(.string))),
         .overload(
-          O.uintToString, argTypes: [.uint], resultType: .string,
+          O.uintToString, argumentTypes: [.uint], resultType: .string,
           .examples("string(123u) // '123'"), .unaryBinding(convertToType(.string)))),
 
       // Timestamp conversions.
@@ -507,16 +507,16 @@ package enum StandardLibrary {
         O.typeConvertTimestamp,
         .documentation("convert a value to a google.protobuf.Timestamp"),
         .overload(
-          O.timestampToTimestamp, argTypes: [.timestamp], resultType: .timestamp,
+          O.timestampToTimestamp, argumentTypes: [.timestamp], resultType: .timestamp,
           .examples(
             "timestamp(timestamp('2023-01-01T00:00:00Z')) // timestamp('2023-01-01T00:00:00Z')"),
           .unaryBinding(identity)),
         .overload(
-          O.intToTimestamp, argTypes: [.int], resultType: .timestamp,
+          O.intToTimestamp, argumentTypes: [.int], resultType: .timestamp,
           .examples("timestamp(1) // timestamp('1970-01-01T00:00:01Z')"),
           .unaryBinding(convertToType(.timestamp))),
         .overload(
-          O.stringToTimestamp, argTypes: [.string], resultType: .timestamp,
+          O.stringToTimestamp, argumentTypes: [.string], resultType: .timestamp,
           .examples("timestamp('2025-01-01T12:34:56Z') // timestamp('2025-01-01T12:34:56Z')"),
           .unaryBinding(convertToType(.timestamp)))),
 
@@ -525,16 +525,16 @@ package enum StandardLibrary {
         O.typeConvertUint,
         .documentation("convert a value to a uint"),
         .overload(
-          O.uintToUint, argTypes: [.uint], resultType: .uint, .examples("uint(123u) // 123u"),
+          O.uintToUint, argumentTypes: [.uint], resultType: .uint, .examples("uint(123u) // 123u"),
           .unaryBinding(identity)),
         .overload(
-          O.doubleToUint, argTypes: [.double], resultType: .uint,
+          O.doubleToUint, argumentTypes: [.double], resultType: .uint,
           .examples("uint(123.45) // 123u"), .unaryBinding(convertToType(.uint))),
         .overload(
-          O.intToUint, argTypes: [.int], resultType: .uint, .examples("uint(123) // 123u"),
+          O.intToUint, argumentTypes: [.int], resultType: .uint, .examples("uint(123) // 123u"),
           .unaryBinding(convertToType(.uint))),
         .overload(
-          O.stringToUint, argTypes: [.string], resultType: .uint,
+          O.stringToUint, argumentTypes: [.string], resultType: .uint,
           .examples("uint('123') // 123u"), .unaryBinding(convertToType(.uint)))),
 
       // String functions.
@@ -542,7 +542,7 @@ package enum StandardLibrary {
         O.contains,
         .documentation("test whether a string contains a substring"),
         .memberOverload(
-          O.containsString, argTypes: [.string, .string], resultType: .bool,
+          O.containsString, argumentTypes: [.string, .string], resultType: .bool,
           .examples(
             "'hello world'.contains('o w') // true", "'hello world'.contains('goodbye') // false"),
           .binaryBinding(stringContains)),
@@ -551,7 +551,7 @@ package enum StandardLibrary {
         O.endsWith,
         .documentation("test whether a string ends with a substring suffix"),
         .memberOverload(
-          O.endsWithString, argTypes: [.string, .string], resultType: .bool,
+          O.endsWithString, argumentTypes: [.string, .string], resultType: .bool,
           .examples(
             "'hello world'.endsWith('world') // true", "'hello world'.endsWith('hello') // false"),
           .binaryBinding(stringEndsWith)),
@@ -560,7 +560,7 @@ package enum StandardLibrary {
         O.startsWith,
         .documentation("test whether a string starts with a substring prefix"),
         .memberOverload(
-          O.startsWithString, argTypes: [.string, .string], resultType: .bool,
+          O.startsWithString, argumentTypes: [.string, .string], resultType: .bool,
           .examples(
             "'hello world'.startsWith('hello') // true",
             "'hello world'.startsWith('world') // false"),
@@ -570,11 +570,11 @@ package enum StandardLibrary {
         O.matches,
         .documentation("test whether a string matches an RE2 regular expression"),
         .overload(
-          O.matches, argTypes: [.string, .string], resultType: .bool,
+          O.matches, argumentTypes: [.string, .string], resultType: .bool,
           .examples(
             "matches('123-456', '^[0-9]+(-[0-9]+)?$') // true", "matches('hello', '^h.*o$') // true")),
         .memberOverload(
-          O.matchesString, argTypes: [.string, .string], resultType: .bool,
+          O.matchesString, argumentTypes: [.string, .string], resultType: .bool,
           .examples(
             "'123-456'.matches('^[0-9]+(-[0-9]+)?$') // true", "'hello'.matches('^h.*o$') // true")),
         .singletonBinaryBinding({ str, pattern in str.match(pattern) }, traits: .matcher)),
@@ -690,10 +690,10 @@ package enum StandardLibrary {
     var options: [FunctionDecl.Option] = [
       .documentation(docs),
       .memberOverload(
-        utcID, argTypes: [.timestamp], resultType: .int, .examples(examples.0),
+        utcID, argumentTypes: [.timestamp], resultType: .int, .examples(examples.0),
         .unaryBinding { ts in timestampField(ts, .string("UTC"), field) }),
       .memberOverload(
-        tzID, argTypes: [.timestamp, .string], resultType: .int, .examples(examples.1),
+        tzID, argumentTypes: [.timestamp, .string], resultType: .int, .examples(examples.1),
         .binaryBinding { ts, tz in timestampField(ts, tz, field) }),
     ]
     if let duration {
@@ -710,7 +710,7 @@ package enum StandardLibrary {
       options.append(
         .overload(
           try OverloadDecl(
-            id: duration.id, argTypes: [.duration], resultType: .int, isMemberFunction: true,
+            id: duration.id, argumentTypes: [.duration], resultType: .int, isMemberFunction: true,
             options: durationOptions)))
     }
     return try FunctionDecl(name, options: options)

@@ -160,7 +160,7 @@ struct InterpreterAttributesTests {
       return
     }
     let unkCond = fac.conditionalAttribute(
-      id: 1, expr: EvalConst(id: 0, value: .unknown(UnknownSet(exprID: 1))), truthy: tv, falsy: fv)
+      id: 1, expr: EvalConst(id: 0, value: .unknown(UnknownSet(expressionID: 1))), truthy: tv, falsy: fv)
     #expect(try unkCond.resolve(frame([:])).isUnknown)
   }
 
@@ -357,7 +357,7 @@ struct InterpreterAttributesTests {
     func eval(_ bindings: [String: Value], _ patterns: [AttributePattern]) throws -> Value {
       try a.resolve(ExecutionFrame(PartialActivationWrapper(MapActivation(bindings), unknowns: patterns)))
     }
-    let unknownB = UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "b"))
+    let unknownB = UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "b"))
     guard case .unknown(let u1) = try eval(["a": [1, 2]], [AttributePattern("b")]) else {
       Issue.record("want unknown")
       return
@@ -374,7 +374,7 @@ struct InterpreterAttributesTests {
       Issue.record("want unknown")
       return
     }
-    #expect(UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0)])).contains(u3))
+    #expect(UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0)])).contains(u3))
     #expect(try eval(["a": [1, 2], "b": 0], []) == 1)
     // The unknown id moves when the attribute becomes more specific: a[b].c
     a = try a.addingQualifier(qual(fac, 3, "c"))
@@ -384,7 +384,7 @@ struct InterpreterAttributesTests {
       return
     }
     #expect(
-      UnknownSet(exprID: 3, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0), .string("c")])).contains(
+      UnknownSet(expressionID: 3, attribute: AttributeTrail(variable: "a", qualifierPath: [.int(0), .string("c")])).contains(
         u4))
   }
 
@@ -411,7 +411,7 @@ struct InterpreterAttributesTests {
       Issue.record("want unknown")
       return
     }
-    #expect(UnknownSet(exprID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.string("b")])).contains(u))
+    #expect(UnknownSet(expressionID: 2, attribute: AttributeTrail(variable: "a", qualifierPath: [.string("b")])).contains(u))
     #expect(fac.maybeAttribute(id: 10, name: ".global_var").id == 10)
   }
 

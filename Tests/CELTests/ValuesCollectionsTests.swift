@@ -84,7 +84,7 @@ struct ListValueTests {
     #expect(list.get(.int(3)) == .error(EvalError("index '3' out of range in list size '3'")))
     #expect(list.get(.double(1.5)) == .error(EvalError("unsupported index value 1.5 in list")))
     #expect(list.get(.uint(.max)) == .error(EvalError("unsupported index value 18446744073709551615 in list")))
-    let unknown = Value.unknown(UnknownSet(exprID: 1))
+    let unknown = Value.unknown(UnknownSet(expressionID: 1))
     #expect(list.get(unknown) == unknown)
   }
 

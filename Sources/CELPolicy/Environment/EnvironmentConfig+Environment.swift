@@ -217,14 +217,14 @@ extension EnvironmentConfig.Overload {
       if !messages.isEmpty {
         throw EnvironmentError(messages.joined(separator: "\n"))
       }
-      return .memberOverload(id, argTypes: args, resultType: result)
+      return .memberOverload(id, argumentTypes: args, resultType: result)
     }
     if !messages.isEmpty {
       throw EnvironmentError(messages.joined(separator: "\n"))
     }
     // Examples are documentation only; `OverloadDecl.Option.examples` is variadic and cannot
     // take the decoded array, so they are not carried over.
-    return .overload(id, argTypes: args, resultType: result)
+    return .overload(id, argumentTypes: args, resultType: result)
   }
 }
 

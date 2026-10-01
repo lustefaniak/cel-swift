@@ -133,7 +133,7 @@ extension Cel_Expr_ExprValue {
       self.error = set
     case .unknown(let unknown):
       var set = Cel_Expr_UnknownSet()
-      set.exprs = unknown.exprIDs
+      set.exprs = unknown.expressionIDs
       self.unknown = set
     default:
       value = try Cel_Expr_Value(celValue: celValue, types: types)

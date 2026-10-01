@@ -63,7 +63,10 @@ enum WellKnownTypes {
     case let m as Google_Protobuf_Duration:
       return .duration(duration(from: m))
     case let m as Google_Protobuf_Timestamp:
-      return .timestamp(CELTimestamp(secondsSinceEpoch: m.seconds, nanoseconds: Int64(m.nanos)))
+      guard let t = CELTimestamp(secondsSinceEpoch: m.seconds, carryingNanoseconds: Int64(m.nanos)) else {
+        return .error(.timestampOverflow)
+      }
+      return .timestamp(t)
     case let m as Google_Protobuf_Value:
       return value(ofJSON: m)
     case let m as Google_Protobuf_Struct:

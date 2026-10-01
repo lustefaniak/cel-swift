@@ -51,14 +51,14 @@ struct APILibrarySubsetTests {
 
   @Test func mergesWithExistingDeclaration() throws {
     _ = try Environment.custom(
-      .function("size", .memberOverload("string_size", argTypes: [.string], resultType: .int)),
+      .function("size", .memberOverload("string_size", argumentTypes: [.string], resultType: .int)),
       .library(.standard(subset: .init(includedFunctions: [.init("size", overloadIDs: ["string_size"])]))))
   }
 
   @Test func mergeConflictFails() {
     #expect {
       _ = try Environment.custom(
-        .function("size", .memberOverload("string_size", argTypes: [.string], resultType: .uint)),
+        .function("size", .memberOverload("string_size", argumentTypes: [.string], resultType: .uint)),
         .library(.standard(subset: .init(includedFunctions: [.init("size", overloadIDs: ["string_size"])]))))
     } throws: { error in
       "\(error)".contains("merge failed")

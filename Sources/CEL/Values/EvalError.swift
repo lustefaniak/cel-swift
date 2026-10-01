@@ -23,12 +23,12 @@ public struct EvalError: Error, Sendable, Hashable, CustomStringConvertible {
   public var message: String
 
   /// The id of the expression node where the error occurred, or `0` when not yet known.
-  public var exprID: Int64
+  public var expressionID: Int64
 
   /// Creates an error with a message and an optional expression id.
-  public init(_ message: String, exprID: Int64 = 0) {
+  public init(_ message: String, expressionID: Int64 = 0) {
     self.message = message
-    self.exprID = exprID
+    self.expressionID = expressionID
   }
 
   /// The error message.
@@ -36,9 +36,9 @@ public struct EvalError: Error, Sendable, Hashable, CustomStringConvertible {
 
   /// Returns the error labelled with `id` unless it already carries an expression id.
   func labelled(with id: Int64) -> EvalError {
-    if exprID != 0 { return self }
+    if expressionID != 0 { return self }
     var copy = self
-    copy.exprID = id
+    copy.expressionID = id
     return copy
   }
 }
@@ -91,7 +91,7 @@ extension Value {
   /// Port of cel-go `types.LabelErrNode`.
   @inline(__always)
   package func labellingError(with id: Int64) -> Value {
-    if case .error(let err) = self, err.exprID == 0 {
+    if case .error(let err) = self, err.expressionID == 0 {
       return .error(err.labelled(with: id))
     }
     return self

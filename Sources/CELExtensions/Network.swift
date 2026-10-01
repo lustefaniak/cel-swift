@@ -64,7 +64,7 @@ enum NetworkLibrary {
   static func library(version: UInt32) -> Library {
     func ipFn(_ name: String, _ id: String, _ f: @escaping @Sendable (NetAddr) -> Value) -> FunctionDecl.Option {
       .memberOverload(
-        id, argTypes: [ipType], resultType: .bool,
+        id, argumentTypes: [ipType], resultType: .bool,
         .unaryBinding { v in
           guard let ip = asIP(v) else { return noSuchOverload(v) }
           return f(ip)
@@ -74,7 +74,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "cidr",
         .overload(
-          "string_to_cidr", argTypes: [.string], resultType: cidrType,
+          "string_to_cidr", argumentTypes: [.string], resultType: cidrType,
           .unaryBinding { v in
             guard case .string(let s) = v else { return noSuchOverload(v) }
             switch parseCIDR(s) {
@@ -85,13 +85,13 @@ enum NetworkLibrary {
       try FunctionDecl(
         "string",
         .overload(
-          "cidr_to_string", argTypes: [cidrType], resultType: .string,
+          "cidr_to_string", argumentTypes: [cidrType], resultType: .string,
           .unaryBinding { v in
             guard let c = asCIDR(v) else { return noSuchOverload(v) }
             return .string(c.description)
           }),
         .overload(
-          "ip_to_string", argTypes: [ipType], resultType: .string,
+          "ip_to_string", argumentTypes: [ipType], resultType: .string,
           .unaryBinding { v in
             guard let ip = asIP(v) else { return noSuchOverload(v) }
             return .string(ip.description)
@@ -99,13 +99,13 @@ enum NetworkLibrary {
       try FunctionDecl(
         "containsCIDR",
         .memberOverload(
-          "cidr_contains_cidr", argTypes: [cidrType, cidrType], resultType: .bool,
+          "cidr_contains_cidr", argumentTypes: [cidrType, cidrType], resultType: .bool,
           .binaryBinding { a, b in
             guard let parent = asCIDR(a), let child = asCIDR(b) else { return noSuchOverload(a, b) }
             return .bool(parent.overlaps(child) && parent.bits <= child.bits)
           }),
         .memberOverload(
-          "cidr_contains_cidr_string", argTypes: [cidrType, .string], resultType: .bool,
+          "cidr_contains_cidr_string", argumentTypes: [cidrType, .string], resultType: .bool,
           .binaryBinding { a, b in
             guard let parent = asCIDR(a), case .string(let s) = b else { return noSuchOverload(a, b) }
             switch parseCIDR(s) {
@@ -116,13 +116,13 @@ enum NetworkLibrary {
       try FunctionDecl(
         "containsIP",
         .memberOverload(
-          "cidr_contains_ip_ip", argTypes: [cidrType, ipType], resultType: .bool,
+          "cidr_contains_ip_ip", argumentTypes: [cidrType, ipType], resultType: .bool,
           .binaryBinding { a, b in
             guard let cidr = asCIDR(a), let ip = asIP(b) else { return noSuchOverload(a, b) }
             return .bool(cidr.contains(ip))
           }),
         .memberOverload(
-          "cidr_contains_ip_string", argTypes: [cidrType, .string], resultType: .bool,
+          "cidr_contains_ip_string", argumentTypes: [cidrType, .string], resultType: .bool,
           .binaryBinding { a, b in
             guard let cidr = asCIDR(a), case .string(let s) = b else { return noSuchOverload(a, b) }
             switch parseIP(s) {
@@ -133,7 +133,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "family",
         .memberOverload(
-          "ip_family", argTypes: [ipType], resultType: .int,
+          "ip_family", argumentTypes: [ipType], resultType: .int,
           .unaryBinding { v in
             guard let ip = asIP(v) else { return noSuchOverload(v) }
             return .int(ip.is4 ? 4 : 6)
@@ -141,7 +141,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "ip",
         .overload(
-          "string_to_ip", argTypes: [.string], resultType: ipType,
+          "string_to_ip", argumentTypes: [.string], resultType: ipType,
           .unaryBinding { v in
             guard case .string(let s) = v else { return noSuchOverload(v) }
             switch parseIP(s) {
@@ -150,7 +150,7 @@ enum NetworkLibrary {
             }
           }),
         .memberOverload(
-          "cidr_ip", argTypes: [cidrType], resultType: ipType,
+          "cidr_ip", argumentTypes: [cidrType], resultType: ipType,
           .unaryBinding { v in
             guard let c = asCIDR(v) else { return noSuchOverload(v) }
             return .object(IPAddressValue(addr: c.addr))
@@ -158,7 +158,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "ip.isCanonical",
         .overload(
-          "ip_is_canonical", argTypes: [.string], resultType: .bool,
+          "ip_is_canonical", argumentTypes: [.string], resultType: .bool,
           .unaryBinding { v in
             guard case .string(let s) = v else { return noSuchOverload(v) }
             switch parseIP(s) {
@@ -169,7 +169,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "isCIDR",
         .overload(
-          "is_cidr", argTypes: [.string], resultType: .bool,
+          "is_cidr", argumentTypes: [.string], resultType: .bool,
           .unaryBinding { v in
             guard case .string(let s) = v else { return noSuchOverload(v) }
             if case .success = parseCIDR(s) {
@@ -181,7 +181,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "isIP",
         .overload(
-          "is_ip", argTypes: [.string], resultType: .bool,
+          "is_ip", argumentTypes: [.string], resultType: .bool,
           .unaryBinding { v in
             guard case .string(let s) = v else { return noSuchOverload(v) }
             if case .success = parseIP(s) {
@@ -199,7 +199,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "isMask",
         .memberOverload(
-          "cidr_is_mask", argTypes: [cidrType], resultType: .bool,
+          "cidr_is_mask", argumentTypes: [cidrType], resultType: .bool,
           .unaryBinding { v in
             guard let c = asCIDR(v) else { return noSuchOverload(v) }
             return .bool(c.addr == c.masked.addr)
@@ -209,7 +209,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "masked",
         .memberOverload(
-          "cidr_masked", argTypes: [cidrType], resultType: cidrType,
+          "cidr_masked", argumentTypes: [cidrType], resultType: cidrType,
           .unaryBinding { v in
             guard let c = asCIDR(v) else { return noSuchOverload(v) }
             return .object(CIDRValue(prefix: c.masked))
@@ -217,7 +217,7 @@ enum NetworkLibrary {
       try FunctionDecl(
         "prefixLength",
         .memberOverload(
-          "cidr_prefix_length", argTypes: [cidrType], resultType: .int,
+          "cidr_prefix_length", argumentTypes: [cidrType], resultType: .int,
           .unaryBinding { v in
             guard let c = asCIDR(v) else { return noSuchOverload(v) }
             return .int(Int64(c.bits))

@@ -269,6 +269,6 @@ func substitute(_ m: TypeMapping, _ t: CELType, _ typeParamToDyn: Bool) -> CELTy
 }
 
 /// The function type the checker unifies call arguments against: `function(result, args...)`.
-func newFunctionType(_ resultType: CELType, _ argTypes: [CELType]) -> CELType {
-  .opaque(name: "function", parameters: [resultType] + argTypes)
+func newFunctionType(_ resultType: CELType, _ argumentTypes: [CELType]) -> CELType {
+  .opaque(name: "function", parameters: [resultType] + argumentTypes)
 }

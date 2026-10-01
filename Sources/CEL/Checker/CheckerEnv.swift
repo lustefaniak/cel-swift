@@ -255,7 +255,7 @@ package struct CheckerEnv: Sendable {
     for overload in current.overloads {
       for macro in Macro.allMacros
       where macro.function == current.name && macro.isReceiverStyle == overload.isMemberFunction
-        && macro.argCount == overload.argTypes.count
+        && macro.argCount == overload.argumentTypes.count
       {
         messages.append(
           "overlapping macro for name '\(current.name)' with \(macro.argCount) args")

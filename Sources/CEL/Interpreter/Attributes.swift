@@ -645,11 +645,11 @@ extension AttributeQualifier {
 final class FieldQualifier: ConstantQualifier, QualifierValueEquator {
   let id: Int64
   let name: String
-  let fieldType: FieldType
+  let fieldType: StructFieldType
   let isOptional: Bool
   let errorOnBadPresenceTest: Bool
 
-  init(id: Int64, name: String, fieldType: FieldType, optional: Bool, errorOnBadPresenceTest: Bool) {
+  init(id: Int64, name: String, fieldType: StructFieldType, optional: Bool, errorOnBadPresenceTest: Bool) {
     self.id = id
     self.name = name
     self.fieldType = fieldType

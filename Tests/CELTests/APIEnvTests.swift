@@ -40,10 +40,10 @@ struct APIEnvTests {
   }
 
   @Test func extendingDisablesDeclaration() throws {
-    let base = try Environment.custom(.function("foo", .overload("foo_bool", argTypes: [.bool], resultType: .bool)))
+    let base = try Environment.custom(.function("foo", .overload("foo_bool", argumentTypes: [.bool], resultType: .bool)))
     _ = try base.compile("foo(true)")
     let child = try base.extending(
-      .function("foo", .disableDeclaration(true), .overload("foo_bool", argTypes: [.bool], resultType: .bool)))
+      .function("foo", .disableDeclaration(true), .overload("foo_bool", argumentTypes: [.bool], resultType: .bool)))
     #expect(throws: CompileError.self) { try child.compile("foo(true)") }
   }
 
@@ -91,7 +91,7 @@ struct APIEnvTests {
         group.addTask {
           let name = "custom_func_\(id)"
           let env = try base.extending(
-            .function(name, .overload("\(name)_int", argTypes: [.int], resultType: .int, .unaryBinding { $0 })))
+            .function(name, .overload("\(name)_int", argumentTypes: [.int], resultType: .int, .unaryBinding { $0 })))
           return try env.program(env.compile("\(name)(42) == 42")).evaluate().value
         }
       }
@@ -115,7 +115,7 @@ struct APIEnvTests {
     let env = try Environment(.optionalTypes)
     #expect(env.hasLibrary(named: "cel.lib.std"))
     #expect(env.hasLibrary(named: "cel.lib.optional"))
-    #expect(Set(env.libraries) == ["cel.lib.std", "cel.lib.optional"])
+    #expect(Set(env.libraryNames) == ["cel.lib.std", "cel.lib.optional"])
   }
 
   @Test func functions() throws {

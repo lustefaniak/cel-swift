@@ -136,8 +136,8 @@ enum TypeConversion {
         let result = try toCELType(o.resultType).get()
         options.append(
           o.isInstanceFunction
-            ? .memberOverload(o.overloadID, argTypes: args, resultType: result)
-            : .overload(o.overloadID, argTypes: args, resultType: result))
+            ? .memberOverload(o.overloadID, argumentTypes: args, resultType: result)
+            : .overload(o.overloadID, argumentTypes: args, resultType: result))
       }
       return .functions([try FunctionDecl(d.name, options: options)])
     case nil:

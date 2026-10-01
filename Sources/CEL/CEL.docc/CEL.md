@@ -87,5 +87,5 @@ print(result.value)   // true
 - ``TypeAdapter``
 - ``TypeRegistry``
 - ``StructTypeDescriptor``
-- ``FieldType``
+- ``StructFieldType``
 - ``TypeTraits``

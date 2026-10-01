@@ -106,9 +106,9 @@ public struct FunctionBinding: Sendable {
         .labellingError(with: exprID)
     }
     if args.count > 2 {
-      return .error(EvalError("no such overload: \(functionName) \(exprID)", exprID: exprID))
+      return .error(EvalError("no such overload: \(functionName) \(exprID)", expressionID: exprID))
     }
-    return .error(EvalError("no such overload: \(functionName)", exprID: exprID))
+    return .error(EvalError("no such overload: \(functionName)", expressionID: exprID))
   }
 
   /// Calls the implementation matching the argument count, or returns a `no such overload` error.

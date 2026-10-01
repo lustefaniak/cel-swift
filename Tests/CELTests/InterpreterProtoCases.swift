@@ -59,7 +59,7 @@ private let jsonFunction: FunctionDecl = {
     return try FunctionDecl(
       "json",
       .overload(
-        "json_string", argTypes: [.string], resultType: .dyn,
+        "json_string", argumentTypes: [.string], resultType: .dyn,
         .unaryBinding { val in
           guard case .string(let s) = val else { return Value.maybeNoSuchOverload(val) }
           do {
@@ -83,7 +83,7 @@ private let hasFieldInput = """
   """
 
 private func unknown(_ id: Int64, _ variable: String) -> UnknownSet {
-  UnknownSet(exprID: id, attribute: AttributeTrail(variable: variable))
+  UnknownSet(expressionID: id, attribute: AttributeTrail(variable: variable))
 }
 
 let interpreterProtoCases: [InterpreterCase] = [

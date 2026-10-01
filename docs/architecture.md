@@ -32,7 +32,7 @@ public enum Value: Sendable {
 - `description` is cel-go's `types.Format` (`1u`, `2.0`, `b"\150"`, `{"a": 1}` with sorted keys,
   `duration("1.5s")`, `timestamp("...Z")`). Literal conformances (`3`, `"x"`, `[1, 2]`, `["k": 1]`) exist
   for tests and host code.
-- `EvalError(message, exprID:)` is the error payload. Messages are cel-go's verbatim (`division by zero`,
+- `EvalError(message, expressionID:)` is the error payload. Messages are cel-go's verbatim (`division by zero`,
   `no such overload`, `no such key: x`, `index '5' out of range in list size '1'`, ...). Package statics:
   `Value.noSuchOverload`, `EvalError.intOverflow`, ...; helpers `Value.valOrError`,
   `Value.maybeNoSuchOverload`, `labellingError(with:)` (= `LabelErrNode`).
@@ -85,9 +85,9 @@ string, object(name), timestamp, type(T?), typeParam(name), uint, unknown, wrapp
 - `protocol ObjectValue: Sendable { var celType; var traits; func field(_:) -> Value;
   func isFieldSet(_:) -> Value; func isEqual(to:) -> Bool; var isZeroValue }`: how protobuf messages
   (`CELProtobuf`) and native Swift types appear. Unknown fields return `no such field 'x'`.
-- `protocol StructTypeDescriptor { typeName; fieldNames; fieldType(named:) -> FieldType?;
+- `protocol StructTypeDescriptor { typeName; fieldNames; fieldType(named:) -> StructFieldType?;
   newValue(fields:) -> Value }`: describes a message type to the checker and to `Msg{f: v}` construction.
-- `FieldType { type: CELType; isSet; getFrom; isJSONField }`.
+- `StructFieldType { type: CELType; isSet; getFrom; isJSONField }`.
 - `protocol TypeProvider` (cel-go `types.Provider`): `enumValue`, `findIdent`, `findStructType`
   (returns `type(T)`), `findStructFieldNames`, `findStructFieldType`, `newValue`.
   `protocol TypeAdapter { nativeToValue(Any) -> Value }`.
@@ -101,13 +101,13 @@ string, object(name), timestamp, type(T?), typeParam(name), uint, unknown, wrapp
 
 Ported from cel-go `common/decls` and `common/functions`.
 
-- `FunctionDecl(name, options...)` with `FunctionDecl.Option`: `.overload(id, argTypes:resultType:, opts...)`,
+- `FunctionDecl(name, options...)` with `FunctionDecl.Option`: `.overload(id, argumentTypes:resultType:, opts...)`,
   `.memberOverload(...)`, `.singletonUnaryBinding(_:traits:)` / `Binary` / `Function`,
   `.disableTypeGuards(Bool)`, `.disableDeclaration(Bool)`, `.documentation(...)`.
   `OverloadDecl.Option`: `.unaryBinding`, `.binaryBinding`, `.functionBinding`, `.lateBinding`,
   `.nonStrict`, `.operandTraits`, `.examples`. Validation errors are `DeclarationError` with cel-go's
   messages. `merging(_:)`, `subset(_:)`, `including/excluding(overloadIDs:)`, `addOverload`,
-  `overloads` (declaration order), `overload(withID:)`, `typeParams`, `signatureEquals/Overlaps`.
+  `overloads` (declaration order), `overload(withID:)`, `typeParameters`, `signatureEquals/Overlaps`.
 - `VariableDecl(name:type:)`, `VariableDecl(constant:type:value:)`, `.typeIdentifier(T)` (`int` : `type(int)`).
 - `FunctionDecl.bindings() throws -> [FunctionBinding]` follows cel-go `Bindings()`:
   - each overload with an implementation -> a binding named by its **overload id**, wrapped in the runtime

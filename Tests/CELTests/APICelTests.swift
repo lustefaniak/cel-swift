@@ -132,7 +132,7 @@ struct APICelTests {
       .function(
         "contains",
         .memberOverload(
-          "bytes_contains_bytes", argTypes: [.bytes, .bytes], resultType: .bool,
+          "bytes_contains_bytes", argumentTypes: [.bytes, .bytes], resultType: .bool,
           .binaryBinding { haystack, needle in
             guard let h = haystack.asBytes, let n = needle.asBytes else { return .error(EvalError("bad")) }
             return Value(bytesContain(h, n))
@@ -146,7 +146,7 @@ struct APICelTests {
       .function(
         "get",
         .memberOverload(
-          "get_map", argTypes: [.map(key: .string, value: .dyn), .string, .dyn], resultType: .dyn,
+          "get_map", argumentTypes: [.map(key: .string, value: .dyn), .string, .dyn], resultType: .dyn,
           .functionBinding { args in
             guard let attrs = args[0].asMap, let key = args[1].asString else {
               return .error(EvalError("invalid operand of type '\(args[0])' to obj.get(key, def)"))
@@ -382,8 +382,8 @@ struct APICelTests {
   @Test func partialVariables() throws {
     let env = try Environment(.variable("x", .string), .variable("y", .int))
     let program = try env.program(env.compile("x == string(y)"), options: [.partialEvaluation])
-    let unknownX = UnknownSet(exprID: 1, attribute: AttributeTrail(variable: "x"))
-    let unknownY = UnknownSet(exprID: 4, attribute: AttributeTrail(variable: "y"))
+    let unknownX = UnknownSet(expressionID: 1, attribute: AttributeTrail(variable: "x"))
+    let unknownY = UnknownSet(expressionID: 4, attribute: AttributeTrail(variable: "y"))
     let both = unknownX.merging(unknownY)
     struct Case {
       var input: [String: Value]
@@ -425,7 +425,7 @@ struct APICelTests {
     let extended = try env.extending(.variable("z", .int))
     let extendedProgram = try extended.program(extended.compile("x == y && y == z"), options: [.partialEvaluation])
     let result = try extendedProgram.evaluate(extended.partialVariables(["z": 1, "y": 1]))
-    #expect(result.value == .unknown(UnknownSet(exprID: 1, attribute: AttributeTrail(variable: "x"))))
+    #expect(result.value == .unknown(UnknownSet(expressionID: 1, attribute: AttributeTrail(variable: "x"))))
   }
 
   // MARK: Regular expressions
@@ -586,11 +586,11 @@ struct APICelTests {
       .homogeneousAggregateLiterals,
       .function(
         "first",
-        .memberOverload("first_list_int", argTypes: [.list(.int)], resultType: .int, first(0)),
-        .memberOverload("first_list_double", argTypes: [.list(.double)], resultType: .double, first(0.0)),
-        .memberOverload("first_list_string", argTypes: [.list(.string)], resultType: .string, first("")),
+        .memberOverload("first_list_int", argumentTypes: [.list(.int)], resultType: .int, first(0)),
+        .memberOverload("first_list_double", argumentTypes: [.list(.double)], resultType: .double, first(0.0)),
+        .memberOverload("first_list_string", argumentTypes: [.list(.string)], resultType: .string, first("")),
         .memberOverload(
-          "first_list_list_string", argTypes: [.list(.list(.string))], resultType: .list(.string), first([]))))
+          "first_list_list_string", argumentTypes: [.list(.list(.string))], resultType: .list(.string), first([]))))
     let out = try interpret(
       env,
       """
@@ -829,8 +829,8 @@ struct APICelTests {
   }
 
   @Test(arguments: [
-    (["y": none, "z": 42], Value.unknown(UnknownSet(exprID: 1, attribute: AttributeTrail(variable: "x")))),
-    (["x": none, "y": none], Value.unknown(UnknownSet(exprID: 5, attribute: AttributeTrail(variable: "z")))),
+    (["y": none, "z": 42], Value.unknown(UnknownSet(expressionID: 1, attribute: AttributeTrail(variable: "x")))),
+    (["x": none, "y": none], Value.unknown(UnknownSet(expressionID: 5, attribute: AttributeTrail(variable: "z")))),
     (["x": Value(optional: 1), "y": none], Value(1)),
     (["x": none, "y": Value(optional: 1)], Value(1)),
   ] as [([String: Value], Value)])

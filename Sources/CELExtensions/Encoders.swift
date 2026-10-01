@@ -37,7 +37,7 @@ extension Library {
       try FunctionDecl(
         "base64.decode",
         .overload(
-          "base64_decode_string", argTypes: [.string], resultType: .bytes,
+          "base64_decode_string", argumentTypes: [.string], resultType: .bytes,
           .unaryBinding { str in
             guard case .string(let s) = str else { return noSuchOverload(str) }
             return bytesOrError(Base64.decodeLenient(Array(s.utf8)))
@@ -45,7 +45,7 @@ extension Library {
       try FunctionDecl(
         "base64.encode",
         .overload(
-          "base64_encode_bytes", argTypes: [.bytes], resultType: .string,
+          "base64_encode_bytes", argumentTypes: [.bytes], resultType: .string,
           .unaryBinding { bytes in
             guard case .bytes(let b) = bytes else { return noSuchOverload(bytes) }
             return .string(Base64.encode(b))
@@ -56,7 +56,7 @@ extension Library {
         try FunctionDecl(
           "json.encode",
           .overload(
-            "json_encode_dyn", argTypes: [.dyn], resultType: .string,
+            "json_encode_dyn", argumentTypes: [.dyn], resultType: .string,
             .unaryBinding { val in
               switch CELJSONEncoder.encode(val) {
               case .success(let s): return .string(s)

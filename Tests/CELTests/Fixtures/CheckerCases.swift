@@ -68,10 +68,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -90,10 +90,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -112,10 +112,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -134,10 +134,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -156,10 +156,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -178,10 +178,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -200,10 +200,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -222,10 +222,10 @@ b"ABC"~bytes
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -274,10 +274,10 @@ ERROR: <input>:1:1: undeclared reference to 'foo' (in container '')
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -296,10 +296,10 @@ ERROR: <input>:1:1: undeclared reference to 'foo' (in container '')
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -318,10 +318,10 @@ ERROR: <input>:1:1: undeclared reference to 'foo' (in container '')
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -340,10 +340,10 @@ ERROR: <input>:1:1: undeclared reference to 'foo' (in container '')
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -362,10 +362,10 @@ ERROR: <input>:1:1: undeclared reference to 'foo' (in container '')
       ],
       functions: [
         try! FunctionDecl("fg_s", options: [
-          .overload("fg_s_0", argTypes: [], resultType: .string),
+          .overload("fg_s_0", argumentTypes: [], resultType: .string),
         ]),
         try! FunctionDecl("fi_s_s", options: [
-          .memberOverload("fi_s_s_0", argTypes: [.string], resultType: .string),
+          .memberOverload("fi_s_s_0", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -1408,8 +1408,8 @@ _+_(
       outType: .int,
       functions: [
         try! FunctionDecl("myfun", options: [
-          .memberOverload("myfun_instance", argTypes: [.int, .bool, .uint], resultType: .int),
-          .overload("myfun_static", argTypes: [.int, .bool, .uint], resultType: .int),
+          .memberOverload("myfun_instance", argumentTypes: [.int, .bool, .uint], resultType: .int),
+          .overload("myfun_static", argumentTypes: [.int, .bool, .uint], resultType: .int),
         ]),
       ]),
     CheckerCase(
@@ -1421,7 +1421,7 @@ _+_(
       ],
       functions: [
         try! FunctionDecl("size", options: [
-          .overload("size_message", argTypes: [.object("google.expr.proto3.test.TestAllTypes")], resultType: .int),
+          .overload("size_message", argumentTypes: [.object("google.expr.proto3.test.TestAllTypes")], resultType: .int),
         ]),
       ]),
     CheckerCase(
@@ -1738,7 +1738,7 @@ _==_(
       outType: .string,
       functions: [
         try! FunctionDecl("base64.encode", options: [
-          .overload("base64_encode_string", argTypes: [.string], resultType: .string),
+          .overload("base64_encode_string", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -1754,7 +1754,7 @@ _==_(
       container: "base64",
       functions: [
         try! FunctionDecl("base64.encode", options: [
-          .overload("base64_encode_string", argTypes: [.string], resultType: .string),
+          .overload("base64_encode_string", argumentTypes: [.string], resultType: .string),
         ]),
       ]),
     CheckerCase(
@@ -1778,7 +1778,7 @@ _==_(
       outType: .opaque(name: "set", parameters: [.int]),
       functions: [
         try! FunctionDecl("set", options: [
-          .overload("set_list", argTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
+          .overload("set_list", argumentTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
         ]),
       ]),
     CheckerCase(
@@ -1794,7 +1794,7 @@ _==_(
       outType: .bool,
       functions: [
         try! FunctionDecl("set", options: [
-          .overload("set_list", argTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
+          .overload("set_list", argumentTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
         ]),
       ]),
     CheckerCase(
@@ -1813,7 +1813,7 @@ _==_(
       ],
       functions: [
         try! FunctionDecl("set", options: [
-          .overload("set_list", argTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
+          .overload("set_list", argumentTypes: [.list(.typeParam("T"))], resultType: .opaque(name: "set", parameters: [.typeParam("T")])),
         ]),
       ]),
     CheckerCase(

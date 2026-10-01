@@ -162,7 +162,7 @@ public struct Environment: Sendable {
   public var functions: [FunctionDecl] { configuration.functions }
 
   /// The names of the libraries configured in the environment, such as `cel.lib.std`.
-  public var libraries: [String] { configuration.libraryNames }
+  public var libraryNames: [String] { configuration.libraryNames }
 
   /// Whether the environment declares a function with the given name.
   public func hasFunction(named name: String) -> Bool {

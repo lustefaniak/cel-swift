@@ -37,7 +37,7 @@ struct TypeErrors: Sendable {
   mutating func noMatchingOverload(
     _ id: Int64, _ l: Location, _ name: String, _ args: [CELType], _ isInstance: Bool
   ) {
-    let signature = formatFunctionDeclType(resultType: nil, argTypes: args, isInstance: isInstance)
+    let signature = formatFunctionDeclType(resultType: nil, argumentTypes: args, isInstance: isInstance)
     errs.reportError(
       exprID: id, at: l, "found no matching overload for '\(name)' applied to '\(signature)'")
   }

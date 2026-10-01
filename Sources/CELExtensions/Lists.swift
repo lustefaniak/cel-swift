@@ -66,7 +66,7 @@ struct ListsLibrary {
       try FunctionDecl(
         "slice",
         .memberOverload(
-          "list_slice", argTypes: [listType, .int, .int], resultType: listType,
+          "list_slice", argumentTypes: [listType, .int, .int], resultType: listType,
           .functionBinding { args in
             guard args.count == 3, case .list(let list) = args[0], case .int(let start) = args[1],
               case .int(let end) = args[2]
@@ -79,7 +79,7 @@ struct ListsLibrary {
         try FunctionDecl(
           "flatten",
           .memberOverload(
-            "list_flatten", argTypes: [.list(listType)], resultType: listType,
+            "list_flatten", argumentTypes: [.list(listType)], resultType: listType,
             .unaryBinding { arg in
               // Double-check as type guards are disabled.
               guard case .list(let list) = arg else {
@@ -88,7 +88,7 @@ struct ListsLibrary {
               return flatten(list, 1)
             }),
           .memberOverload(
-            "list_flatten_int", argTypes: [.list(.dyn), .int], resultType: .list(.dyn),
+            "list_flatten_int", argumentTypes: [.list(.dyn), .int], resultType: .list(.dyn),
             .binaryBinding { arg1, arg2 in
               guard case .list(let list) = arg1, case .int(let depth) = arg2 else {
                 return Value.valOrError(
@@ -103,7 +103,7 @@ struct ListsLibrary {
     if version >= 2 {
       var sortOptions: [FunctionDecl.Option] = Self.comparableTypes.map { t in
         .memberOverload(
-          "list_\(t.runtimeTypeName)_sort", argTypes: [.list(t)], resultType: .list(t))
+          "list_\(t.runtimeTypeName)_sort", argumentTypes: [.list(t)], resultType: .list(t))
       }
       sortOptions.append(
         .singletonUnaryBinding(
@@ -115,7 +115,7 @@ struct ListsLibrary {
 
       var sortByOptions: [FunctionDecl.Option] = Self.comparableTypes.map { u in
         .memberOverload(
-          "list_\(u.runtimeTypeName)_sortByAssociatedKeys", argTypes: [listType, .list(u)],
+          "list_\(u.runtimeTypeName)_sortByAssociatedKeys", argumentTypes: [listType, .list(u)],
           resultType: listType)
       }
       sortByOptions.append(
@@ -133,7 +133,7 @@ struct ListsLibrary {
         try FunctionDecl(
           "lists.range",
           .overload(
-            "lists_range", argTypes: [.int], resultType: .list(.int),
+            "lists_range", argumentTypes: [.int], resultType: .list(.int),
             .unaryBinding { n in
               guard case .int(let count) = n else { return noSuchOverload(n) }
               return range(count, maxRange)
@@ -142,7 +142,7 @@ struct ListsLibrary {
         try FunctionDecl(
           "reverse",
           .memberOverload(
-            "list_reverse", argTypes: [listType], resultType: listType,
+            "list_reverse", argumentTypes: [listType], resultType: listType,
             .unaryBinding { arg in
               guard case .list(let list) = arg else { return noSuchOverload(arg) }
               return .list(ArrayList(list.elements.reversed()))
@@ -151,7 +151,7 @@ struct ListsLibrary {
         try FunctionDecl(
           "distinct",
           .memberOverload(
-            "list_distinct", argTypes: [listType], resultType: listType,
+            "list_distinct", argumentTypes: [listType], resultType: listType,
             .unaryBinding { arg in
               guard case .list(let list) = arg else { return noSuchOverload(arg) }
               return distinct(list)

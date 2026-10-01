@@ -73,26 +73,26 @@ package enum OptionalLibrary {
         optionalOfFunc,
         .documentation("create a new optional_type(T) with a value where any value is considered valid"),
         .overload(
-          "optional_of", argTypes: [paramV], resultType: optionalV,
+          "optional_of", argumentTypes: [paramV], resultType: optionalV,
           .examples("optional.of(1) // optional(1)"),
           .unaryBinding { value in .optional(value) })),
       try FunctionDecl(
         optionalOfNonZeroValueFunc,
         .documentation("create a new optional_type(T) with a value, if the value is not a zero or empty value"),
         .overload(
-          "optional_ofNonZeroValue", argTypes: [paramV], resultType: optionalV,
+          "optional_ofNonZeroValue", argumentTypes: [paramV], resultType: optionalV,
           .unaryBinding { value in value.isZeroValue ? .optional(nil) : .optional(value) })),
       try FunctionDecl(
         optionalNoneFunc,
         .documentation("singleton value representing an optional without a value"),
         .overload(
-          "optional_none", argTypes: [], resultType: optionalV,
+          "optional_none", argumentTypes: [], resultType: optionalV,
           .functionBinding { _ in .optional(nil) })),
       try FunctionDecl(
         valueFunc,
         .documentation("obtain the value contained by the optional, error if optional.none()"),
         .memberOverload(
-          "optional_value", argTypes: [optionalV], resultType: paramV,
+          "optional_value", argumentTypes: [optionalV], resultType: paramV,
           .unaryBinding { value in
             guard case .optional(let inner) = value else { return .noSuchOverload }
             return inner ?? .error(message: "optional.none() dereference")
@@ -101,7 +101,7 @@ package enum OptionalLibrary {
         hasValueFunc,
         .documentation("determine whether the optional contains a value"),
         .memberOverload(
-          "optional_hasValue", argTypes: [optionalV], resultType: .bool,
+          "optional_hasValue", argumentTypes: [optionalV], resultType: .bool,
           .unaryBinding { value in
             guard case .optional(let inner) = value else { return .noSuchOverload }
             return .bool(inner != nil)
@@ -110,30 +110,30 @@ package enum OptionalLibrary {
       try FunctionDecl(
         "or",
         .documentation("chain optional expressions together, picking the first valued optional expression"),
-        .memberOverload("optional_or_optional", argTypes: [optionalV, optionalV], resultType: optionalV)),
+        .memberOverload("optional_or_optional", argumentTypes: [optionalV, optionalV], resultType: optionalV)),
       try FunctionDecl(
         "orValue",
         .documentation("chain optional expressions together picking the first valued optional or the default value"),
-        .memberOverload("optional_orValue_value", argTypes: [optionalV, paramV], resultType: paramV)),
+        .memberOverload("optional_orValue_value", argumentTypes: [optionalV, paramV], resultType: paramV)),
       // The type checker handles optional selection specially, using the field type.
       try FunctionDecl(
         Operators.optSelect,
         .documentation("if the field is present create an optional of the field value, otherwise return optional.none()"),
-        .overload("select_optional_field", argTypes: [.dyn, .string], resultType: optionalV)),
+        .overload("select_optional_field", argumentTypes: [.dyn, .string], resultType: optionalV)),
       try FunctionDecl(
         Operators.optIndex,
         .documentation("if the index is present create an optional of the field value, otherwise return optional.none()"),
-        .overload("list_optindex_optional_int", argTypes: [listV, .int], resultType: optionalV),
+        .overload("list_optindex_optional_int", argumentTypes: [listV, .int], resultType: optionalV),
         .overload(
-          "optional_list_optindex_optional_int", argTypes: [.optional(listV), .int], resultType: optionalV),
-        .overload("map_optindex_optional_value", argTypes: [mapKV, paramK], resultType: optionalV),
+          "optional_list_optindex_optional_int", argumentTypes: [.optional(listV), .int], resultType: optionalV),
+        .overload("map_optindex_optional_value", argumentTypes: [mapKV, paramK], resultType: optionalV),
         .overload(
-          "optional_map_optindex_optional_value", argTypes: [.optional(mapKV), paramK], resultType: optionalV)),
+          "optional_map_optindex_optional_value", argumentTypes: [.optional(mapKV), paramK], resultType: optionalV)),
       // Index overloads accepting an optional operand.
       try FunctionDecl(
         Operators.index,
-        .overload("optional_list_index_int", argTypes: [.optional(listV), .int], resultType: optionalV),
-        .overload("optional_map_index_value", argTypes: [.optional(mapKV), paramK], resultType: optionalV)),
+        .overload("optional_list_index_int", argumentTypes: [.optional(listV), .int], resultType: optionalV),
+        .overload("optional_map_index_value", argumentTypes: [.optional(mapKV), paramK], resultType: optionalV)),
     ]
     if version >= 2 {
       out += [
@@ -141,7 +141,7 @@ package enum OptionalLibrary {
           "last",
           .documentation("return the last value in a list if present, otherwise optional.none()"),
           .memberOverload(
-            "list_last", argTypes: [listV], resultType: optionalV,
+            "list_last", argumentTypes: [listV], resultType: optionalV,
             .unaryBinding { v in
               guard case .list(let l) = v else { return .noSuchOverload }
               return l.count == 0 ? .optional(nil) : .optional(l.element(at: l.count - 1))
@@ -150,7 +150,7 @@ package enum OptionalLibrary {
           "first",
           .documentation("return the first value in a list if present, otherwise optional.none()"),
           .memberOverload(
-            "list_first", argTypes: [listV], resultType: optionalV,
+            "list_first", argumentTypes: [listV], resultType: optionalV,
             .unaryBinding { v in
               guard case .list(let l) = v else { return .noSuchOverload }
               return l.count == 0 ? .optional(nil) : .optional(l.element(at: 0))
@@ -158,11 +158,11 @@ package enum OptionalLibrary {
         try FunctionDecl(
           optionalUnwrapFunc,
           .documentation("convert a list of optional values to a list containing only value which are not optional.none()"),
-          .overload("optional_unwrap", argTypes: [listOptionalV], resultType: listV, .unaryBinding(optUnwrap))),
+          .overload("optional_unwrap", argumentTypes: [listOptionalV], resultType: listV, .unaryBinding(optUnwrap))),
         try FunctionDecl(
           unwrapOptFunc,
           .documentation("convert a list of optional values to a list containing only value which are not optional.none()"),
-          .memberOverload("optional_unwrapOpt", argTypes: [listOptionalV], resultType: listV, .unaryBinding(optUnwrap))),
+          .memberOverload("optional_unwrapOpt", argumentTypes: [listOptionalV], resultType: listV, .unaryBinding(optUnwrap))),
       ]
     }
     return out

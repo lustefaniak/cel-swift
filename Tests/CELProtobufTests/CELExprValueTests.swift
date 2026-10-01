@@ -57,7 +57,7 @@ struct CELExprValueTests {
   @Test func exprValueErrorsAndUnknowns() throws {
     let error = try Cel_Expr_ExprValue(celValue: .error(EvalError("boom")), types: types)
     #expect(error.error.errors.first?.message == "boom")
-    let unknown = try Cel_Expr_ExprValue(celValue: .unknown(UnknownSet(exprID: 3)), types: types)
+    let unknown = try Cel_Expr_ExprValue(celValue: .unknown(UnknownSet(expressionID: 3)), types: types)
     #expect(unknown.unknown.exprs == [3])
     #expect(throws: EvalError.self) { try Cel_Expr_Value(celValue: .optional(nil), types: types) }
   }

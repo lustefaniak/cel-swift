@@ -37,7 +37,7 @@ public struct OverloadDecl: Sendable {
   /// The unique overload id, referenced by the type checker and the interpreter.
   public let id: String
   /// The argument types; for member overloads the first is the receiver type.
-  public let argTypes: [CELType]
+  public let argumentTypes: [CELType]
   /// The result type.
   public let resultType: CELType
   /// Whether the overload is called receiver-style, `target.function(args)`.
@@ -61,13 +61,13 @@ public struct OverloadDecl: Sendable {
   ///   binding on an overload that does not take one argument.
   public init(
     id: String,
-    argTypes: [CELType],
+    argumentTypes: [CELType],
     resultType: CELType,
     isMemberFunction: Bool = false,
     options: [Option] = []
   ) throws {
     self.id = id
-    self.argTypes = argTypes
+    self.argumentTypes = argumentTypes
     self.resultType = resultType
     self.isMemberFunction = isMemberFunction
     for option in options {
@@ -82,7 +82,7 @@ public struct OverloadDecl: Sendable {
 
   /// The type parameter names used by the argument and result types, in first-use order
   /// (result type first).
-  public var typeParams: [String] {
+  public var typeParameters: [String] {
     var names: [String] = []
     func collect(_ t: CELType) {
       if case .typeParam(let name) = t, !names.contains(name) {
@@ -93,7 +93,7 @@ public struct OverloadDecl: Sendable {
       }
     }
     collect(resultType)
-    argTypes.forEach(collect)
+    argumentTypes.forEach(collect)
     return names
   }
 
@@ -102,9 +102,9 @@ public struct OverloadDecl: Sendable {
   /// Operand traits and strictness are not part of the signature.
   public func signatureEquals(_ other: OverloadDecl) -> Bool {
     guard id == other.id, isMemberFunction == other.isMemberFunction,
-      argTypes.count == other.argTypes.count
+      argumentTypes.count == other.argumentTypes.count
     else { return false }
-    for (a, b) in zip(argTypes, other.argTypes) where !a.isEquivalentType(b) {
+    for (a, b) in zip(argumentTypes, other.argumentTypes) where !a.isEquivalentType(b) {
       return false
     }
     return resultType.isEquivalentType(other.resultType)
@@ -113,9 +113,9 @@ public struct OverloadDecl: Sendable {
   /// Whether two overloads have different but overlapping signatures, such as `list(dyn)` and
   /// `list(string)`.
   public func signatureOverlaps(_ other: OverloadDecl) -> Bool {
-    guard isMemberFunction == other.isMemberFunction, argTypes.count == other.argTypes.count
+    guard isMemberFunction == other.isMemberFunction, argumentTypes.count == other.argumentTypes.count
     else { return false }
-    return zip(argTypes, other.argTypes).allSatisfy { a, b in
+    return zip(argumentTypes, other.argumentTypes).allSatisfy { a, b in
       a.isAssignable(from: b) || b.isAssignable(from: a)
     }
   }
@@ -156,24 +156,24 @@ public struct OverloadDecl: Sendable {
   }
 
   func matchesRuntimeUnarySignature(_ disableTypeGuards: Bool, _ arg: Value) -> Bool {
-    matchRuntimeArgType(isNonStrict, disableTypeGuards, argTypes[0], arg)
+    matchRuntimeArgType(isNonStrict, disableTypeGuards, argumentTypes[0], arg)
       && matchOperandTrait(operandTraits, arg)
   }
 
   func matchesRuntimeBinarySignature(_ disableTypeGuards: Bool, _ lhs: Value, _ rhs: Value) -> Bool {
-    matchRuntimeArgType(isNonStrict, disableTypeGuards, argTypes[0], lhs)
-      && matchRuntimeArgType(isNonStrict, disableTypeGuards, argTypes[1], rhs)
+    matchRuntimeArgType(isNonStrict, disableTypeGuards, argumentTypes[0], lhs)
+      && matchRuntimeArgType(isNonStrict, disableTypeGuards, argumentTypes[1], rhs)
       && matchOperandTrait(operandTraits, lhs)
   }
 
   func matchesRuntimeSignature(_ disableTypeGuards: Bool, _ args: [Value]) -> Bool {
-    if args.count != argTypes.count {
+    if args.count != argumentTypes.count {
       return false
     }
     if args.isEmpty {
       return true
     }
-    for (argType, arg) in zip(argTypes, args)
+    for (argType, arg) in zip(argumentTypes, args)
     where !matchRuntimeArgType(isNonStrict, disableTypeGuards, argType, arg) {
       return false
     }
@@ -197,7 +197,7 @@ private func matchOperandTrait(_ trait: TypeTraits, _ arg: Value) -> Bool {
   trait.isEmpty || arg.traits.isSuperset(of: trait) || arg.isUnknownOrError
 }
 
-/// Propagates an error or unknown argument, or produces `no such overload: name(argTypes)`.
+/// Propagates an error or unknown argument, or produces `no such overload: name(argumentTypes)`.
 ///
 /// Port of cel-go `decls.MaybeNoSuchOverload`.
 package func maybeNoSuchOverload(_ functionName: String, _ args: [Value]) -> Value {
@@ -236,7 +236,7 @@ extension OverloadDecl {
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }
-        if o.argTypes.count != 1 {
+        if o.argumentTypes.count != 1 {
           throw DeclarationError("unary function bound to non-unary overload: \(o.id)")
         }
         if o.hasLateBinding {
@@ -252,7 +252,7 @@ extension OverloadDecl {
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }
-        if o.argTypes.count != 2 {
+        if o.argumentTypes.count != 2 {
           throw DeclarationError("binary function bound to non-binary overload: \(o.id)")
         }
         if o.hasLateBinding {

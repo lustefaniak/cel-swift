@@ -145,7 +145,7 @@ package struct PartialAttributeFactory: AttributeFactory {
       }
       for (i, pattern) in patterns.enumerated() where pattern.variableMatches(variable) {
         if qualifiers.isEmpty {
-          return UnknownSet(exprID: attrID, attribute: AttributeTrail(variable: variable))
+          return UnknownSet(expressionID: attrID, attribute: AttributeTrail(variable: variable))
         }
         if !candidates.contains(i) {
           candidates.append(i)
@@ -198,7 +198,7 @@ package struct PartialAttributeFactory: AttributeFactory {
             trail = trail.qualified(by: .string("*"))
           }
         }
-        return UnknownSet(exprID: matchExprID, attribute: trail)
+        return UnknownSet(expressionID: matchExprID, attribute: trail)
       }
     }
     return nil

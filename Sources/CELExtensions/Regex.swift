@@ -34,7 +34,7 @@ extension Library {
       try FunctionDecl(
         "regex.extract",
         .overload(
-          "regex_extract_string_string", argTypes: [.string, .string],
+          "regex_extract_string_string", argumentTypes: [.string, .string],
           resultType: .optional(.string),
           .binaryBinding { target, pattern in
             guard case .string(let t) = target, case .string(let p) = pattern else {
@@ -45,7 +45,7 @@ extension Library {
       try FunctionDecl(
         "regex.extractAll",
         .overload(
-          "regex_extractAll_string_string", argTypes: [.string, .string],
+          "regex_extractAll_string_string", argumentTypes: [.string, .string],
           resultType: .list(.string),
           .binaryBinding { target, pattern in
             guard case .string(let t) = target, case .string(let p) = pattern else {
@@ -56,7 +56,7 @@ extension Library {
       try FunctionDecl(
         "regex.replace",
         .overload(
-          "regex_replace_string_string_string", argTypes: [.string, .string, .string],
+          "regex_replace_string_string_string", argumentTypes: [.string, .string, .string],
           resultType: .string,
           .functionBinding { args in
             guard args.count == 3, case .string(let t) = args[0], case .string(let p) = args[1],
@@ -65,7 +65,7 @@ extension Library {
             return regexReplace(t, p, r, -1)
           }),
         .overload(
-          "regex_replace_string_string_string_int", argTypes: [.string, .string, .string, .int],
+          "regex_replace_string_string_string_int", argumentTypes: [.string, .string, .string, .int],
           resultType: .string,
           .functionBinding { args in
             guard args.count == 4, case .string(let t) = args[0], case .string(let p) = args[1],

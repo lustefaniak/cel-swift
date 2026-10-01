@@ -161,7 +161,7 @@ enum ValueConversion {
     case .unknown(let set)?:
       var unknown: UnknownSet?
       for id in set.exprs {
-        unknown = UnknownSet.merge(UnknownSet(exprID: id), unknown)
+        unknown = UnknownSet.merge(UnknownSet(expressionID: id), unknown)
       }
       return unknown.map { .success(.unknown($0)) } ?? .failure(ConversionFailure(message: "empty unknown set"))
     case nil:

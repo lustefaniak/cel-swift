@@ -114,7 +114,7 @@ extension CostCase.Estimator {
 func costTestEnvironment(_ vars: [VariableDecl]) throws -> ProgramEnvironment {
   var env = ProgramEnvironment(provider: testTypeRegistry())
   let maxFunc = try FunctionDecl(
-    "max", .memberOverload("list_bytes_max", argTypes: [.list(.bytes)], resultType: .bytes))
+    "max", .memberOverload("list_bytes_max", argumentTypes: [.list(.bytes)], resultType: .bytes))
   try env.declare(vars, functions: [maxFunc])
   return env
 }

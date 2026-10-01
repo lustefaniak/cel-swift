@@ -112,7 +112,7 @@ public struct UnknownSet: Sendable, Equatable, CustomStringConvertible {
   public private(set) var attributeTrails: [Int64: [AttributeTrail]]
 
   /// Creates an unknown for the expression `id` and the attribute it depends on.
-  public init(exprID id: Int64, attribute: AttributeTrail = .unspecified) {
+  public init(expressionID id: Int64, attribute: AttributeTrail = .unspecified) {
     attributeTrails = [id: [attribute]]
   }
 
@@ -121,12 +121,12 @@ public struct UnknownSet: Sendable, Equatable, CustomStringConvertible {
   }
 
   /// The unknown expression ids in ascending order.
-  public var exprIDs: [Int64] {
+  public var expressionIDs: [Int64] {
     attributeTrails.keys.sorted()
   }
 
   /// The attribute trails recorded for an expression id.
-  public func attributeTrails(forExprID id: Int64) -> [AttributeTrail]? {
+  public func attributeTrails(forExpressionID id: Int64) -> [AttributeTrail]? {
     attributeTrails[id]
   }
 
@@ -174,7 +174,7 @@ public struct UnknownSet: Sendable, Equatable, CustomStringConvertible {
 
   /// The set formatted as in cel-go, `attr (id)` per expression id, in ascending id order.
   public var description: String {
-    exprIDs.map { id in
+    expressionIDs.map { id in
       let attrs = attributeTrails[id] ?? []
       if attrs.count == 1 {
         return "\(attrs[0]) (\(id))"

@@ -218,8 +218,8 @@ struct PartialEvaluationFixtureTests {
     } else if let unknown = tc.unknown {
       let set = try #require(got.asUnknown, "got \(got), want unknown \(unknown)")
       var trails: [Int64: [String]] = [:]
-      for id in set.exprIDs {
-        trails[id] = (set.attributeTrails(forExprID: id) ?? []).map(\.description)
+      for id in set.expressionIDs {
+        trails[id] = (set.attributeTrails(forExpressionID: id) ?? []).map(\.description)
       }
       #expect(trails == unknown, "got \(set)")
     }

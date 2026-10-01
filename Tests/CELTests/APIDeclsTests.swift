@@ -17,13 +17,13 @@ private let dispatchCases: [(expr: String, out: Value?, error: String?)] = [
   ("max(1, 2, dyn(1.2))", nil, "no such overload: max(int, int, double)"),
   ("max(err, 1)", nil, "error argument"),
   ("max(err, unk)", nil, "error argument"),
-  ("max(unk, unk)", .unknown(UnknownSet(exprID: 42)), nil),
-  ("max(unk, unk, unk)", .unknown(UnknownSet(exprID: 42)), nil),
+  ("max(unk, unk)", .unknown(UnknownSet(expressionID: 42)), nil),
+  ("max(unk, unk, unk)", .unknown(UnknownSet(expressionID: 42)), nil),
 ]
 
 /// cel-go `testParse` and `testCompile`.
 private func checkDispatch(_ env: Environment) throws {
-  let variables: [String: Value] = ["err": .error(EvalError("error argument")), "unk": .unknown(UnknownSet(exprID: 42))]
+  let variables: [String: Value] = ["err": .error(EvalError("error argument")), "unk": .unknown(UnknownSet(expressionID: 42))]
   for c in dispatchCases {
     for program in [try env.program(env.parse(c.expr)), try env.program(env.compile(c.expr))] {
       if let error = c.error {
@@ -69,26 +69,26 @@ struct APIDeclsTests {
     let listV = CELType.list(.typeParam("V"))
     let size = Environment.Option.function(
       "size",
-      .overload("size_map", argTypes: [mapKV], resultType: .int),
-      .overload("size_list", argTypes: [listV], resultType: .int),
-      .overload("size_string", argTypes: [.string], resultType: .int),
-      .overload("size_bytes", argTypes: [.bytes], resultType: .int),
-      .memberOverload("map_size", argTypes: [mapKV], resultType: .int),
-      .memberOverload("list_size", argTypes: [listV], resultType: .int),
-      .memberOverload("string_size", argTypes: [.string], resultType: .int),
-      .memberOverload("bytes_size", argTypes: [.bytes], resultType: .int),
+      .overload("size_map", argumentTypes: [mapKV], resultType: .int),
+      .overload("size_list", argumentTypes: [listV], resultType: .int),
+      .overload("size_string", argumentTypes: [.string], resultType: .int),
+      .overload("size_bytes", argumentTypes: [.bytes], resultType: .int),
+      .memberOverload("map_size", argumentTypes: [mapKV], resultType: .int),
+      .memberOverload("list_size", argumentTypes: [listV], resultType: .int),
+      .memberOverload("string_size", argumentTypes: [.string], resultType: .int),
+      .memberOverload("bytes_size", argumentTypes: [.bytes], resultType: .int),
       .singletonUnaryBinding({ sizeOf($0) }, traits: .sizer))
     // The vector size is inherited from the singleton implementation of `size`.
     let sizeExt = Environment.Option.function(
       "size",
-      .overload("size_vector", argTypes: [Self.vector], resultType: .int),
-      .memberOverload("vector_size", argTypes: [Self.vector], resultType: .int))
+      .overload("size_vector", argumentTypes: [Self.vector], resultType: .int),
+      .memberOverload("vector_size", argumentTypes: [Self.vector], resultType: .int))
     let vectorExt = Environment.Option.function(
-      "vector", .overload("vector_list", argTypes: [listV], resultType: Self.vector, .unaryBinding { $0 }))
+      "vector", .overload("vector_list", argumentTypes: [listV], resultType: Self.vector, .unaryBinding { $0 }))
     let eq = Environment.Option.function(
       "_==_",
       .overload(
-        "_==_", argTypes: [.typeParam("T"), .typeParam("T")], resultType: .bool,
+        "_==_", argumentTypes: [.typeParam("T"), .typeParam("T")], resultType: .bool,
         .binaryBinding { lhs, rhs in lhs.celEquals(rhs) }))
     let env = try Environment.custom(size, sizeExt, vectorExt, eq)
     let checked = try env.compile(
@@ -105,8 +105,8 @@ struct APIDeclsTests {
 
     let sizeBad = Environment.Option.function(
       "size",
-      .overload("size_vector", argTypes: [Self.vector], resultType: .int),
-      .memberOverload("vector_size", argTypes: [Self.vector], resultType: .int),
+      .overload("size_vector", argumentTypes: [Self.vector], resultType: .int),
+      .memberOverload("vector_size", argumentTypes: [Self.vector], resultType: .int),
       .singletonBinaryBinding { _, _ in .null })
     #expect {
       try Environment.custom(size, sizeBad)
@@ -117,30 +117,30 @@ struct APIDeclsTests {
     #expect {
       let mixed = try Environment.custom(
         size,
-        .function("size", .overload("size_int", argTypes: [.int], resultType: .int, .unaryBinding { _ in 2 })))
+        .function("size", .overload("size_int", argumentTypes: [.int], resultType: .int, .unaryBinding { _ in 2 })))
       _ = try mixed.program(checked)
     } throws: { "\($0)".contains("incompatible with specialized overloads") }
   }
 
   @Test func functionMergeDuplicate() throws {
     let maxFunc = Environment.Option.function(
-      "max", .overload("max_int", argTypes: [.int], resultType: .int), .overload("max_int", argTypes: [.int], resultType: .int))
+      "max", .overload("max_int", argumentTypes: [.int], resultType: .int), .overload("max_int", argumentTypes: [.int], resultType: .int))
     _ = try Environment.custom(maxFunc, maxFunc)
   }
 
   @Test func functionMergeDeclarationAndDefinition() throws {
     let decl = Environment.Option.function(
-      "id", .overload("id", argTypes: [.typeParam("T")], resultType: .typeParam("T"), .nonStrict))
+      "id", .overload("id", argumentTypes: [.typeParam("T")], resultType: .typeParam("T"), .nonStrict))
     let def = Environment.Option.function(
-      "id", .overload("id", argTypes: [.typeParam("T")], resultType: .typeParam("T"), .nonStrict, .unaryBinding { $0 }))
+      "id", .overload("id", argumentTypes: [.typeParam("T")], resultType: .typeParam("T"), .nonStrict, .unaryBinding { $0 }))
     let env = try Environment.custom(.variable("x", .any), decl, def)
     #expect(try env.program(env.compile("id(x)")).evaluate(["x": true]).value == true)
   }
 
   @Test func functionMergeCollision() {
     let maxFunc = Environment.Option.function(
-      "max", .overload("max_int", argTypes: [.int], resultType: .int),
-      .overload("max_int2", argTypes: [.int], resultType: .int))
+      "max", .overload("max_int", argumentTypes: [.int], resultType: .int),
+      .overload("max_int2", argumentTypes: [.int], resultType: .int))
     #expect(throws: DeclarationError.self) { try Environment.custom(maxFunc, maxFunc) }
   }
 
@@ -153,17 +153,17 @@ struct APIDeclsTests {
   @Test func singletonUnaryBinding() throws {
     let env = try Environment.custom(
       .variable("x", .any),
-      .function("id", .overload("id_any", argTypes: [.any], resultType: .any)),
-      .function("id", .overload("id_any", argTypes: [.any], resultType: .any), .singletonUnaryBinding { $0 }))
+      .function("id", .overload("id_any", argumentTypes: [.any], resultType: .any)),
+      .function("id", .overload("id_any", argumentTypes: [.any], resultType: .any), .singletonUnaryBinding { $0 }))
     #expect(try env.program(env.parse("id(x)")).evaluate(["x": "hello"]).value == "hello")
   }
 
   @Test func singletonUnaryBindingParameterized() throws {
     let env = try Environment.custom(
       .variable("x", .any),
-      .function("isSorted", .memberOverload("list_int_is_sorted", argTypes: [.list(.int)], resultType: .bool)),
+      .function("isSorted", .memberOverload("list_int_is_sorted", argumentTypes: [.list(.int)], resultType: .bool)),
       .function(
-        "isSorted", .memberOverload("list_uint_is_sorted", argTypes: [.list(.uint)], resultType: .bool),
+        "isSorted", .memberOverload("list_uint_is_sorted", argumentTypes: [.list(.uint)], resultType: .bool),
         .singletonUnaryBinding { _ in true }))
     #expect(try env.program(env.parse("x.isSorted()")).evaluate(["x": [1, 2, 3]]).value == true)
   }
@@ -172,35 +172,35 @@ struct APIDeclsTests {
     _ = try Environment.custom(
       .function(
         "right",
-        .overload("right_int_int", argTypes: [.int, .int], resultType: .int),
-        .overload("right_double_double", argTypes: [.double, .double], resultType: .double),
-        .overload("right_string_string", argTypes: [.string, .string], resultType: .string),
+        .overload("right_int_int", argumentTypes: [.int, .int], resultType: .int),
+        .overload("right_double_double", argumentTypes: [.double, .double], resultType: .double),
+        .overload("right_string_string", argumentTypes: [.string, .string], resultType: .string),
         .singletonBinaryBinding({ _, rhs in rhs }, traits: .comparer)))
   }
 
   @Test func singletonFunctionBinding() throws {
     let env = try Environment.custom(
       .variable("unk", .dyn), .variable("err", .dyn),
-      .function("dyn", .overload("dyn", argTypes: [.dyn], resultType: .dyn), .singletonUnaryBinding { $0 }),
+      .function("dyn", .overload("dyn", argumentTypes: [.dyn], resultType: .dyn), .singletonUnaryBinding { $0 }),
       .function(
         "max",
-        .overload("max_int", argTypes: [.int], resultType: .int),
-        .overload("max_int_int", argTypes: [.int, .int], resultType: .int),
-        .overload("max_int_int_int", argTypes: [.int, .int, .int], resultType: .int),
+        .overload("max_int", argumentTypes: [.int], resultType: .int),
+        .overload("max_int_int", argumentTypes: [.int, .int], resultType: .int),
+        .overload("max_int_int_int", argumentTypes: [.int, .int, .int], resultType: .int),
         .singletonFunctionBinding { maxOfInts($0) }))
     try checkDispatch(env)
   }
 
   @Test func unaryBinding() throws {
     #expect {
-      try Environment.custom(.function("dyn", .overload("dyn", argTypes: [], resultType: .dyn, .unaryBinding { $0 })))
+      try Environment.custom(.function("dyn", .overload("dyn", argumentTypes: [], resultType: .dyn, .unaryBinding { $0 })))
     } throws: { "\($0)".contains("function bound to non-unary overload") }
 
     let env = try Environment.custom(
       .function(
         "size",
         .overload(
-          "size_non_strict", argTypes: [.list(.dyn)], resultType: .int, .nonStrict, .operandTraits(.sizer),
+          "size_non_strict", argumentTypes: [.list(.dyn)], resultType: .int, .nonStrict, .operandTraits(.sizer),
           .unaryBinding { arg in
             switch arg {
             case .unknown, .error: return arg
@@ -208,8 +208,8 @@ struct APIDeclsTests {
             }
           })),
       .variable("x", .list(.dyn)))
-    let out = try env.program(env.compile("size(x)")).evaluate(["x": .unknown(UnknownSet(exprID: 1))]).value
-    #expect(out.asUnknown.map { UnknownSet(exprID: 1).contains($0) } == true)
+    let out = try env.program(env.compile("size(x)")).evaluate(["x": .unknown(UnknownSet(expressionID: 1))]).value
+    #expect(out.asUnknown.map { UnknownSet(expressionID: 1).contains($0) } == true)
   }
 
   @Test func binaryBinding() throws {
@@ -217,7 +217,7 @@ struct APIDeclsTests {
       .function(
         "max",
         .overload(
-          "max_int_int", argTypes: [.int, .int], resultType: .int, .nonStrict,
+          "max_int_int", argumentTypes: [.int, .int], resultType: .int, .nonStrict,
           .binaryBinding { lhs, rhs in
             guard let l = lhs.asInt else { return rhs }
             guard let r = rhs.asInt else { return lhs }
@@ -225,36 +225,36 @@ struct APIDeclsTests {
           })),
       .variable("x", .int), .variable("y", .int))
     let program = try env.program(env.parse("max(x, y)"))
-    #expect(try program.evaluate(["x": .unknown(UnknownSet(exprID: 1)), "y": 1]).value == 1)
-    #expect(try program.evaluate(["x": 2, "y": .unknown(UnknownSet(exprID: 2))]).value == 2)
+    #expect(try program.evaluate(["x": .unknown(UnknownSet(expressionID: 1)), "y": 1]).value == 1)
+    #expect(try program.evaluate(["x": 2, "y": .unknown(UnknownSet(expressionID: 2))]).value == 2)
     #expect(try program.evaluate(["x": 2, "y": 1]).value == 2)
 
     #expect {
       try Environment.custom(
         .function(
           "right",
-          .overload("right_int_int", argTypes: [.int, .int, .int], resultType: .int, .binaryBinding { _, rhs in rhs })))
+          .overload("right_int_int", argumentTypes: [.int, .int, .int], resultType: .int, .binaryBinding { _, rhs in rhs })))
     } throws: { "\($0)".contains("function bound to non-binary overload") }
   }
 
   @Test func functionBinding() throws {
     let env = try Environment.custom(
       .variable("unk", .dyn), .variable("err", .dyn),
-      .function("dyn", .overload("dyn", argTypes: [.dyn], resultType: .dyn), .singletonUnaryBinding { $0 }),
+      .function("dyn", .overload("dyn", argumentTypes: [.dyn], resultType: .dyn), .singletonUnaryBinding { $0 }),
       .function(
         "max",
-        .overload("max_int", argTypes: [.int], resultType: .int, .unaryBinding { $0 }),
+        .overload("max_int", argumentTypes: [.int], resultType: .int, .unaryBinding { $0 }),
         .overload(
-          "max_int_int", argTypes: [.int, .int], resultType: .int,
+          "max_int_int", argumentTypes: [.int, .int], resultType: .int,
           .binaryBinding { lhs, rhs in (lhs.asInt ?? 0) < (rhs.asInt ?? 0) ? rhs : lhs }),
-        .overload("max_int_int_int", argTypes: [.int, .int, .int], resultType: .int, .functionBinding { maxOfInts($0) })))
+        .overload("max_int_int_int", argumentTypes: [.int, .int, .int], resultType: .int, .functionBinding { maxOfInts($0) })))
     try checkDispatch(env)
   }
 
   @Test func functionDisableDeclaration() throws {
     let env = try Environment.custom(
       .function(
-        "disabled", .disableDeclaration(true), .overload("disabled_any", argTypes: [.bool], resultType: .bool),
+        "disabled", .disableDeclaration(true), .overload("disabled_any", argumentTypes: [.bool], resultType: .bool),
         .singletonFunctionBinding { _ in true }))
     #expect(try env.program(env.parse("disabled(true)")).evaluate().value == true)
     #expect {
@@ -264,10 +264,10 @@ struct APIDeclsTests {
 
   @Test func functionDisableDeclarationMerge() throws {
     let env = try Environment.custom(
-      .function("disabled", .overload("disabled_any", argTypes: [.bool], resultType: .bool)),
+      .function("disabled", .overload("disabled_any", argumentTypes: [.bool], resultType: .bool)),
       .function(
         "disabled", .disableDeclaration(true),
-        .overload("disabled_any", argTypes: [.bool], resultType: .bool, .functionBinding { _ in true })))
+        .overload("disabled_any", argumentTypes: [.bool], resultType: .bool, .functionBinding { _ in true })))
     #expect(try env.program(env.parse("disabled(true)")).evaluate().value == true)
     #expect {
       try env.compile("disabled(true)")
@@ -276,10 +276,10 @@ struct APIDeclsTests {
 
   @Test func functionDisableDeclarationMergeReenable() throws {
     let env = try Environment.custom(
-      .function("enabled", .disableDeclaration(true), .overload("enabled_any", argTypes: [.bool], resultType: .bool)),
+      .function("enabled", .disableDeclaration(true), .overload("enabled_any", argumentTypes: [.bool], resultType: .bool)),
       .function(
         "enabled", .disableDeclaration(false),
-        .overload("enabled_any", argTypes: [.bool], resultType: .bool, .functionBinding { _ in true })))
+        .overload("enabled_any", argumentTypes: [.bool], resultType: .bool, .functionBinding { _ in true })))
     #expect(try env.program(env.parse("enabled(true)")).evaluate().value == true)
     _ = try env.compile("enabled(true)")
   }
