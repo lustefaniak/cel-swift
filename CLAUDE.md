@@ -9,7 +9,8 @@ Pure-Swift port of cel-go. The plan, architecture, milestones and conformance ta
   follows cel-go unless the spec (`third_party/cel-spec/doc/langdef.md`) says otherwise; any deliberate
   divergence goes in `docs/divergences.md` with the reason.
 - **Ported files keep cel-go's copyright header** (Apache-2.0); `CELRegex` files keep the Go Authors' BSD
-  notice. See `NOTICE`.
+  notice. See `NOTICE`. Files that are not ports say `Not a ported file` in their first comment;
+  `tools/check-headers/check_headers.py` checks all of this in CI.
 - **The grind loop**: run the conformance target for one file, group failures by cause, read the matching
   cel-go code, fix, rerun; then run the differential suite before committing. A milestone is done when its
   exit criteria hold, not when most tests pass.
@@ -65,9 +66,10 @@ This is a library other packages depend on, so the public surface is the product
 - **No name clashes with the standard library** in public API (`Duration`, `Error`, `Type`, `Optional`,
   `Regex`): qualify or rename, since clients import both.
 - **Portability.** Everything in `Sources` builds on Linux; Darwin-only code needs `#if canImport(Darwin)`
-  and a Linux path. CI is the check, not the local macOS build.
+  and a Linux path (Glibc and, for the static Linux SDK, Musl: `pthread_t` differs). CI is the check, not
+  the local macOS build.
 - **Documentation.** Every `public` declaration has a doc comment in DocC markup; the API design skill sets
-  the shape.
+  the shape. `tools/check-docs/check-docs.sh` (through swiftlock) lists gaps and builds the DocC catalogs.
 
 ## Builds
 

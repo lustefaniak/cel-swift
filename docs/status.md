@@ -40,6 +40,7 @@ it raises for an unrelated reason); that is the whole remaining rust gap.
 | Policy (M7) | `Sources/CELPolicy`, `Sources/CELTest`, `Sources/CELCommandLine` | YAML parser, env configs, compiler + composer, celtest runner, `cel-swift policy test`; every cel-go policy and celtest suite passes, and `tools/celtest-go/compare.sh` shows cel-go celtest and `cel-swift policy test` agree on all of them. Not ported: textproto suites, checked-expression and descriptor-set files, coverage |
 | Unknowns and state tracking (M5) | `Sources/CEL/Interpreter`, `Sources/CEL/API` | partial evaluation, unknown sets, residuals (`Environment.residual(of:state:)`), state tracking and exhaustive evaluation, end to end through the public API. Ported and passing: every `interpreter_test.go` testData case except `literal_pb3_msg` (no generated `v1alpha1.Expr` types), all 83 `prune_test.go` cases, `attribute_patterns_test.go`, `TestAttributeStateTracking` and the other unknown/qualifier tests of `attributes_test.go`, `unknown_test.go`, the partial/residual tests of `cel_test.go` and `ext/comprehensions_test.go` (`TestTwoVarComprehensionsResidualAST`). `tools/partial-fixtures` pins 208 more cases (value, error, unknown ids and attribute trails, residual text; checked and parse-only) to cel-go through the oracle's `residual` flag; all match, so no divergences |
 | Fuzzing | `Fuzz/`, `Sources/cel-fuzz-*`, `Sources/CELFuzzSupport` (only with `CEL_FUZZ=1`) | CI job 60 s per target, nightly workflow. Three docker runs (`--memory 8g`): ~10 + 20 + 20 min per target, about 40k parser, 200k checker and 220k evaluator executions; the only finding was the memory growth, two parser retain cycles (prediction DFA edges; rule context and its syntax error), fixed with reproducers in `FuzzRegressionTests`. Since then RSS plateaus near 1 GB per target under ASan (allocator and corpus), `cel-fuzz-leakcheck` shows flat RSS without ASan and `leaks` finds nothing over the generated corpora; see `Fuzz/README.md` § Memory. The parser target runs at ~10 exec/s: long inputs of nested unary operators cost ANTLR prediction 100+ ms (about 2× cel-go, see Performance) |
+| Release prep (M8) | `tools/check-headers`, `tools/check-docs`, `tools/api-check`, `CHANGELOG.md`, `docs/decisions.md`, `.github/workflows/ci.yml` | every file under `Sources` carries its license header and names its cel-go / Go / ANTLR / go-yaml source (`check_headers.py`, CI); every public declaration has a doc comment and the `CEL` and `CELPolicy` DocC catalogs build with `--warnings-as-errors` (`check-docs.sh`, CI); `check-api.sh` runs `diagnose-api-breaking-changes` against the last tag (CI, report-only before 1.0); CI adds Linux Swift 6.2 / 6.3, an iOS simulator build and a static Linux SDK (musl) build; the policy composer runs on the core `Environment.optimize` |
 | Tooling | `tools/oracle`, `tools/dashboard`, `tools/build-guard`, `tools/*-fixtures` | cel-go oracle (parse/check/eval, unknowns, residuals), dashboard, build memory guard, fixture generators |
 
 ## Next, in order
@@ -49,12 +50,12 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
 1. **Differential suite (M4)** — not started. Seeded generator of well-typed expressions, batch through `tools/oracle`,
    compare value / error / type / static cost / runtime cost, minimise failures into a checked-in regression file, wire
    the nightly slot in `.github/workflows/nightly.yml`.
-2. **Public API follow-ups (M8)** — move the policy composer's internal optimizer
-   (`Sources/CELPolicy/Compiler/StaticOptimizer.swift`) onto `Environment.optimize` and drop the copy; run
-   `swift package diagnose-api-breaking-changes` once a tag exists; decide the open questions below, which block
-   custom macros, custom optimizers and decorators, proto AST conversion and the cel-go tests that need them
-   (listed in the headers of `Tests/CELTests/API*Tests.swift`). The public `enum CEL` (only `specVersion`) shares
-   the module's name, which breaks `CEL.Environment`-style qualification for clients; rename or drop it before 1.0.
+2. **First release (M8)** — blocked on the maintainer: settle the questions in `docs/decisions.md` (package name,
+   the `enum CEL` module clash, public AST, proto conversion, accessor naming, `Value` payloads, strong enums, the
+   spec-over-cel-go options), apply the outcome, then fill in `CHANGELOG.md`, tag `0.1.0` and point PRBar at it. From
+   then on `tools/api-check/check-api.sh` compares against the tag. Custom macros, optimizers and decorators, proto AST
+   conversion and the cel-go tests that need them (headers of `Tests/CELTests/API*Tests.swift`) follow the public AST
+   decision.
 3. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
    existential list/map/object payloads dominate. Parser rebuilds the ANTLR prediction cache per parse (~0.5 ms, and
    100+ ms for long inputs of nested unary operators, which keeps the parser fuzzer at ~10 exec/s);
@@ -68,8 +69,4 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
 
 ## Open decisions for the maintainer
 
-- Public AST (needed for custom macros and validators in the public API)?
-- Conversion of parsed/checked expressions to and from the cel-spec protos (the types live in a non-product target)?
-- `Value` accessor naming: `asInt` (current) or `intValue`?
-- Class-backed list/map/object payloads in `Value` for copy performance?
-- Package name `cel-swift` vs `swift-cel` before the first tag.
+In `docs/decisions.md`, one section each with options, affected code and a recommendation.
