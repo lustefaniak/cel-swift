@@ -2,10 +2,10 @@
 // or without macros, extend the environment with the container and type_env declarations, check unless
 // disabled, plan and evaluate with the bindings, and convert the result to a cel.expr.ExprValue.
 //
-// cel-go's environment: standard library, optional types, EnableErrorOnBadPresenceTest, the TestAllTypes
-// messages, the bindings / encoders / lists / math / protos / strings / two-variable comprehension
-// extensions, the conformance cel.block macros, and identifier escape syntax. Pieces not in the library
-// yet (extensions) report `notImplemented` or fail.
+// Everything goes through the public `Environment` / `Program` API, so the suite exercises the product
+// surface. cel-go's environment: standard library, optional types, EnableErrorOnBadPresenceTest, the
+// TestAllTypes messages, the bindings / encoders / lists / math / protos / strings / two-variable
+// comprehension extensions, the conformance cel.block macros, and identifier escape syntax.
 
 import CEL
 import CELExtensions
@@ -20,86 +20,80 @@ let conformanceRunner: any ConformanceRunner = CELConformanceRunner()
 struct CELConformanceRunner: ConformanceRunner {
   var name: String { "cel-swift" }
 
-  /// cel-go's conformance environment, as far as the library has the pieces: the standard library,
-  /// optional types, errors on bad presence tests, identifier escapes.
-  static let baseEnvironment: ProgramEnvironment = {
-    // cel-go `Types(&proto2pb.TestAllTypes{}, &proto3pb.TestAllTypes{})` plus the proto2 extensions.
-    let protos = CELSpecProtos.protobufTypes
-    var registry = TypeRegistry(composing: protos, adapter: protos)
-    // cel-go `Types(types.OptionalType)`.
-    try? registry.register(CELType.optionalOfDyn)
-    var env = ProgramEnvironment(
-      functions: StandardLibrary.functions + OptionalLibrary.functions(),
-      variables: OptionalLibrary.types,
-      provider: registry,
-      macros: Macro.allMacros + OptionalLibrary.macros(),
-      parserOptions: [.enableOptionalSyntax(true), .enableIdentEscapeSyntax(true)],
-      errorOnBadPresenceTest: true)
-    env.decorators = [OptionalLibrary.decorator]
-    // cel-go clears the macros, installs the libraries, then adds the standard macros back.
-    env.macros = OptionalLibrary.macros()
-    for library in extensionLibraries {
-      try? env.install(library)
-    }
-    env.macros += Macro.allMacros
-    return env
-  }()
-
-  /// cel-go does not run network_ext (its conformance environment lacks the network library); these
-  /// tests run with the base environment plus `ext.Network()`, as the oracle's `network` extension does.
-  static let networkEnvironment: ProgramEnvironment = {
-    var env = baseEnvironment
-    try? env.install(.network)
-    return env
-  }()
-
   /// The extension libraries of cel-go's conformance environment, in its order.
   static let extensionLibraries: [Library] = [
     .bindings, .encoders, .lists, .math, .protos, .strings, .twoVarComprehensions,
     .celBlockConformance,
   ]
 
-  /// The macros with `disable_macros`: the optional and library macros, without the standard ones.
-  static let macrosWithoutStandard: [Macro] = {
-    var env = baseEnvironment
-    env.macros = OptionalLibrary.macros()
-    for library in extensionLibraries {
-      env.macros += library.macros
-    }
-    return env.macros
+  /// cel-go's conformance environment options before the standard macros are added back: it clears the
+  /// macros, installs optional types and the libraries, then re-adds the standard macros.
+  static let baseOptions: [Environment.Option] = {
+    // cel-go `Types(&proto2pb.TestAllTypes{}, &proto3pb.TestAllTypes{})` plus the proto2 extensions.
+    let protos = CELSpecProtos.protobufTypes
+    return [
+      .typeProvider(TypeRegistry(composing: protos, adapter: protos)),
+      .clearMacros,
+      .optionalTypes,
+      .errorOnBadPresenceTest(),
+      .identifierEscapeSyntax(),
+      .libraries(extensionLibraries),
+    ]
   }()
+
+  static let baseEnvironment = makeEnvironment(baseOptions + [.macros(Macro.allMacros)])
+
+  /// With `disable_macros`: the optional and library macros stay, the standard ones are not added back.
+  static let environmentWithoutStandardMacros = makeEnvironment(baseOptions)
+
+  /// cel-go does not run network_ext (its conformance environment lacks the network library); these
+  /// tests run with the base environment plus `ext.Network()`, as the oracle's `network` extension does.
+  static let networkEnvironment = makeEnvironment(
+    baseOptions + [.macros(Macro.allMacros), .library(.network)])
+
+  static func makeEnvironment(_ options: [Environment.Option]) -> Result<Environment, DeclarationError> {
+    Result { () throws(DeclarationError) in try Environment(options: options) }
+  }
 
   func run(_ request: ConformanceRequest) -> ConformanceOutcome {
     let test = request.test
-    var env = request.name.hasPrefix("network_ext/") ? Self.networkEnvironment : Self.baseEnvironment
-    if test.disableMacros {
-      // cel-go clears the macros before adding the libraries, so library macros stay.
-      env.macros = Self.macrosWithoutStandard
+    let base =
+      request.name.hasPrefix("network_ext/")
+      ? Self.networkEnvironment
+      : test.disableMacros ? Self.environmentWithoutStandardMacros : Self.baseEnvironment
+    let env: Environment
+    switch base {
+    case .success(let e): env = e
+    case .failure(let error): return .notImplemented("conformance environment: \(error)")
     }
-    var ast: AST
+    let parsed: ParsedExpression
     do {
-      ast = try env.parse(test.expr, description: test.name)
+      parsed = try env.parse(test.expr, sourceName: test.name)
     } catch {
-      return .parseError(error.message)
+      return .parseError(error.description)
     }
+    let testEnv: Environment
     do {
+      var options: [Environment.Option] = []
       if !test.container.isEmpty {
-        env.container = try Container(.name(test.container))
+        options.append(.container(test.container))
       }
       for decl in test.typeEnv {
-        try TypeConversion.declare(decl, in: &env)
+        options.append(try TypeConversion.option(for: decl))
       }
+      testEnv = options.isEmpty ? env : try env.extending(options: options)
     } catch {
       return .checkError("\(error)")
     }
+    var checked: CheckedExpression?
     var deducedType: Cel_Expr_Type?
     if request.runsChecker {
       do {
-        ast = try env.check(ast, source: TextSource(test.expr, description: test.name))
+        checked = try testEnv.check(parsed)
       } catch {
-        return .checkError(error.message)
+        return .checkError(error.description)
       }
-      deducedType = TypeConversion.toProto(ast.type(of: ast.expr.id))
+      deducedType = checked.map { TypeConversion.toProto($0.outputType) }
       if request.checkOnly, let deducedType {
         return .checked(deducedType: deducedType)
       }
@@ -111,21 +105,30 @@ struct CELConformanceRunner: ConformanceRunner {
       case .failure(let reason): return .notImplemented(reason.message)
       }
     }
-    let program: PlannedProgram
+    let program: Program
     do {
-      program = try env.program(ast)
+      if let checked {
+        program = try testEnv.program(checked, options: [.errorsAsValues])
+      } else {
+        program = try testEnv.program(parsed, options: [.errorsAsValues])
+      }
     } catch {
       // cel-go fails the test when program creation fails; report it as an evaluation error.
       var set = Cel_Expr_ErrorSet()
       var status = Cel_Expr_Status()
-      status.message = "\(error)"
+      status.message = error.description
       set.errors = [status]
       var result = Cel_Expr_ExprValue()
       result.error = set
       return .evaluated(result: result, deducedType: deducedType)
     }
-    let result = program.eval(bindings)
-    switch ValueConversion.toExprValue(result.value, types: CELSpecProtos.protobufTypes) {
+    let value: Value
+    do {
+      value = try program.evaluate(bindings).value
+    } catch {
+      value = .error(error)
+    }
+    switch ValueConversion.toExprValue(value, types: CELSpecProtos.protobufTypes) {
     case .success(let ev): return .evaluated(result: ev, deducedType: deducedType)
     case .failure(let reason): return .notImplemented(reason.message)
     }
