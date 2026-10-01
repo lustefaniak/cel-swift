@@ -503,6 +503,17 @@ final class EvalMap: InterpretableConstructor {
         return valVal
       }
       (unknown, _) = Value.maybeMergeUnknowns(valVal, unknown)
+      var isNone = false
+      if hasOptionals && optionals[i] && !valVal.isUnknown {
+        guard case .optional(let opt) = valVal else {
+          return invalidOptionalEntryInit(formatGoValue(keyVal), valVal).labellingError(with: id)
+        }
+        if let opt {
+          valVal = opt
+        } else {
+          isNone = true
+        }
+      }
       if unknown != nil || keyError != nil {
         continue
       }
@@ -510,15 +521,9 @@ final class EvalMap: InterpretableConstructor {
         keyError = Value.error(EvalError("unsupported key type: \(keyVal.runtimeTypeName)", exprID: id))
         continue
       }
-      if hasOptionals && optionals[i] {
-        guard case .optional(let opt) = valVal else {
-          return invalidOptionalEntryInit(formatGoValue(keyVal), valVal).labellingError(with: id)
-        }
-        guard let opt else {
-          entries[key] = nil
-          continue
-        }
-        valVal = opt
+      if isNone {
+        entries[key] = nil
+        continue
       }
       if entries.find(keyVal) != nil {
         keyError = Value.error(EvalError("Failed with repeated key: \(formatGoValue(keyVal))", exprID: id))

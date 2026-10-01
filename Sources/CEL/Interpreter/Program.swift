@@ -71,6 +71,11 @@ package struct ProgramEnvironment: Sendable {
   package var errorOnBadPresenceTest: Bool
   /// Planner decorators contributed by libraries (cel-go `CustomDecorator` program options).
   package var decorators: [ProgramDecorator] = []
+  /// Options for the type checker.
+  package var checkerOptions: [CheckerOption] = []
+  /// Declares the standard type identifiers (`int`, `list`, ...) as variables, as cel-go's
+  /// `StdLib` does; without them the checker still resolves type names through the provider.
+  package var declaresStandardTypes = true
 
   /// The standard environment: standard library functions and type identifiers, standard macros,
   /// the root container and the standard types.
@@ -122,8 +127,8 @@ package struct ProgramEnvironment: Sendable {
 
   /// The checker environment for these declarations.
   package func checkerEnv(options: [CheckerOption] = []) throws -> CheckerEnv {
-    var env = CheckerEnv(container: container, provider: provider, options: options)
-    try env.addIdents(StandardLibrary.types + variables)
+    var env = CheckerEnv(container: container, provider: provider, options: checkerOptions + options)
+    try env.addIdents((declaresStandardTypes ? StandardLibrary.types : []) + variables)
     try env.addFunctions(functions)
     return env
   }
@@ -136,7 +141,14 @@ package struct ProgramEnvironment: Sendable {
     } catch {
       throw PlanError("\(error)")
     }
-    let (checked, errors) = Checker.check(ast, source: source, env: env)
+    // The checker recurses per expression level like the planner.
+    var result: (ast: AST, errors: CELErrors)?
+    withStack(depth: ast.expr.depth) {
+      result = Checker.check(ast, source: source, env: env)
+    }
+    guard let (checked, errors) = result else {
+      throw PlanError("type check did not run")
+    }
     if !errors.isEmpty {
       throw PlanError(errors.toDisplayString())
     }

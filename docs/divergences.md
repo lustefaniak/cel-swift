@@ -140,3 +140,32 @@ cel-go reflects over protobuf descriptors (`pb.Db`, `dynamicpb`); swift-protobuf
   'double' to int64` where cel-go prints `... to int64` via `reflect.Type`; the prefixes cel-go tests match
   (`field type conversion error`, `unsupported field type`, `type conversion error`, `no such field`,
   `unknown type`) are the same.
+
+## Interpreter
+
+Planning and evaluation follow cel-go `interpreter/` node for node (same attribute resolution, error
+messages, error node ids, observed ids and runtime cost). The differences:
+
+- **Map literals reject non-key types and repeated keys.** cel-go accepts any value as a map literal key and
+  lets a repeated key overwrite the earlier entry (it skips `fields/qualified_identifier_resolution/map_key_*`
+  and `map_value_repeat_key*`). The spec makes both an error, and `MapKey` cannot hold a `double`, `null` or
+  list key, so `{1.5: 1}` is `unsupported key type: double` and `{1: 'a', 1u: 'b'}` is
+  `Failed with repeated key: 1` (repeats are found with CEL's cross-numeric key equality).
+- **The cost limit does not unwind immediately.** cel-go panics out of evaluation when the runtime cost
+  exceeds the limit. Here the cost tracker marks the evaluation cancelled and stops counting, comprehensions
+  stop at their next iteration, and the program returns `operation cancelled: actual cost limit exceeded`.
+  Work outside comprehensions is bounded by the expression size, so the result and the reported cost are the
+  same; the remaining non-loop nodes still run.
+- **Unknown pattern matching is deterministic.** When several attribute patterns could match, cel-go tries
+  them in Go map order; here in the order they were given.
+- **No asynchronous functions, object pools or V1 interpretables.** `async.go`, the `sync.Pool`s of
+  `frame.go` and the `Interpretable` / `InterpretableV2` split have no counterpart: there is one
+  `eval(_ frame:)`. Interpretables and attributes are immutable classes and adding a qualifier returns a new
+  attribute, so a planned program is `Sendable`.
+- **Comprehension accumulators are reference types.** `MutableList` / `MutableMap` (cel-go `mutableList` /
+  `mutableMap`) are `@unchecked Sendable`: each is created by one comprehension evaluation, reachable only
+  through its accumulator variable, and converted to an immutable list or map before the comprehension
+  returns.
+- **Deep expressions are planned, checked and evaluated on a large stack.** Like the parser (see
+  `LargeStack`), `ProgramEnvironment` runs the checker, the planner and evaluation on a thread with a stack
+  sized for the expression depth when the calling thread's stack may not suffice; Go has growable stacks.
