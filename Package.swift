@@ -56,7 +56,7 @@ let package = Package(
     ),
     .target(
       name: "CELPolicy",
-      dependencies: ["CEL", .product(name: "Yams", package: "Yams")],
+      dependencies: ["CEL", "CELExtensions", .product(name: "Yams", package: "Yams")],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .target(
@@ -104,7 +104,7 @@ let package = Package(
     ),
     .testTarget(
       name: "CELPolicyTests",
-      dependencies: ["CEL", "CELPolicy"],
+      dependencies: ["CEL", "CELPolicy", "CELProtobuf", "CELGoTestProtos"],
       exclude: ["Goldens"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
