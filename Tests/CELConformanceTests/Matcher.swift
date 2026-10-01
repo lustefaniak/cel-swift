@@ -22,6 +22,15 @@ enum Matcher {
     case .parseError(let message):
       return .fail("parse error: \(message)")
     case .checkError(let message):
+      // A test that expects an evaluation error passes on a check error carrying the expected message:
+      // network_ext/ip_type/is_ip_cidr_compile_error sets `disable_check: false` and expects the checker's
+      // no-matching-overload error as its eval_error. cel-go's and cel-cpp's runners fail every check error
+      // (neither runs network_ext); requiring the message keeps unrelated check errors failing.
+      if case .evalError(let want)? = test.resultMatcher, !want.errors.isEmpty,
+        want.errors.allSatisfy({ !$0.message.isEmpty && message.contains($0.message) })
+      {
+        return .pass
+      }
       return .fail("check error: \(message)")
     case .checked(let deducedType):
       guard request.checkOnly else {

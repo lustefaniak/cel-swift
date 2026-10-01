@@ -253,6 +253,10 @@ struct NetworkTests {
     #expect(d.call("isIP", "invalid") == false)
     #expect(d.call("isIP", "fe80::1%en0") == false)
     #expect(d.call("isIP", "::ffff:1.2.3.4") == false)
+    // The hexadecimal IPv4-mapped form is the IPv4 address (cel-spec network_ext; cel-go rejects it).
+    #expect(d.call("isIP", "::ffff:c0a8:1") == true)
+    #expect(ip("::ffff:c0a8:1") == ip("192.168.0.1"))
+    #expect(d.call("family", ip("::ffff:c0a8:1")) == 4)
     #expect(d.call("isCIDR", "10.0.0.0/8") == true)
     #expect(d.call("isCIDR", "10.0.0.1/8") == true)
     #expect(d.call("isCIDR", "10.0.0.0/33") == false)

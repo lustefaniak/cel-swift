@@ -244,7 +244,11 @@ enum NetworkLibrary {
     return nil
   }
 
-  /// Port of `parseIPAddr`: strict parsing, no zones, no IPv4-mapped IPv6.
+  /// Port of `parseIPAddr`: strict parsing, no zones, no IPv4-mapped IPv6 in dotted form.
+  ///
+  /// The cel-spec tests accept an IPv4-mapped address written in hexadecimal (`::ffff:c0a8:1`) as the
+  /// IPv4 address it maps (`192.168.0.1`), and reject the dotted form (`::ffff:192.168.0.1`); cel-go
+  /// rejects both (docs/divergences.md).
   static func parseIP(_ raw: String) -> Result<NetAddr, NetParseError> {
     let q = GoFormat.quote(raw)
     switch NetIP.parseAddr(raw) {
@@ -256,7 +260,10 @@ enum NetworkLibrary {
         return .failure(NetParseError(message: "IP address \(q) with zone value is not allowed"))
       }
       if addr.is4In6 {
-        return .failure(NetParseError(message: "IPv4-mapped IPv6 address \(q) is not allowed"))
+        if raw.utf8.contains(UInt8(ascii: ".")) {
+          return .failure(NetParseError(message: "IPv4-mapped IPv6 address \(q) is not allowed"))
+        }
+        return .success(NetAddr(bytes: Array(addr.bytes[12..<16])))
       }
       return .success(addr)
     }

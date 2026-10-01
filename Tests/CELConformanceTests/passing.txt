@@ -2927,6 +2927,7 @@ checked network_ext/ip_type/ip_to_string
 parse-only network_ext/ip_type/ip_to_string
 checked network_ext/ip_type/ip_type
 parse-only network_ext/ip_type/ip_type
+checked network_ext/ip_type/is_ip_cidr_compile_error
 parse-only network_ext/ip_type/is_ip_cidr_compile_error
 checked network_ext/ip_type/is_ip_invalid_ipv4
 parse-only network_ext/ip_type/is_ip_invalid_ipv4
@@ -2946,6 +2947,8 @@ checked network_ext/ip_type/parse_ipv6
 parse-only network_ext/ip_type/parse_ipv6
 checked network_ext/ipv4/ipv4_equals
 parse-only network_ext/ipv4/ipv4_equals
+checked network_ext/ipv4/ipv4_equals_ipv6
+parse-only network_ext/ipv4/ipv4_equals_ipv6
 checked network_ext/ipv4/ipv4_family
 parse-only network_ext/ipv4/ipv4_family
 checked network_ext/ipv4/ipv4_is_global_unicast_false
@@ -2962,6 +2965,8 @@ checked network_ext/ipv4/ipv4_is_unspecified_true
 parse-only network_ext/ipv4/ipv4_is_unspecified_true
 checked network_ext/ipv4/ipv4_not_equals
 parse-only network_ext/ipv4/ipv4_not_equals
+checked network_ext/ipv4/ipv4_not_equals_ipv6
+parse-only network_ext/ipv4/ipv4_not_equals_ipv6
 checked network_ext/ipv4/is_link_local_multicast_false
 parse-only network_ext/ipv4/is_link_local_multicast_false
 checked network_ext/ipv4/is_link_local_multicast_true

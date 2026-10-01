@@ -212,6 +212,11 @@ messages, error node ids, observed ids and runtime cost). The differences:
   substring) and skips those tests pending a spec update; when the pinned cel-spec adopts cel-go's
   behaviour, follow it. An offset equal to the length is accepted as before. The cel-go table rows
   `strings_test.go:148/150/159/161` expect the error here (`GoTableTests.specErrors`).
+- **`ip()` accepts an IPv4-mapped IPv6 address written in hexadecimal** (`::ffff:c0a8:1`) and returns the
+  IPv4 address it maps, so `ip('::ffff:c0a8:1') == ip('192.168.0.1')` and its `family()` is 4
+  (`network_ext/ipv4/ipv4_equals_ipv6`, `ipv4_not_equals_ipv6`). The dotted form (`::ffff:192.168.0.1`)
+  is still rejected, as the same suite requires; cel-go (Kubernetes-compatible parsing) rejects both.
+  `cidr()` keeps rejecting every IPv4-mapped prefix; the suite only tests the dotted form there.
 - **`string.format` before strings version 4 formats `%f` and `%e` with en-US symbols only.** cel-go
   formats them through `golang.org/x/text/message` with the CLDR symbols of the configured locale
   (`ext.StringsLocale`, e.g. `de_DE` prints `3,140`). The `locale` argument of `Library.strings` is
