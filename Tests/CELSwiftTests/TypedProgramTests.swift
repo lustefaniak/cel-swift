@@ -140,6 +140,33 @@ struct TypedProgramTests {
     }
   }
 
+  @Test func keyStrategyAppliesToFactsAndOutputs() throws {
+    struct Flag: Codable, Equatable {
+      var ruleID: String
+      var isFlagged: Bool
+    }
+    let options = CELCodingOptions(keyStrategy: .convertToSnakeCase)
+    let program = try TypedProgram<SelectFacts, Flag>(
+      expression: "{'rule_id': pr.base_ref, 'is_flagged': pr.created_at > timestamp('2020-01-01T00:00:00Z')}",
+      environment: Environment(), options: options)
+    #expect(try program.evaluate(.sample) == Flag(ruleID: "main", isFlagged: true))
+    #expect(throws: ValidationError.self) {
+      _ = try TypedProgram<SelectFacts, Bool>(
+        expression: "pr.baseRef == 'main'", environment: Environment(), options: options)
+    }
+  }
+
+  @Test func programOptionsBoundEvaluation() throws {
+    let program = try TypedProgram<SelectFacts, Bool>(
+      expression: "pr.files.all(f, pr.labels.all(l, f.size() > l.size()))", environment: Environment(),
+      programOptions: [.costLimit(3)])
+    #expect {
+      _ = try program.evaluate(.sample)
+    } throws: { error in
+      (error as? EvaluationError)?.message == "operation cancelled: actual cost limit exceeded"
+    }
+  }
+
   // MARK: Policies
 
   @Test func firstMatchPolicy() throws {
@@ -268,6 +295,34 @@ struct TypedProgramTests {
         Decision(rule: "approve", verdict: "approve", flag: nil),
         Decision(rule: "share-findings", verdict: "none", flag: nil),
       ])
+  }
+
+  @Test func explainsAggregateRulesWithTheirIDs() throws {
+    let yaml = """
+      name: attachments
+      rule:
+        aggregate:
+          - rule:
+              id: verdict
+              match:
+                - condition: review.verdict == "approve" && review.confidence >= 0.95
+                  output: '{"rule": "approve", "verdict": "approve"}'
+          - rule:
+              id: inline
+              match:
+                - condition: review.findings.exists(f, f.severity >= severity.suggestion)
+                  output: '{"rule": "share-findings", "verdict": "none"}'
+      """
+    let program = try TypedProgram<DecideFacts, [Decision]>(
+      policy: PolicySource(yaml, description: "attachments.yaml"), environment: baseEnvironment())
+    let explanation = try program.explain(.sample)
+    #expect(explanation.conditions.map(\.ruleID) == ["verdict", "inline"])
+    #expect(explanation.conditions.map(\.value) == [false, true])
+    #expect(explanation.conditions[0].terms.map(\.value) == [true, false])
+    #expect(explanation.conditions[0].terms[1].inputs.map(\.value) == [0.92])
+    #expect(
+      explanation.conditions[1].terms.map(\.text) == ["review.findings.exists(f, f.severity >= severity.suggestion)"])
+    #expect(try explanation.result.get() == [Decision(rule: "share-findings", verdict: "none", flag: nil)])
   }
 
   @Test func structLiteralOutputsAreTypeChecked() throws {
