@@ -6,7 +6,7 @@
 // dfa_state.go and prediction_mode.go (parser parts only).
 
 /// A semantic predicate context. The CEL grammar only has precedence predicates.
-indirect enum SemanticContext: Hashable {
+indirect enum SemanticContext: Hashable, Sendable {
   case none
   case predicate(ruleIndex: Int, predIndex: Int, isCtxDependent: Bool)
   case precedence(Int)
@@ -227,7 +227,7 @@ final class ATNConfigSet {
   }
 
   @discardableResult
-  func add(_ config: ATNConfig, _ mergeCache: inout MergeCache?) -> Bool {
+  func add(_ config: ATNConfig, _ mergeCache: MergeCache?) -> Bool {
     precondition(!readOnly, "set is read-only")
     if config.semanticContext != .none {
       hasSemanticContext = true
@@ -245,7 +245,7 @@ final class ATNConfigSet {
     let rootIsWildcard = !fullCtx
     let merged: PredictionContext?
     if let ec = existing.context, let cc = config.context {
-      merged = PredictionContext.merge(ec, cc, rootIsWildcard: rootIsWildcard, &mergeCache)
+      merged = PredictionContext.merge(ec, cc, rootIsWildcard: rootIsWildcard, mergeCache)
     } else {
       merged = existing.context ?? config.context
     }
@@ -258,9 +258,17 @@ final class ATNConfigSet {
     return true
   }
 
+  /// Appends a config known not to collide with any in the set (used to restore snapshots).
+  func appendUnique(_ config: ATNConfig) {
+    let key = ConfigLookupKey(
+      state: config.state, alt: config.alt, semanticContext: config.semanticContext)
+    configLookup[key] = config
+    configs.append(config)
+  }
+
   func add(_ config: ATNConfig) {
-    var noCache: MergeCache? = nil
-    add(config, &noCache)
+    let noCache: MergeCache? = nil
+    add(config, noCache)
   }
 
   var alts: BitSet {
@@ -474,5 +482,48 @@ enum PredictionMode {
     }
     let altsets = conflictingAltSubsets(configs)
     return hasConflictingAltSet(altsets) && !hasStateAssociatedWithOneAlt(configs)
+  }
+}
+
+/// An immutable copy of a configuration, so start states can be computed once per process.
+struct ConfigSnapshot: Sendable {
+  let state: Int
+  let alt: Int
+  let context: PredictionContext?
+  let semanticContext: SemanticContext
+  let reachesIntoOuterContext: Int
+  let precedenceFilterSuppressed: Bool
+}
+
+/// An immutable copy of a prediction start state's configuration set.
+struct ConfigSetSnapshot: Sendable {
+  let configs: [ConfigSnapshot]
+  let hasSemanticContext: Bool
+  let dipsIntoOuterContext: Bool
+
+  init(_ set: ATNConfigSet) {
+    configs = set.configs.map {
+      ConfigSnapshot(
+        state: $0.state, alt: $0.alt, context: $0.context, semanticContext: $0.semanticContext,
+        reachesIntoOuterContext: $0.reachesIntoOuterContext,
+        precedenceFilterSuppressed: $0.precedenceFilterSuppressed)
+    }
+    hasSemanticContext = set.hasSemanticContext
+    dipsIntoOuterContext = set.dipsIntoOuterContext
+  }
+
+  /// A fresh, mutable configuration set equal to the snapshot.
+  func materialize() -> ATNConfigSet {
+    let set = ATNConfigSet(fullCtx: false)
+    for c in configs {
+      let config = ATNConfig(
+        state: c.state, alt: c.alt, context: c.context, semanticContext: c.semanticContext)
+      config.reachesIntoOuterContext = c.reachesIntoOuterContext
+      config.precedenceFilterSuppressed = c.precedenceFilterSuppressed
+      set.appendUnique(config)
+    }
+    set.hasSemanticContext = hasSemanticContext
+    set.dipsIntoOuterContext = dipsIntoOuterContext
+    return set
   }
 }

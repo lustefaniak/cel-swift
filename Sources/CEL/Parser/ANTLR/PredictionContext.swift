@@ -201,18 +201,21 @@ struct PredictionContextPair: Hashable {
   }
 }
 
-typealias MergeCache = [PredictionContextPair: PredictionContext]
+/// The merge cache of one prediction, shared by reference.
+final class MergeCache {
+  var map: [PredictionContextPair: PredictionContext] = [:]
+}
 
 extension PredictionContext {
   /// antlr `merge`.
   static func merge(
-    _ a: PredictionContext, _ b: PredictionContext, rootIsWildcard: Bool, _ mergeCache: inout MergeCache?
+    _ a: PredictionContext, _ b: PredictionContext, rootIsWildcard: Bool, _ mergeCache: MergeCache?
   ) -> PredictionContext {
     if a === b || a.equals(b) {
       return a
     }
     if a.kind == .singleton && b.kind == .singleton {
-      return mergeSingletons(a, b, rootIsWildcard, &mergeCache)
+      return mergeSingletons(a, b, rootIsWildcard, mergeCache)
     }
     if rootIsWildcard {
       if a.isEmpty {
@@ -224,7 +227,7 @@ extension PredictionContext {
     }
     let ara = convertToArray(a)
     let arb = convertToArray(b)
-    return mergeArrays(ara, arb, rootIsWildcard, &mergeCache)
+    return mergeArrays(ara, arb, rootIsWildcard, mergeCache)
   }
 
   private static func convertToArray(_ pc: PredictionContext) -> PredictionContext {
@@ -242,34 +245,32 @@ extension PredictionContext {
     _ cache: MergeCache?, _ a: PredictionContext, _ b: PredictionContext
   ) -> PredictionContext? {
     guard let cache else { return nil }
-    if let previous = cache[PredictionContextPair(a: a, b: b)] {
+    if let previous = cache.map[PredictionContextPair(a: a, b: b)] {
       return previous
     }
-    return cache[PredictionContextPair(a: b, b: a)]
+    return cache.map[PredictionContextPair(a: b, b: a)]
   }
 
   private static func cachePut(
-    _ cache: inout MergeCache?, _ a: PredictionContext, _ b: PredictionContext,
+    _ cache: MergeCache?, _ a: PredictionContext, _ b: PredictionContext,
     _ value: PredictionContext
   ) {
-    if cache != nil {
-      cache?[PredictionContextPair(a: a, b: b)] = value
-    }
+    cache?.map[PredictionContextPair(a: a, b: b)] = value
   }
 
   private static func mergeSingletons(
     _ a: PredictionContext, _ b: PredictionContext, _ rootIsWildcard: Bool,
-    _ mergeCache: inout MergeCache?
+    _ mergeCache: MergeCache?
   ) -> PredictionContext {
     if let previous = cacheGet(mergeCache, a, b) {
       return previous
     }
     if let rootMerge = mergeRoot(a, b, rootIsWildcard) {
-      cachePut(&mergeCache, a, b, rootMerge)
+      cachePut(mergeCache, a, b, rootMerge)
       return rootMerge
     }
     if a.singletonReturnState == b.singletonReturnState {
-      let parent = mergeOptional(a.parentContext, b.parentContext, rootIsWildcard, &mergeCache)
+      let parent = mergeOptional(a.parentContext, b.parentContext, rootIsWildcard, mergeCache)
       if PredictionContext.equals(parent, a.parentContext) {
         return a
       }
@@ -277,7 +278,7 @@ extension PredictionContext {
         return b
       }
       let spc = singleton(parent: parent, returnState: a.singletonReturnState)
-      cachePut(&mergeCache, a, b, spc)
+      cachePut(mergeCache, a, b, spc)
       return spc
     }
     var singleParent: PredictionContext? = nil
@@ -295,7 +296,7 @@ extension PredictionContext {
         payloads = [b.singletonReturnState, a.singletonReturnState]
       }
       let apc = array(parents: [singleParent, singleParent], returnStates: payloads)
-      cachePut(&mergeCache, a, b, apc)
+      cachePut(mergeCache, a, b, apc)
       return apc
     }
     var payloads = [a.singletonReturnState, b.singletonReturnState]
@@ -305,19 +306,19 @@ extension PredictionContext {
       parents = [b.parentContext, a.parentContext]
     }
     let apc = array(parents: parents, returnStates: payloads)
-    cachePut(&mergeCache, a, b, apc)
+    cachePut(mergeCache, a, b, apc)
     return apc
   }
 
   /// Merges possibly-nil parents; nil only occurs for contexts built without a rule context.
   private static func mergeOptional(
     _ a: PredictionContext?, _ b: PredictionContext?, _ rootIsWildcard: Bool,
-    _ mergeCache: inout MergeCache?
+    _ mergeCache: MergeCache?
   ) -> PredictionContext? {
     guard let a, let b else {
       return a ?? b
     }
-    return merge(a, b, rootIsWildcard: rootIsWildcard, &mergeCache)
+    return merge(a, b, rootIsWildcard: rootIsWildcard, mergeCache)
   }
 
   private static func mergeRoot(
@@ -344,7 +345,7 @@ extension PredictionContext {
 
   private static func mergeArrays(
     _ a: PredictionContext, _ b: PredictionContext, _ rootIsWildcard: Bool,
-    _ mergeCache: inout MergeCache?
+    _ mergeCache: MergeCache?
   ) -> PredictionContext {
     if let previous = cacheGet(mergeCache, a, b) {
       return previous
@@ -366,7 +367,7 @@ extension PredictionContext {
           mergedParents.append(aParent)
           mergedReturnStates.append(payload)
         } else {
-          mergedParents.append(mergeOptional(aParent, bParent, rootIsWildcard, &mergeCache))
+          mergedParents.append(mergeOptional(aParent, bParent, rootIsWildcard, mergeCache))
           mergedReturnStates.append(payload)
         }
         i += 1
@@ -395,19 +396,19 @@ extension PredictionContext {
     let total = a.returnStates.count + b.returnStates.count
     if mergedParents.count < total && mergedParents.count == 1 {
       let pc = singleton(parent: mergedParents[0], returnState: mergedReturnStates[0])
-      cachePut(&mergeCache, a, b, pc)
+      cachePut(mergeCache, a, b, pc)
       return pc
     }
     let m = array(parents: mergedParents, returnStates: mergedReturnStates)
     if m.equals(a) {
-      cachePut(&mergeCache, a, b, a)
+      cachePut(mergeCache, a, b, a)
       return a
     }
     if m.equals(b) {
-      cachePut(&mergeCache, a, b, b)
+      cachePut(mergeCache, a, b, b)
       return b
     }
-    cachePut(&mergeCache, a, b, m)
+    cachePut(mergeCache, a, b, m)
     return m
   }
 }

@@ -765,6 +765,16 @@ final class ParserRuntime {
     } else {
       s0 = dfa.s0
     }
+    if s0 == nil, let snapshot = ParserRuntime.startStateSnapshot(decision, precedence) {
+      // The SLL start state depends only on the ATN and the precedence: reuse the precomputed one.
+      let start = addDFAState(dfa, DFAState(stateNumber: -1, configs: snapshot.materialize()))
+      if dfa.precedenceDfa {
+        dfa.setPrecedenceStartState(precedence, start)
+      } else {
+        dfa.s0 = start
+      }
+      s0 = start
+    }
     if s0 == nil {
       let s0Closure = computeStartState(dfa.atnStartState, nil, fullCtx: false)
       if dfa.precedenceDfa {
@@ -788,6 +798,45 @@ final class ParserRuntime {
     mergeCache = nil
     try seek(index)
     return alt
+  }
+
+  /// SLL start states per decision; precedence decisions have one per precedence 0...3.
+  private static let startStates: [[Int: ConfigSetSnapshot]] = {
+    let runtime = ParserRuntime(
+      input: [], sourceInfo: SourceInfo(source: nil), errors: CELErrors(), maxRecursionDepth: 1,
+      errorReportingLimit: 1, errorRecoveryLimit: 1, lookaheadLimit: 1)
+    return runtime.computeAllStartStates()
+  }()
+
+  static func startStateSnapshot(_ decision: Int, _ precedence: Int) -> ConfigSetSnapshot? {
+    let byPrecedence = startStates[decision]
+    if let plain = byPrecedence[-1] {
+      return plain
+    }
+    return byPrecedence[precedence]
+  }
+
+  private func computeAllStartStates() -> [[Int: ConfigSetSnapshot]] {
+    var out: [[Int: ConfigSetSnapshot]] = []
+    for decision in atn.decisionToState.indices {
+      let dfa = DFA(atn: atn, decision: decision)
+      currentDFA = dfa
+      var byPrecedence: [Int: ConfigSetSnapshot] = [:]
+      if dfa.precedenceDfa {
+        for p in 0...3 {
+          precedenceStack = [0, p]
+          let closure = computeStartState(dfa.atnStartState, nil, fullCtx: false)
+          byPrecedence[p] = ConfigSetSnapshot(applyPrecedenceFilter(closure))
+        }
+        precedenceStack = [0]
+      } else {
+        byPrecedence[-1] = ConfigSetSnapshot(
+          computeStartState(dfa.atnStartState, nil, fullCtx: false))
+      }
+      currentDFA = nil
+      out.append(byPrecedence)
+    }
+    return out
   }
 
   private func execATN(
@@ -941,7 +990,7 @@ final class ParserRuntime {
 
   private func computeReachSet(_ closure: ATNConfigSet, _ t: Int, fullCtx: Bool) -> ATNConfigSet? {
     if mergeCache == nil {
-      mergeCache = [:]
+      mergeCache = MergeCache()
     }
     let intermediate = ATNConfigSet(fullCtx: fullCtx)
     var skippedStopStates: [ATNConfig]? = nil
@@ -954,7 +1003,7 @@ final class ParserRuntime {
         continue
       }
       for trans in state.transitions where trans.matches(t, 0, atn.maxTokenType) {
-        intermediate.add(ATNConfig(c, state: trans.target), &mergeCache)
+        intermediate.add(ATNConfig(c, state: trans.target), mergeCache)
       }
     }
     var reach: ATNConfigSet? = nil
@@ -985,7 +1034,7 @@ final class ParserRuntime {
       !fullCtx || !PredictionMode.hasConfigInRuleStopState(result, atn)
     {
       for c in skippedStopStates {
-        result.add(c, &mergeCache)
+        result.add(c, mergeCache)
       }
     }
     if result.configs.isEmpty {
@@ -1004,13 +1053,13 @@ final class ParserRuntime {
     for config in configs.configs {
       let state = atn.states[config.state]
       if state.type == .ruleStop {
-        result.add(config, &mergeCache)
+        result.add(config, mergeCache)
         continue
       }
       if lookToEndOfRule && state.epsilonOnlyTransitions {
         if atn.nextTokens(config.state).contains(TokenType.epsilon) {
           let endOfRuleState = atn.ruleToStopState[state.ruleIndex]
-          result.add(ATNConfig(config, state: endOfRuleState), &mergeCache)
+          result.add(ATNConfig(config, state: endOfRuleState), mergeCache)
         }
       }
     }
@@ -1037,9 +1086,9 @@ final class ParserRuntime {
       }
       statesFromAlt1[config.state] = .some(config.context)
       if updated != config.semanticContext {
-        configSet.add(ATNConfig(config, semanticContext: updated), &mergeCache)
+        configSet.add(ATNConfig(config, semanticContext: updated), mergeCache)
       } else {
-        configSet.add(config, &mergeCache)
+        configSet.add(config, mergeCache)
       }
     }
     for config in configs.configs where config.alt != 1 {
@@ -1050,7 +1099,7 @@ final class ParserRuntime {
           continue
         }
       }
-      configSet.add(config, &mergeCache)
+      configSet.add(config, mergeCache)
     }
     return configSet
   }
@@ -1180,7 +1229,7 @@ final class ParserRuntime {
             if context.returnState(i) == PredictionContext.emptyReturnState {
               if fullCtx {
                 let nb = ATNConfig(currConfig, state: currConfig.state, context: .some(PredictionContext.empty))
-                configs.add(nb, &mergeCache)
+                configs.add(nb, mergeCache)
                 continue
               } else {
                 closureWork(
@@ -1199,7 +1248,7 @@ final class ParserRuntime {
           }
           continue
         } else if fullCtx {
-          configs.add(currConfig, &mergeCache)
+          configs.add(currConfig, mergeCache)
           continue
         }
       }
@@ -1214,7 +1263,7 @@ final class ParserRuntime {
   ) {
     let state = atn.states[config.state]
     if !state.epsilonOnlyTransitions {
-      configs.add(config, &mergeCache)
+      configs.add(config, mergeCache)
     }
     for (i, t) in state.transitions.enumerated() {
       if i == 0 && canDropLoopEntryEdgeInLeftRecursiveRule(config) {
