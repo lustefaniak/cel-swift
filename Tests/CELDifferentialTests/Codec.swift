@@ -10,6 +10,8 @@ indirect enum GType: Hashable, Sendable, CustomStringConvertible {
   case list(GType)
   case map(GType, GType)
   case optional(GType)
+  /// A protobuf message, by full name (see `Messages`).
+  case message(String)
 
   var celType: CELType {
     switch self {
@@ -26,6 +28,7 @@ indirect enum GType: Hashable, Sendable, CustomStringConvertible {
     case .list(let e): return .list(e.celType)
     case .map(let k, let v): return .map(key: k.celType, value: v.celType)
     case .optional(let e): return .optional(e.celType)
+    case .message(let name): return .object(name)
     }
   }
 
@@ -50,6 +53,7 @@ indirect enum GType: Hashable, Sendable, CustomStringConvertible {
     case .list(let e): return desc("list", [e])
     case .map(let k, let v): return desc("map", [k, v])
     case .optional(let e): return desc("optional_type", [e])
+    case .message(let name): return desc(name)
     }
   }
 
@@ -70,6 +74,7 @@ indirect enum GType: Hashable, Sendable, CustomStringConvertible {
     case ("list", 1): self = .list(params[0])
     case ("map", 2): self = .map(params[0], params[1])
     case ("optional_type", 1): self = .optional(params[0])
+    case (let name, 0) where name.contains("."): self = .message(name)
     default: return nil
     }
   }
@@ -105,6 +110,8 @@ indirect enum GValue: Sendable {
   case list([GValue])
   case map([(GValue, GValue)])
   case optional(GValue?)
+  /// A message by full name, with the fields that are set.
+  case message(String, [(String, GValue)])
 
   /// The oracle's typed JSON.
   var json: JSON {
@@ -124,6 +131,8 @@ indirect enum GValue: Sendable {
         ("map", .array(entries.map { .object([("key", $0.0.json), ("value", $0.1.json)]) }))
       ])
     case .optional(let v): return .object([("optional", v?.json ?? .null)])
+    case .message(let name, _):
+      return .object([("message", .object([("type", .string(name)), ("value", Messages.protoJSON(self))]))])
     }
   }
 }
@@ -304,6 +313,8 @@ enum Codec {
     case "optional":
       if payload == .null { return .optional(nil) }
       return .optional(try value(payload))
+    case "message":
+      return try Messages.value(payload)
     case "list":
       if let items = payload.arrayValue { return .list(ArrayList(try items.map(value))) }
     case "map":
@@ -369,7 +380,7 @@ enum Codec {
         canonical(json: $0["key"] ?? .null) + ": " + canonical(json: $0["value"] ?? .null)
       }
       return "{" + entries.sorted().joined(separator: ", ") + "}"
-    case "message": return "message:\(p.rendered)"
+    case "message": return Messages.canonical(json: p)
     default: return "?\(j.rendered)"
     }
   }
@@ -395,7 +406,7 @@ enum Codec {
         entries.append(canonical(k.value) + ": " + canonical(value))
       }
       return "{" + entries.sorted().joined(separator: ", ") + "}"
-    case .object(let o): return "message:\(o.celType.runtimeTypeName)"
+    case .object(let o): return Messages.canonical(o)
     case .error(let e): return "error:\(e.message)"
     case .unknown(let u): return "unknown:" + u.exprIDs.sorted().map(String.init).joined(separator: ",")
     }

@@ -98,7 +98,10 @@ let package = Package(
     // Differential tests against cel-go through tools/oracle; see the test file header.
     .testTarget(
       name: "CELDifferentialTests",
-      dependencies: ["CEL", "CELExtensions"],
+      dependencies: [
+        "CEL", "CELExtensions", "CELProtobuf", "CELSpecProtos",
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+      ],
       exclude: ["regressions.jsonl"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),

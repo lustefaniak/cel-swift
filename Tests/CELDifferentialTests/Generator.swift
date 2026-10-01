@@ -7,7 +7,7 @@
 // algorithm is not guaranteed stable across toolchains.
 
 /// SplitMix64.
-struct SeededRandom {
+struct SeededRandom: RandomNumberGenerator {
   var state: UInt64
 
   init(seed: UInt64) {
@@ -41,6 +41,10 @@ struct SeededRandom {
   }
 
   /// Picks an index by weight.
+  mutating func pickIndex(_ count: Int) -> Int {
+    below(count)
+  }
+
   mutating func weighted(_ weights: [Int]) -> Int {
     let total = weights.reduce(0, +)
     var r = below(max(total, 1))
@@ -136,6 +140,8 @@ enum Profile: String, Sendable {
   case std
   /// Like `full`, with each extension at a random version (functions it lacks fail to compile).
   case versioned
+  /// Like `full`, plus the conformance TestAllTypes messages in the `cel.expr.conformance` container.
+  case proto
 
   /// The extensions of `full` and the highest version cel-go v0.32.0 defines for each, in the order they are
   /// applied.
@@ -155,6 +161,12 @@ enum Profile: String, Sendable {
     if self != .std {
       decls += [("oi", .optional(.int)), ("os", .optional(.string)), ("lo", .list(.optional(.int)))]
     }
+    if self == .proto {
+      decls += [
+        ("m3", .message("cel.expr.conformance.proto3.TestAllTypes")),
+        ("m2", .message("cel.expr.conformance.proto2.TestAllTypes")),
+      ]
+    }
     return decls
   }
 }
@@ -163,6 +175,11 @@ enum Profile: String, Sendable {
 /// `docs/status.md`. Remove an entry when its bug is fixed.
 enum KnownGaps {
   static let disabled: Set<String> = []
+
+  /// Proto2 enums are closed in SwiftProtobuf: a field cannot hold an undeclared number, so cel-swift
+  /// rejects `proto2.TestAllTypes{standalone_enum: 10}` (`invalid enum value 10 for NestedEnum`) where
+  /// cel-go stores 10. Message literals give proto2 enum fields declared values only.
+  static let closedEnums = true
 }
 
 struct Generator {
@@ -182,6 +199,13 @@ struct Generator {
   }
 
   var full: Bool { profile != .std }
+  var messages: Bool { profile == .proto }
+
+  static let messageNames: [String] = [
+    "cel.expr.conformance.proto3.TestAllTypes", "cel.expr.conformance.proto2.TestAllTypes",
+    "cel.expr.conformance.proto3.TestAllTypes.NestedMessage", "cel.expr.conformance.proto3.NestedTestAllTypes",
+    "cel.expr.conformance.proto2.TestAllTypes.NestedMessage", "cel.expr.conformance.proto2.NestedTestAllTypes",
+  ]
 
   static func enabled(_ name: String) -> Bool {
     !KnownGaps.disabled.contains(name)
@@ -360,9 +384,17 @@ struct Generator {
       var keys: [String] = []
       for _ in 0..<n {
         // Distinct literal keys: cel-swift rejects repeated keys where cel-go overwrites (docs/divergences.md).
-        let key = rng.chance(80) ? literal(k, 0) : (depth > 0 ? gen(k, depth - 1) : literal(k, 0))
-        if keys.contains(key.rendered) { continue }
-        keys.append(key.rendered)
+        // Computed keys can still repeat; those cases are skipped as a documented divergence.
+        let key: Node
+        let identity: String
+        if rng.chance(80) || depth <= 0 {
+          (key, identity) = keyLiteral(k)
+        } else {
+          key = gen(k, depth - 1)
+          identity = "expr:" + key.rendered
+        }
+        if keys.contains(identity) { continue }
+        keys.append(identity)
         let i = keys.count - 1
         kids.append(key)
         if full && rng.chance(10) {
@@ -378,6 +410,72 @@ struct Generator {
     case .optional(let e):
       if rng.chance(30) { return Node("optional.none()", [], t) }
       return Node("optional.of($0)", [depth > 0 ? gen(e, depth - 1) : literal(e, 0)], t)
+    case .message(let name):
+      let fields = Messages.fields[name] ?? []
+      var kids: [Node] = []
+      var parts: [String] = []
+      var used: [String] = []
+      for _ in 0..<(fields.isEmpty ? 0 : rng.range(0, 3)) {
+        let f = rng.pick(fields)
+        if used.contains(f.name) { continue }
+        used.append(f.name)
+        let value: Node
+        if name.contains(".proto2.") && f.name.contains("enum") {
+          // KnownGaps.closedEnums: only declared values for proto2 enums.
+          value = closedEnumLiteral(f.type)
+        } else if (f.isWrapper || f.type == .null) && rng.chance(25) {
+          value = Node("null", [], .null)
+        } else if case .message = f.type, depth <= 0 {
+          value = Self.minimalLiterals(f.type)[0]
+        } else {
+          value = depth > 0 ? gen(f.type, depth - 1) : literal(f.type, 0)
+        }
+        // An optional field entry `?f: optional` sets the field only when the optional has a value.
+        if full && rng.chance(8) {
+          kids.append(Node("optional.of($0)", [value], .optional(f.type)))
+          parts.append("?\(f.name): $\(kids.count - 1)")
+        } else {
+          kids.append(value)
+          parts.append("\(f.name): $\(kids.count - 1)")
+        }
+      }
+      return Node(Messages.shortName(name) + "{" + parts.joined(separator: ", ") + "}", kids, t)
+    }
+  }
+
+  /// A literal holding only declared values (0, 1, 2) of a proto2 enum, for an enum, list of enums or map of
+  /// enums field.
+  mutating func closedEnumLiteral(_ t: GType) -> Node {
+    switch t {
+    case .list:
+      return Node("[" + (0..<rng.range(0, 2)).map { _ in "\(rng.range(0, 2))" }.joined(separator: ", ") + "]", [], t)
+    case .map(let k, _):
+      if rng.chance(30) { return Node("{}", [], t) }
+      let (key, _) = keyLiteral(k)
+      return Node("{$0: \(rng.range(0, 2))}", [key], t)
+    default:
+      return Node("\(rng.range(0, 2))", [], t)
+    }
+  }
+
+  /// A map key literal and the identity of its value, so a literal map never repeats a key.
+  mutating func keyLiteral(_ k: GType) -> (Node, String) {
+    switch k {
+    case .string:
+      let s = rng.chance(60) ? rng.pick(Self.mapKeys) : rng.pick(Self.strings)
+      return (Node(Self.quote(s), [], .string), "s:" + s)
+    case .int:
+      let v: Int64 = rng.chance(50) ? Int64(rng.range(-3, 3)) : rng.pick(Self.ints)
+      return (Node("\(v)", [], .int, op: v < 0), "i:\(v)")
+    case .uint:
+      let v: UInt64 = rng.chance(50) ? UInt64(rng.range(0, 3)) : rng.pick(Self.uints)
+      return (Node("\(v)u", [], .uint), "u:\(v)")
+    case .bool:
+      let v = rng.chance(50)
+      return (Node("\(v)", [], .bool), "b:\(v)")
+    default:
+      let node = literal(k, 0)
+      return (node, "x:" + node.rendered)
     }
   }
 
@@ -397,6 +495,7 @@ struct Generator {
     case .list: return [Node("[]", [], t)]
     case .map: return [Node("{}", [], t)]
     case .optional: return [Node("optional.none()", [], t)]
+    case .message(let name): return [Node(Messages.shortName(name) + "{}", [], t)]
     }
   }
 
@@ -409,9 +508,10 @@ struct Generator {
 
   mutating func randomType(scalarOnly: Bool = false, nesting: Int = 2) -> GType {
     if scalarOnly || nesting == 0 { return scalarType() }
-    switch rng.weighted([14, 3, 2, full ? 2 : 0, 1]) {
+    switch rng.weighted([14, 3, 2, full ? 2 : 0, 1, messages ? 3 : 0]) {
     case 0: return scalarType()
     case 4: return .dyn
+    case 5: return .message(Self.messageNames[rng.weighted([4, 3, 1, 1, 1, 1])])
     case 1: return .list(randomType(nesting: nesting - 1))
     case 2:
       let keys: [GType] = [.int, .uint, .string, .bool]
@@ -452,6 +552,67 @@ struct Generator {
       }
       return .map(entries)
     case .optional(let e): return rng.chance(30) ? .optional(nil) : .optional(value(e, nesting: nesting - 1))
+    case .message(let name): return messageValue(name, nesting: nesting)
+    }
+  }
+
+  /// A message binding with a few fields set, each in range for its protobuf type.
+  mutating func messageValue(_ name: String, nesting: Int) -> GValue {
+    let fields = (Messages.fields[name] ?? []).filter { f in
+      // NullValue fields take only null, which the generator does not bind.
+      if f.name.contains("null_value") { return false }
+      switch f.type {
+      case .int, .uint, .double, .string, .bytes, .bool, .duration, .timestamp: return true
+      case .list(let e), .map(_, let e): return e.isOrderable
+      case .message: return nesting > 0
+      default: return false
+      }
+    }
+    var set: [(String, GValue)] = []
+    for _ in 0..<(fields.isEmpty ? 0 : rng.range(0, 4)) {
+      let f = rng.pick(fields)
+      if set.contains(where: { $0.0 == f.name }) { continue }
+      // Members of one oneof cannot both be set in protobuf JSON.
+      let oneofs = [["single_nested_message", "single_nested_enum"], ["oneof_type", "oneof_msg", "oneof_bool"]]
+      let clash = oneofs.contains { group in group.contains(f.name) && set.contains { group.contains($0.0) } }
+      if clash { continue }
+      set.append((f.name, fieldValue(f, nesting: nesting)))
+    }
+    return .message(name, set)
+  }
+
+  /// A value that fits a field: 32-bit fields get 32-bit numbers, enums their values, floats exact floats.
+  /// The protobuf kind comes from the field name: `map_<key>_<value>`, `repeated_<kind>`, `single_<kind>`,
+  /// and `bb` (NestedMessage's int32).
+  mutating func fieldValue(_ f: Messages.Field, nesting: Int) -> GValue {
+    func scalar(_ t: GType, _ kind: String) -> GValue {
+      if kind.contains("enum") { return .int(Int64(rng.range(0, 2))) }
+      switch t {
+      case .int where kind.contains("32") || kind == "bb":
+        return .int(Int64(rng.pick([0, 1, -1, 7, 2_147_483_647, -2_147_483_648])))
+      case .uint where kind.contains("32"): return .uint(UInt64(rng.pick([0, 1, 7, 4_294_967_295])))
+      case .double where kind.contains("float"): return .double(rng.pick([0, 1.5, -2.25, 0.5, 1e10, .infinity]))
+      default: return value(t, nesting: 0)
+      }
+    }
+    switch f.type {
+    case .list(let e): return .list((0..<rng.range(0, 3)).map { _ in scalar(e, f.name) })
+    case .map(let k, let v):
+      // map_<key>_<value>: the key kind is the second word.
+      let words = f.name.split(separator: "_").map(String.init)
+      let keyKind = words.count > 1 ? words[1] : ""
+      let valueKind = words.dropFirst(2).joined(separator: "_")
+      var entries: [(GValue, GValue)] = []
+      var seen: [String] = []
+      for _ in 0..<rng.range(0, 2) {
+        let key = scalar(k, keyKind)
+        if seen.contains(key.json.rendered) { continue }
+        seen.append(key.json.rendered)
+        entries.append((key, scalar(v, valueKind)))
+      }
+      return .map(entries)
+    case .message(let name): return messageValue(name, nesting: nesting - 1)
+    default: return scalar(f.type, f.name)
     }
   }
 
@@ -469,6 +630,7 @@ struct Generator {
     case .list: return .list(.dyn)
     case .map: return .map(.dyn, .dyn)
     case .optional: return .optional(.dyn)
+    case .message(let name, _): return .message(name)
     }
   }
 
@@ -514,6 +676,9 @@ struct Generator {
   }
 
   mutating func leaf(_ t: GType) -> Node {
+    if t == .int && messages && rng.chance(10) {
+      return Node(rng.pick(Messages.enumConstants), [], .int)
+    }
     let candidates = names(of: t)
     if !candidates.isEmpty && rng.chance(55) {
       let name = rng.pick(candidates)
@@ -573,6 +738,18 @@ struct Generator {
       ])
       return Node("%0[$1]", [g.gen(.map(k, t), d), Node(key, [], .dyn)], t)
     }
+    if messages {
+      // Fields of type t on any generated message.
+      let sources = Self.messageNames.flatMap { m in
+        (Messages.fields[m] ?? []).filter { $0.type == t }.map { (m, $0.name) }
+      }
+      if !sources.isEmpty {
+        add(4, "msg_field") { g in
+          let (m, field) = g.rng.pick(sources)
+          return Node("%0.\(field)", [g.gen(.message(m), d)], t)
+        }
+      }
+    }
     add(1, "map_select") { g in
       Node("%0.\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty }))", [g.gen(.map(.string, t), d)], t)
     }
@@ -616,6 +793,7 @@ struct Generator {
         Node("dyn(%0).\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty }))", [g.gen(g.randomType(nesting: 1), d)], .dyn)
       }
     case .null: break
+    case .message: break
     }
 
     for _ in 0..<8 {
@@ -889,6 +1067,11 @@ struct Generator {
       let maps = g.decls.filter { if case .map(.string, _) = $0.1 { return true } else { return false } }.map(\.0)
       return Node("has(\(g.rng.pick(maps)).\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty })))", [], .bool)
     }
+    addIf(&o, messages, 4, "msg_has") { g in
+      let m = g.rng.pick(Self.messageNames)
+      guard let f = Messages.fields[m]?.randomElement(using: &g.rng) else { return nil }
+      return Node("has(%0.\(f.name))", [g.gen(.message(m), d)], .bool)
+    }
     addIf(&o, true, 1, "has_expr") { g in
       // Presence tests on computed maps and on values that are not maps at all.
       let operand = g.rng.chance(60) ? g.gen(.map(.string, g.scalarType()), d) : g.gen(g.randomType(nesting: 1), d)
@@ -909,7 +1092,8 @@ struct Generator {
         "bool($0)", [g.stringLiteral(g.rng.pick(["true", "false", "1", "t", "TRUE", "no", "f", "True"]))], .bool)
     }
     addIf(&o, true, 2, "type_eq") { g in
-      Node("type(%0) == \(g.rng.pick(Self.typeNames))", [g.gen(g.randomType(), d)], .bool, op: true)
+      let names = Self.typeNames + (g.messages ? ["proto3.TestAllTypes", "proto2.TestAllTypes"] : [])
+      return Node("type(%0) == \(g.rng.pick(names))", [g.gen(g.randomType(), d)], .bool, op: true)
     }
     for macro in ["all", "exists", "exists_one"] {
       addIf(&o, comprehensionDepth < 2, 2, macro) { g in
@@ -1122,6 +1306,14 @@ struct Generator {
       let maps = g.decls.filter { $0.1 == .map(.string, e) }.map(\.0)
       guard !maps.isEmpty else { return nil }
       return Node("\(g.rng.pick(maps)).?\(g.rng.pick(Self.mapKeys.filter { !$0.isEmpty }))", [], t)
+    }
+    addIf(&o, messages, 3, "msg_opt_field") { g in
+      let sources = Self.messageNames.flatMap { m in
+        (Messages.fields[m] ?? []).filter { $0.type == e }.map { (m, $0.name) }
+      }
+      guard !sources.isEmpty else { return nil }
+      let (m, field) = g.rng.pick(sources)
+      return Node("%0.?\(field)", [g.gen(.message(m), d)], t)
     }
     addIf(&o, true, 2, "opt_or") { g in Node("%0.or(%1)", [g.gen(t, d), g.gen(t, d)], t) }
     addIf(&o, comprehensionDepth < 2, 1, "optMap") { g in

@@ -44,10 +44,17 @@ struct DiffCase: Sendable {
   /// The oracle request; also everything the cel-swift side needs.
   var request: JSON {
     let decls = profile.declarations
+    // Message variables go through decls_proto: the env config resolves variable types before any
+    // extension registers the message types.
+    let plain = decls.filter { if case .message = $0.1 { return false } else { return true } }
+    let messageDecls: [JSON] = decls.compactMap { name, type in
+      guard case .message(let m) = type else { return nil }
+      return .object([("name", .string(name)), ("ident", .object([("type", .object([("message_type", .string(m))]))]))])
+    }
     let config: JSON = .object([
       (
         "variables",
-        .array(decls.map { name, type in .object([("name", .string(name))] + (type.typeDesc.objectValue ?? [])) })
+        .array(plain.map { name, type in .object([("name", .string(name))] + (type.typeDesc.objectValue ?? [])) })
       ),
       ("extensions", .array(extensions.map { .object([("name", .string($0.0)), ("version", .string($0.1))]) })),
     ])
@@ -55,6 +62,11 @@ struct DiffCase: Sendable {
       ("id", .string(id)), ("kind", "eval"), ("expr", .string(expr)), ("config", config),
       ("bindings", .object(bindings.map { ($0.0, $0.1.json) })),
     ]
+    if profile == .proto {
+      fields.append(("container", .string(Messages.container)))
+      fields.append(("test_types", true))
+      fields.append(("decls_proto", .array(messageDecls)))
+    }
     if checked {
       fields.append(("size_hints", Self.sizeHints(decls)))
     } else {
@@ -77,13 +89,14 @@ struct DiffCase: Sendable {
     var mixer = SeededRandom(seed: seed &* 0x2545_F491_4F6C_DD1D &+ UInt64(index))
     let caseSeed = mixer.next()
     var pick = SeededRandom(seed: caseSeed ^ 0xA5A5)
-    let profile: Profile = [.full, .std, .versioned][pick.weighted([70, 20, 10])]
+    let profile: Profile = [.full, .std, .versioned, .proto][pick.weighted([60, 15, 10, 15])]
     let checked = pick.chance(85)
     var extensions: [(String, String)] = []
     switch profile {
     case .full: extensions = Profile.extensionVersions.map { ($0.0, "latest") }
     case .std: break
     case .versioned: extensions = Profile.extensionVersions.map { ($0.0, String(pick.range(0, $0.1))) }
+    case .proto: extensions = Profile.extensionVersions.map { ($0.0, "latest") }
     }
     var generator = Generator(seed: caseSeed, profile: profile)
     let (root, bindings) = generator.makeCase()
@@ -208,6 +221,8 @@ struct Mismatch: Sendable, CustomStringConvertible {
         return o.evalError != e
       }
     ),
+    // docs/divergences.md: cel-go accepts any value as a map literal key (parse-only expressions).
+    ("map literals reject non-key types", { _, s in s.evalError?.hasPrefix("unsupported key type") ?? false }),
     // cel-go panics (recovered as `internal error: interface conversion ...`) in the runtime cost trackers of
     // ext/lists.go `distinct` and `sort`, which cast their argument to a list without checking for an error.
     ("cel-go panics", { o, _ in o.evalError?.hasPrefix("internal error: ") ?? false }),
@@ -275,8 +290,12 @@ struct SwiftSide {
     }
   }
 
-  mutating func environment(_ config: JSON) throws -> Environment {
-    let key = config.rendered
+  mutating func environment(_ request: JSON) throws -> Environment {
+    let config = request["config"] ?? .object([])
+    let container = request["container"]?.stringValue
+    let testTypes = request["test_types"]?.boolValue ?? false
+    let declsProto = request["decls_proto"]?.arrayValue ?? []
+    let key = config.rendered + (container ?? "") + "\(testTypes)" + JSON.array(declsProto).rendered
     if let cached = environments[key] {
       return try cached.get()
     }
@@ -286,6 +305,19 @@ struct SwiftSide {
     }
     for ext in config["extensions"]?.arrayValue ?? [] {
       options.append(.library(try Self.library(ext)))
+    }
+    if testTypes {
+      options.append(.typeProvider(TypeRegistry(composing: Messages.types, adapter: Messages.types)))
+    }
+    if let container {
+      options.append(.container(container))
+    }
+    for decl in declsProto {
+      guard let name = decl["name"]?.stringValue, let message = decl["ident"]?["type"]?["message_type"]?.stringValue
+      else {
+        throw CodecError(description: "unsupported decls_proto entry \(decl.rendered)")
+      }
+      options.append(.variable(name, .object(message)))
     }
     let result: Result<Environment, DeclarationError>
     do {
@@ -342,7 +374,7 @@ struct SwiftSide {
     var bindings: [String: Value] = [:]
     var hints: [String: ClosedRange<UInt64>] = [:]
     do {
-      env = try environment(request["config"] ?? .object([]))
+      env = try environment(request)
       for (name, v) in request["bindings"]?.objectValue ?? [] {
         bindings[name] = try Codec.value(v)
       }

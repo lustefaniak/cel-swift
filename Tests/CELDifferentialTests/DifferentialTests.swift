@@ -156,7 +156,10 @@ struct DifferentialTests {
 
     // Minimise one failure per signature and record it.
     var signatures: [String: Failure] = [:]
-    for f in failures where signatures[f.signature] == nil { signatures[f.signature] = f }
+    // Harness failures (a binding or configuration either side rejects) are generator bugs: not recorded.
+    for f in failures where signatures[f.signature] == nil && f.mismatches.first?.category != .harness {
+      signatures[f.signature] = f
+    }
     var checker = Checker()
     var recorded: [JSON] = []
     for (signature, failure) in signatures.sorted(by: { $0.key < $1.key }).prefix(Self.maxMinimize) {
@@ -192,6 +195,9 @@ struct DifferentialTests {
     let variables = (config["variables"]?.arrayValue ?? []).filter { keep($0["name"]?.stringValue ?? "") }
     config = config.setting("variables", .array(variables))
     var out = request.setting("config", config)
+    if let decls = request["decls_proto"]?.arrayValue {
+      out = out.setting("decls_proto", .array(decls.filter { keep($0["name"]?.stringValue ?? "") }))
+    }
     for key in ["bindings", "size_hints"] {
       if let fields = request[key]?.objectValue {
         out = out.setting(key, .object(fields.filter { keep($0.0) }))

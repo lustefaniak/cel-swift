@@ -88,6 +88,7 @@ enum Reducer {
     case .map(let m): return m.isEmpty ? nil : .map([])
     case .optional(let o): return o == nil ? nil : .optional(nil)
     case .null: return nil
+    case .message(let name, let fields): return fields.isEmpty ? nil : .message(name, [])
     }
   }
 
