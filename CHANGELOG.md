@@ -93,6 +93,23 @@ Settled before the release after a design review, for code written against `main
   materializing their keys; `keys` is an extension (`docs/decisions.md` § 13).
 - Every `TypeProvider` requirement has a default that reports a miss, so a provider composed under a
   `TypeRegistry` implements only the lookups it answers (`docs/decisions.md` § 14).
+- `TypeRegistry.registerEnumValue(_:number:)` takes an `Int32`, the width of protobuf and cel-go enum
+  numbers; with strong enums an `Int64` outside that range used to wrap silently.
+
+### Untrusted input
+
+Inputs that crashed or used memory out of proportion to their size are now errors or bounded:
+
+- YAML (policies, environment configs, test suites, `YAMLNode.decodeValue()`): decodes that are mostly alias
+  expansion fail with go-yaml's `document contains excessive aliasing`; deep documents no longer overflow the
+  stack (the composer is iterative, decoding and the policy parser and compiler run on a large stack when
+  needed), and decoding stops at 1000 nested collections; duplicate-key checks are linear, reporting at most
+  1000 errors per mapping.
+- Lists extension: `flatten` handles host lists nested deeper than the thread's stack.
+- `CELRegex`: the NFA allocates capture slots as threads are created, as Go does, instead of for every
+  possible thread up front (quadratic in the pattern for capture-heavy patterns).
+- `CELProtobuf`: a proto2 enum field decoded with both a declared and an undeclared number reads the
+  declared one, as protobuf's closed enums and swift-protobuf's accessors do (`docs/divergences.md`).
 
 ### Conformance
 
