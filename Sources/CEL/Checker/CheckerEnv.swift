@@ -58,19 +58,6 @@ package struct CheckerEnv: Sendable {
     ]
   }()
 
-  /// The macros the parser expands, as (function, receiver style, argument count): a function
-  /// overload with the same shape could never be called (cel-go `parser.AllMacros`).
-  static let allMacros: [(function: String, isReceiverStyle: Bool, argCount: Int)] = [
-    (Operators.has, false, 1),
-    (Operators.all, true, 2),
-    (Operators.exists, true, 2),
-    (Operators.existsOne, true, 2),
-    ("existsOne", true, 2),
-    (Operators.map, true, 2),
-    (Operators.map, true, 3),
-    (Operators.filter, true, 2),
-  ]
-
   /// The container names are resolved in.
   package let container: Container
   /// Resolves message types, fields, enum values and type identifiers.
@@ -266,7 +253,7 @@ package struct CheckerEnv: Sendable {
       }
     }
     for overload in current.overloads {
-      for macro in CheckerEnv.allMacros
+      for macro in Macro.allMacros
       where macro.function == current.name && macro.isReceiverStyle == overload.isMemberFunction
         && macro.argCount == overload.argTypes.count
       {

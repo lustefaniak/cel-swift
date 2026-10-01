@@ -84,3 +84,21 @@ by fixtures generated from cel-go (`tools/value-fixtures`). The differences:
   when the directory is unreadable (iOS sandboxes). FoundationEssentials alone cannot resolve zone names on
   Linux, which is why Foundation is not used there. Zones are not cached: each accessor call with a zone
   name reads the TZif file.
+
+## Type checker
+
+The checker is cel-go's `checker` package; messages, type inference and the debug printer output match
+cel-go (the full `checker_test.go` table passes). Quirks kept on purpose because they are observable:
+comprehension scopes drop the cross-type numeric comparison filter and the JSON field name option, as
+cel-go's `enterScope` / `exitScope` do, so `[1].all(x, x < 2.0)` type-checks even without the option. The
+differences:
+
+- **Type variables are numbered in first-use order.** cel-go instantiates an overload's type parameters in
+  Go map iteration order, so `_varN` numbering for overloads with several parameters is random there. It
+  only shows in error messages that mention unresolved type variables.
+- **`FormatCheckedType` (for `cel.expr.Type` protos) and `checker/decls` are not ported**: the core has
+  no protobuf types. `CELType.checkerDescription` is `FormatCELType`, which produces the same strings.
+- **Expressions in two error messages are rendered with the debug printer.** `incompatible type already
+  exists` and `unsupported optional field selection: <expr>` print a Go struct with `%v` in cel-go; neither
+  can be produced by parsed input.
+- **`TestCheckInvalidLiteral` has no counterpart**: `Constant` cannot hold a duration literal.
