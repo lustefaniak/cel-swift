@@ -18,9 +18,10 @@ import CELPolicy
 /// ```swift
 /// let explanation = try decide.explain(facts)
 /// print(explanation)
-/// // decide.yaml:8:9 [verdict] pr.author in lists.trusted && pr.additions <= 200 -> false
-/// //   true   pr.author in lists.trusted   (pr.author = "alice")
-/// //   false  pr.additions <= 200          (pr.additions = 412)
+/// // decide.yaml:8:9 [verdict] pr.author in lists.trusted && variables.size <= 200 -> false
+/// //   true   pr.author in lists.trusted   (pr.author = "alice", lists.trusted = ["alice", "bob"])
+/// //   false  variables.size <= 200   (variables.size = 442)
+/// // result: Decision(rule: "nothing", verdict: "none")
 /// ```
 public struct Explanation<Output>: CustomStringConvertible {
   /// A condition: a policy `match` condition, or the whole expression.

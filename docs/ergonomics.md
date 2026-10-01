@@ -162,11 +162,13 @@ thrown error becomes the call's error value.
 })
 ```
 
-Arities 0 to 3 (`overload`) and 1 to 3 (`memberOverload`), as explicit generic overloads: parameter packs
-would cover any arity, but iterating packs to derive argument types and decode arguments needs Swift 6.0
-features (pack iteration) that have had compiler bugs on the 6.0 floor, and four arities cover the rules.
-The factories throw `DeclarationError` when a type cannot be described, inside the same `try` as the
-environment.
+Arities 0 to 3 (`overload`) and 1 to 3 (`memberOverload`), as explicit generic overloads. Parameter packs
+would cover any arity, but decoding a `[Value]` into a pack needs a running index inside a pack expansion,
+and explicit overloads keep the type checker's diagnostics at call sites readable; four arities cover the
+rules, and packs can be added later without breaking these. The factories throw `DeclarationError` when a
+type cannot be described, inside the same `try` as the environment. The bindings capture the typed
+implementation behind an existential, so the `@Sendable` closures capture no generic metatypes (Swift 6.2
+warns about those).
 
 ### U5: enumerations
 
@@ -221,13 +223,18 @@ which for a composed policy points into a `cel.@block` whose nodes no longer loo
 After:
 
 ```swift
-let explanation = try decide.explain(facts)
+let explanation = try decide.explain(facts)   // pr.additions = 412
 print(explanation)
-// decide.yaml:8:9 pr.author in lists.trusted && review.confidence >= 0.85 && variables.size <= 200 -> false
+// decide.yaml:8:9 pr.author in lists.trusted && review.verdict == "approve" && review.confidence >= 0.85 && variables.size <= 200 -> false
 //   true   pr.author in lists.trusted   (pr.author = "alice", lists.trusted = ["alice", "bob"])
+//   true   review.verdict == "approve"   (review.verdict = "approve")
 //   true   review.confidence >= 0.85   (review.confidence = 0.92)
 //   false  variables.size <= 200   (variables.size = 442)
-// result: CELSwiftTests.Decision(rule: "nothing", verdict: "none", flag: nil)
+// decide.yaml:12:9 review.verdict == "request_changes" && review.confidence >= 0.9 && review.findings.exists(f, f.severity >= severity.blocker) -> false
+//   false  review.verdict == "request_changes"   (review.verdict = "approve")
+//   true   review.confidence >= 0.9   (review.confidence = 0.92)
+//   false  review.findings.exists(f, f.severity >= severity.blocker)
+// result: Decision(rule: "nothing", verdict: "none", flag: nil)
 ```
 
 `Explanation` has one `Condition` per policy match condition (or one for an expression), in file order, with

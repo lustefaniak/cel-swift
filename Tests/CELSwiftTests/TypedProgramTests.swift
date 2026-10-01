@@ -442,7 +442,19 @@ struct TypedProgramTests {
     #expect(size.inputs.map(\.value) == [442])
     #expect(explanation.conditions.count == 2)
     #expect(explanation.conditions[1].value == false)
-    #expect(explanation.description.contains("decide.yaml:8:9 pr.author in lists.trusted"))
+    #expect(
+      explanation.description == """
+        decide.yaml:8:9 pr.author in lists.trusted && review.verdict == "approve" && review.confidence >= 0.85 && variables.size <= 200 -> false
+          true   pr.author in lists.trusted   (pr.author = "alice", lists.trusted = ["alice", "bob"])
+          true   review.verdict == "approve"   (review.verdict = "approve")
+          true   review.confidence >= 0.85   (review.confidence = 0.92)
+          false  variables.size <= 200   (variables.size = 442)
+        decide.yaml:12:9 review.verdict == "request_changes" && review.confidence >= 0.9 && review.findings.exists(f, f.severity >= severity.blocker) -> false
+          false  review.verdict == "request_changes"   (review.verdict = "approve")
+          true   review.confidence >= 0.9   (review.confidence = 0.92)
+          false  review.findings.exists(f, f.severity >= severity.blocker)
+        result: Decision(rule: "nothing", verdict: "none", flag: nil)
+        """)
   }
 
   @Test func explainsAnExpression() throws {
