@@ -50,11 +50,10 @@ strong sections). Enum values are `EnumValue` objects with an opaque enum type (
 
 Each item is sized for one fresh session. Read `CLAUDE.md` first; every build goes through `tools/build-guard/swiftlock`.
 
-1. **First release (M8)** — the questions in `docs/decisions.md` are decided and applied except the one being
-   implemented (shared parser cache); `CHANGELOG.md` has the 0.1.0 section. When those land: update
-   the changelog numbers, tag `0.1.0` and point PRBar at it. From then on `tools/api-check/check-api.sh` compares
-   against the tag. Custom macros, optimizers and decorators, proto AST conversion and the cel-go tests that need
-   them (headers of `Tests/CELTests/API*Tests.swift`) wait for a public AST facade (decision 3).
+1. **After 0.1.0** — released 2026-10-01 (`CHANGELOG.md`). Point PRBar at `from: "0.1.0"`;
+   `tools/api-check/check-api.sh` now compares against the tag. Custom macros, optimizers and decorators,
+   proto AST conversion and the cel-go tests that need them (headers of `Tests/CELTests/API*Tests.swift`) wait
+   for a public AST facade (decision 3).
 2. **Performance** — baseline and method in `docs/performance.md` (`tools/bench/bench.py` runs the same
    expressions through cel-swift and cel-go, parse / check / plan / eval). On main: parse about 8× cel-go,
    check 1.3–2×, plan about 3×, eval 1.6–3.3× (after the boxed `Value` payloads, decision 6). The shared ANTLR
