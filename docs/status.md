@@ -69,15 +69,6 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
   documentation and computed properties (needs swift-syntax), a typed `tests.yaml` runner that decodes inputs
   as the facts type, cost size hints derived from `CELSchema`, residuals as text in explanations.
 
-## Open untrusted-input gaps
-
-- **Deeply nested types in environment configs overflow the stack.** A variable `type:` string such as
-  `list<list<...>>` nested about 1000 levels overflows `TypeDescriptorParser` (recursive descent, run outside the
-  large stack since it is one scalar), and type descriptors nested about 300 levels through `params` decode but
-  crash when the `Environment` is built from the config (CEL type conversion and checking recurse per level).
-  cel-go has no limit (growable stacks). Needs either a nesting limit on config types or the large stack around
-  the conversion.
-
 ## Open differential gaps
 
 Found by the differential suite and not fixed; the generator steers around them (`KnownGaps` in

@@ -105,6 +105,8 @@ Inputs that crashed or used memory out of proportion to their size are now error
   stack (the composer is iterative, decoding and the policy parser and compiler run on a large stack when
   needed), and decoding stops at 1000 nested collections; duplicate-key checks are linear, reporting at most
   1000 errors per mapping.
+- Environment configs: types nest at most 100 levels; deeper type specifiers, `params` mappings and
+  descriptors built in code are errors instead of overflowing the stack (`docs/divergences.md`).
 - Lists extension: `flatten` handles host lists nested deeper than the thread's stack.
 - `CELRegex`: the NFA allocates capture slots as threads are created, as Go does, instead of for every
   possible thread up front (quadratic in the pattern for capture-heavy patterns).

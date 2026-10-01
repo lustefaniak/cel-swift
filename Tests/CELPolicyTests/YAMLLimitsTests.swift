@@ -112,22 +112,87 @@ struct YAMLLimitsTests {
       + String(repeating: "]}", count: depth) + "\n"
   }
 
-  /// cel-go parses a type specifier of any depth (its parser recurses on a growable stack).
-  @Test(.disabled("overflows the stack: TypeDescriptorParser recurses once per level"))
-  func deepTypeSpecifierIsAnError() throws {
-    let yaml = "variables:\n- name: x\n  type: '\(Self.nestedListSpecifier(1_000))'\n"
-    #expect(throws: (any Error).self) { try EnvironmentConfig(yaml: yaml) }
-    #expect(throws: (any Error).self) {
-      try EnvironmentConfig.TypeDescriptor(parsing: Self.nestedListSpecifier(1_000))
+  /// A list type descriptor nested `depth` levels, built without parsing.
+  static func nestedList(_ depth: Int) -> EnvironmentConfig.TypeDescriptor {
+    var type = EnvironmentConfig.TypeDescriptor("int")
+    for _ in 0..<depth {
+      type = EnvironmentConfig.TypeDescriptor("list", parameters: [type])
+    }
+    return type
+  }
+
+  /// Types nesting 100 levels, the limit, are declared and checked on the calling thread.
+  @Test func typesAtTheNestingLimitCompile() throws {
+    let parsed = try EnvironmentConfig.TypeDescriptor(parsing: Self.nestedListSpecifier(99))
+    #expect(parsed == Self.nestedList(99))
+    for yaml in [
+      "variables:\n- name: x\n  type: '\(Self.nestedListSpecifier(99))'\n", Self.nestedParamsConfig(99),
+    ] {
+      let config = try EnvironmentConfig(yaml: yaml)
+      #expect(config.variables.first?.type == Self.nestedList(99))
+      var withFunction = config
+      withFunction.functions = [
+        .init(name: "f", overloads: [.init(id: "f_list", arguments: [Self.nestedList(99)], resultType: .init("int"))])
+      ]
+      let environment = try Environment(.environmentConfig(withFunction))
+      for expression in ["x == x", "[x, x][0] == x", "f(x) == 1", "x.exists(y, size(y) == 0)"] {
+        #expect(try environment.compile(expression).outputType == .bool)
+      }
+      // The error message formats the type.
+      #expect(throws: CompileError.self) { try environment.compile("x + 1") }
     }
   }
 
-  /// Types nested through `params` decode within the YAML depth limit; cel-go builds an
-  /// environment from them at any depth.
-  @Test(.disabled("overflows the stack: type conversion and validation recurse once per level"))
-  func deepTypeParamsAreAnError() throws {
-    let config = try EnvironmentConfig(yaml: Self.nestedParamsConfig(300))
-    #expect(throws: (any Error).self) { try Environment(.environmentConfig(config)) }
+  /// cel-go parses a type specifier of any depth (its parser recurses on a growable stack); here
+  /// the parser stops past 100 levels.
+  @Test func deepTypeSpecifierIsAnError() throws {
+    let specifier = Self.nestedListSpecifier(1_000)
+    let suffix = "exceeded max nesting depth of 100 at position 500"
+    do {
+      _ = try EnvironmentConfig(yaml: "variables:\n- name: x\n  type: '\(specifier)'\n")
+      Issue.record("a type nested 1000 levels decoded")
+    } catch {
+      #expect(error.message.hasPrefix("failed to parse type \"list<list<"))
+      #expect(error.message.hasSuffix(suffix))
+    }
+    do {
+      _ = try EnvironmentConfig.TypeDescriptor(parsing: Self.nestedListSpecifier(100))
+      Issue.record("a type nested 101 levels parsed")
+    } catch {
+      #expect(error.messages.count == 1)
+      #expect(error.messages.first?.hasSuffix(suffix) == true)
+    }
+  }
+
+  /// Types nested through `params` within the YAML depth limit but past 100 levels are a decoding
+  /// error; cel-go builds an environment from them at any depth.
+  @Test func deepTypeParamsAreAnError() throws {
+    #expect(throws: YAMLError(message: "invalid type: exceeded max nesting depth of 100")) {
+      try EnvironmentConfig(yaml: Self.nestedParamsConfig(300))
+    }
+    #expect(throws: YAMLError(message: "invalid type: exceeded max nesting depth of 100")) {
+      try EnvironmentConfig(yaml: Self.nestedParamsConfig(100))
+    }
+  }
+
+  /// Descriptors built in code are checked when the environment is created.
+  @Test func deepTypeDescriptorsAreAnError() throws {
+    let deep = Self.nestedList(1_000)
+    #expect(throws: EnvironmentConfigError(messages: ["invalid type: exceeded max nesting depth of 100"])) {
+      try deep.validate()
+    }
+    var withVariable = EnvironmentConfig()
+    withVariable.variables = [.init(name: "x", type: deep)]
+    var withFunction = EnvironmentConfig()
+    withFunction.functions = [.init(name: "f", overloads: [.init(id: "f_deep", arguments: [deep], resultType: deep)])]
+    for configured in [withVariable, withFunction] {
+      do {
+        _ = try Environment(.environmentConfig(configured))
+        Issue.record("a type nested 1001 levels was declared")
+      } catch {
+        #expect("\(error)".contains("invalid type: exceeded max nesting depth of 100"))
+      }
+    }
   }
 
   // MARK: Alias expansion

@@ -31,6 +31,13 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
   key repeated n times yields n(n-1)/2 messages (half a million for 1000 repeats); the first 1000 are
   reported, in go-yaml's order. Keys are grouped by hashing rather than compared pairwise, which
   gives the same errors.
+- **Environment config types nest at most 100 levels** (`list<int>` is 2). cel-go has no limit. Past it,
+  a type specifier fails to parse (`failed to parse type "...": exceeded max nesting depth of 100 at
+  position N`), a `type_name`/`params` mapping fails to decode, and `TypeDescriptor.validate()` and
+  `Environment.Option.environmentConfig` reject descriptors built in code (`invalid type: exceeded max
+  nesting depth of 100`). Validation, the conversion to `CELType` and the checker's type relations and
+  formatting recurse once per level on the caller's thread, and overflowed a 512 KiB stack at a few hundred
+  levels in debug builds; 100 leaves them at least a 2x margin.
 - **The recursive passes run on a large stack.** Decoding, the policy parser and the policy compiler
   recurse once per nesting level, as go-yaml and cel-go do; Swift threads have fixed stacks, so for
   deep documents these passes run on a temporary thread sized for the depth (as the CEL parser does,

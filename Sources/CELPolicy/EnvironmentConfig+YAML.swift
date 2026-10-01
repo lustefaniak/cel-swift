@@ -79,7 +79,7 @@ struct TypeDescriptorParser {
 
   mutating func parse() -> Result<TypeDescriptor, TypeDescriptorParseFailure> {
     let res: TypeDescriptor
-    switch parseTypeElem() {
+    switch parseTypeElem(depth: 1) {
     case .success(let d):
       res = d
     case .failure(let e):
@@ -94,7 +94,7 @@ struct TypeDescriptorParser {
     return .success(res)
   }
 
-  private mutating func parseConcreteType() -> Result<TypeDescriptor, TypeDescriptorParseFailure> {
+  private mutating func parseConcreteType(depth: Int) -> Result<TypeDescriptor, TypeDescriptorParseFailure> {
     let id: String
     switch parseNamespaceIdentifier() {
     case .success(let s): id = s
@@ -105,7 +105,7 @@ struct TypeDescriptorParser {
       var params: [TypeDescriptor] = []
       while true {
         skipWhitespace()
-        switch parseTypeElem() {
+        switch parseTypeElem(depth: depth + 1) {
         case .success(let p): params.append(p)
         case .failure(let e): return .failure(e)
         }
@@ -125,7 +125,13 @@ struct TypeDescriptorParser {
     return .success(TypeDescriptor(id))
   }
 
-  private mutating func parseTypeElem() -> Result<TypeDescriptor, TypeDescriptorParseFailure> {
+  /// Parses the type element at nesting level `depth` (1 at the top). The parser recurses once
+  /// per level, so it stops past ``EnvironmentConfig/TypeDescriptor/maxNestingDepth``, which
+  /// cel-go's does not.
+  private mutating func parseTypeElem(depth: Int) -> Result<TypeDescriptor, TypeDescriptorParseFailure> {
+    if depth > TypeDescriptor.maxNestingDepth {
+      return .failure(TypeDescriptorParseFailure(text: "\(TypeDescriptor.nestingError) at position \(pos)"))
+    }
     skipWhitespace()
     if pos < bytes.count && bytes[pos] == UInt8(ascii: "~") {
       pos += 1
@@ -134,7 +140,7 @@ struct TypeDescriptorParser {
       case .failure(let e): return .failure(e)
       }
     }
-    return parseConcreteType()
+    return parseConcreteType(depth: depth)
   }
 
   private mutating func parseNamespaceIdentifier() -> Result<String, TypeDescriptorParseFailure> {
@@ -494,6 +500,11 @@ extension YAMLDecoder {
           } ?? []
       default: t.isTypeParameter = try d.decodeBool(v) ?? false
       }
+    }
+    // Rejected here, as the specifier form is by its parser, so that no deeper descriptor
+    // reaches validation or the CEL type conversion.
+    if t.nestingDepth > EnvironmentConfig.TypeDescriptor.maxNestingDepth {
+      throw YAMLError(message: "invalid type: " + EnvironmentConfig.TypeDescriptor.nestingError)
     }
     return t
   }

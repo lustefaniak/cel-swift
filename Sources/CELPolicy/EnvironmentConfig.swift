@@ -500,7 +500,7 @@ public struct EnvironmentConfig: Sendable, Hashable {
       return typeName + "<" + parameters.map(\.specifier).joined(separator: ", ") + ">"
     }
 
-    /// Checks the descriptor's name and parameter count.
+    /// Checks the descriptor's name, parameter count and nesting depth (at most 100 levels).
     ///
     /// - Throws: ``EnvironmentConfigError`` describing the first problem found.
     public func validate() throws(EnvironmentConfigError) {
@@ -509,7 +509,34 @@ public struct EnvironmentConfig: Sendable, Hashable {
       }
     }
 
+    /// The deepest nesting accepted, counting the descriptor itself: `list<int>` nests 2 levels.
+    /// Validation, CEL type conversion and the checker recurse once per level on the calling
+    /// thread, so untrusted configs are bounded. cel-go has no limit; see docs/divergences.md.
+    static let maxNestingDepth = 100
+
+    static let nestingError = "exceeded max nesting depth of \(maxNestingDepth)"
+
+    /// The number of nested levels, `int` being 1, computed without recursion.
+    var nestingDepth: Int {
+      var result = 0
+      var stack: [(TypeDescriptor, Int)] = [(self, 1)]
+      while let (descriptor, depth) = stack.popLast() {
+        result = Swift.max(result, depth)
+        for parameter in descriptor.parameters {
+          stack.append((parameter, depth + 1))
+        }
+      }
+      return result
+    }
+
     func validationError() -> String? {
+      if nestingDepth > Self.maxNestingDepth {
+        return "invalid type: " + Self.nestingError
+      }
+      return shapeError()
+    }
+
+    private func shapeError() -> String? {
       if typeName.isEmpty {
         return "invalid type: missing type name"
       }
@@ -521,17 +548,17 @@ public struct EnvironmentConfig: Sendable, Hashable {
         if parameters.count != 1 {
           return "invalid type: list expects 1 parameter, got \(parameters.count)"
         }
-        return parameters[0].validationError()
+        return parameters[0].shapeError()
       case "map":
         if parameters.count != 2 {
           return "invalid type: map expects 2 parameters, got \(parameters.count)"
         }
-        return parameters[0].validationError() ?? parameters[1].validationError()
+        return parameters[0].shapeError() ?? parameters[1].shapeError()
       case "optional_type":
         if parameters.count != 1 {
           return "invalid type: optional_type expects 1 parameter, got \(parameters.count)"
         }
-        return parameters[0].validationError()
+        return parameters[0].shapeError()
       case "type":
         if parameters.isEmpty {
           return nil
@@ -539,7 +566,7 @@ public struct EnvironmentConfig: Sendable, Hashable {
         if parameters.count != 1 {
           return "invalid type: type expects 0 or 1 parameters, got \(parameters.count)"
         }
-        return parameters[0].validationError()
+        return parameters[0].shapeError()
       default:
         return nil
       }
