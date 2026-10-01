@@ -171,7 +171,7 @@ func goQuote(_ s: String) -> String {
 
 /// Formats a value as Go's `fmt` `%v` verb does for cel-go values, used in error messages such as
 /// `no such key: x`.
-func formatGoValue(_ value: Value) -> String {
+package func formatGoValue(_ value: Value) -> String {
   switch value {
   case .null: return "NULL_VALUE"
   case .bool(let b): return b ? "true" : "false"

@@ -6,6 +6,7 @@ let package = Package(
   platforms: [.macOS(.v13), .iOS(.v16)],
   products: [
     .library(name: "CEL", targets: ["CEL"]),
+    .library(name: "CELExtensions", targets: ["CELExtensions"]),
     .library(name: "CELPolicy", targets: ["CELPolicy"]),
     .library(name: "CELTest", targets: ["CELTest"]),
     .library(name: "CELProtobuf", targets: ["CELProtobuf"]),
@@ -88,6 +89,16 @@ let package = Package(
     .testTarget(
       name: "CELTestTests",
       dependencies: ["CELTest", "CELPolicy"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .target(
+      name: "CELExtensions",
+      dependencies: ["CEL", "CELRegex"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    .testTarget(
+      name: "CELExtensionsTests",
+      dependencies: ["CEL", "CELExtensions"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .target(
