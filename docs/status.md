@@ -56,10 +56,15 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    then on `tools/api-check/check-api.sh` compares against the tag. Custom macros, optimizers and decorators, proto AST
    conversion and the cel-go tests that need them (headers of `Tests/CELTests/API*Tests.swift`) follow the public AST
    decision.
-3. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
-   existential list/map/object payloads dominate. Parser rebuilds the ANTLR prediction cache per parse (~0.5 ms, and
-   100+ ms for long inputs of nested unary operators, which keeps the parser fuzzer at ~10 exec/s);
-   sharing it needs a lock in an `@unchecked Sendable` class (CLAUDE.md asks to raise that first).
+3. **Performance** — baseline and method in `docs/performance.md` (`tools/bench/bench.py` runs the same
+   expressions through cel-swift and cel-go, parse / check / plan / eval). On main: parse about 8× cel-go,
+   check 1.3–2×, plan about 3×, eval 2.5–5.5×. Two prototypes wait for maintainer decisions (below), each on a
+   pushed branch with numbers in its commit: `perf/class-payloads` (indirect list/map/object/error cases,
+   eval 1.4–2× faster, to 1.7–3× cel-go) and `perf/shared-parser-cache` (process-wide ANTLR prediction cache
+   behind a pthread mutex, parse 3–5× faster single-threaded, to 2–3× cel-go, but the coarse lock serializes
+   concurrent parses; port antlr-go's per-DFA locking before landing it); see `docs/decisions.md` §§ 6 and 9.
+   Remaining without a decision: plan allocation, `Folder` exclusivity checks, `LargeStack`'s thread hop for
+   long inputs.
 4. **Strong enums (optional, beyond cpp parity)** — the last 35 conformance tests (`enums/strong_proto2`,
    `strong_proto3`). Needs an environment option (the `legacy_*` sections must keep passing), a typed enum value and
    type (a public `Value` / `CELType` decision: new case or opaque type), enum type names resolving to types and to

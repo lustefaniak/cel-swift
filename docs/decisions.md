@@ -117,6 +117,14 @@ Recommendation: **keep the public cases as they are** and do the first option (c
 the concrete types) as a performance task; it needs no API decision. Revisit only if profiles after
 that still point at the existential dispatch.
 
+Measured (`docs/performance.md`): the profiles point at the size of `Value` more than at the structs'
+storage. A 40-byte existential payload makes `Value` 41 bytes, and every copy or destroy of any `Value`
+runs the outlined value witness (20 to 30% of eval profiles). Branch `perf/class-payloads` keeps the
+public cases and types and only marks `.list`, `.map`, `.object` and `.error` `indirect` (Swift boxes
+those payloads): `Value` drops to 17 bytes, eval gets 1.4 to 2 times faster (policy 58 to 29 µs,
+comprehension-nested 3.1 to 1.6 ms), from 2.5 to 5.5 times cel-go down to 1.7 to 3. Source compatible,
+one more allocation per constructed list/map/object/error; full suite and conformance pass.
+
 ## 7. Strong enums: enum values and types in `Value` and `CELType`
 
 The only conformance tests left (35 checked, 29 parse-only) are the `enums/strong_proto2` and
@@ -168,3 +176,23 @@ Options for each:
 Recommendation: **keep the spec behaviour without options for 0.1**. Options are additive and can be
 added when a client asks; for `indexOf`, follow cel-spec when its pinned version changes (the
 divergence entry already says so).
+
+## 9. Sharing the ANTLR prediction cache across parses
+
+antlr4-go keeps the parser's prediction DFAs in a process-wide static, so cel-go builds them once per
+process; cel-swift rebuilds them for every parse, which makes parsing about 8 times slower than cel-go
+(`docs/performance.md`) and 100+ ms for long inputs. Sharing them is global mutable state, which CLAUDE.md
+asks to raise first; without `Synchronization` (macOS 15) it needs an `@unchecked Sendable` class with a
+pthread mutex.
+
+- **Share behind one lock** (branch `perf/shared-parser-cache`, `PredictionCache.shared`): single-threaded
+  parse 3 to 5 times faster, to 2 to 3 times cel-go. The lock covers all of `adaptivePredict`, so concurrent
+  parses serialize (8 threads parsed more slowly together than one thread alone).
+- **Share with antlr-go's finer locking** (lock only DFA state lookup/insert and edge updates, compute target
+  states outside): same single-thread gain, scales with threads; more code to port and test.
+- **Per-`Environment` cache**: no process-wide state, warm after the first parses of an environment; still
+  needs the lock, since environments are `Sendable` and shared between tasks.
+- **Leave it**: parse is usually done once per expression and cached by the host.
+
+Recommendation: the finer-locked shared cache, owned by the parser (per `Environment`) if global state is
+the sticking point.
