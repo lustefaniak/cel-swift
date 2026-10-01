@@ -11,3 +11,4 @@ DerivedData/
 .claude/worktrees/
 /.build-fuzz
 /.build-fuzz-work
+.claude/codex-*.md
