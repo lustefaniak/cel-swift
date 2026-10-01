@@ -155,7 +155,37 @@ labelled with `exprID`. `invoke(args)` calls the implementation directly.
 
 `Container` (cel-go `containers.Container`): `Container(.name("a.b"), .abbreviations("x.y.Z"),
 .alias("q.n", as: "a"))`, `extended(...)`, `resolveCandidateNames(_:)` (most qualified first, leading dot
-= absolute, aliases win). `ToQualifiedName(expr)` belongs with the AST.
+= absolute, aliases win). `Container.qualifiedName(of: expr)` is cel-go `ToQualifiedName`.
+
+## Type checker (`Sources/CEL/Checker`)
+
+Ported from cel-go `checker` (all of it but `cost.go` and the protobuf-typed `FormatCheckedType` /
+`checker/decls`). Everything is `package` for now.
+
+```swift
+var env = CheckerEnv(container: try Container(.name("pkg")), provider: registry,
+                     options: [.crossTypeNumericComparisons(true)])   // also .jsonFieldNames, .validatedDeclarations(env)
+try env.addFunctions(StandardLibrary.functions)  // merges overloads; DeclarationError on conflicts / macro overlap
+try env.addIdents(VariableDecl(name: "x", type: .int))
+let (checked, errors) = Checker.check(parsed, source: source, env: env)   // errors: CELErrors, cel-go text
+Checker.print(checked.expr, checked: checked)    // checker_test.go debug format: `x~int^x`, `_+_(...)~int^add_int64`
+```
+
+- **Checked AST** (`AST/ReferenceInfo.swift`): `AST.typeMap: [Int64: CELType]` and
+  `AST.referenceMap: [Int64: ReferenceInfo]`, filled by the checker; `type(of:)` (`dyn` when absent),
+  `overloadIDs(of:)`, `reference(of:)`, `isChecked`. `ReferenceInfo { name; overloadIDs; value: Value? }`:
+  identifiers carry their fully qualified name (and the enum value for enum constants), calls every
+  matching overload id. The interpreter's planner reads these as cel-go's reads `ast.ReferenceInfo`.
+- **Rewrites**: identifiers and `a.b.c` chains that resolve to a declaration become one fully qualified
+  `.ident` (leading `.` when a local shadows it), namespaced calls `a.b.f(x)` become global calls to
+  `a.b.f`, message literal names become fully qualified. Offsets of removed nodes are cleared.
+- Types are `CELType`; `checkerDescription` is cel-go `FormatCELType` (`!error!`, `wrapper(int)`, `_var0`).
+  Unification (`CheckerTypes.swift`, `Mapping.swift`) is a value-typed port of cel-go's `types.go`.
+- cel-go quirks kept: cross-type numeric comparisons are off by default but allowed inside
+  comprehensions (cel-go's scoped environments drop the filter); `homogeneousAggregateLiterals` exists but
+  cel-go enforces it with a `cel`-package validator.
+- Tests: `Tests/CELTests/CheckerTests.swift` runs cel-go's full `checker_test.go` table, generated into
+  `Fixtures/CheckerCases.swift` by `tools/checker-cases/gen.sh`, against CELProtobuf's `CELGoTestProtos`.
 
 ## What the interpreter must implement (not here)
 
