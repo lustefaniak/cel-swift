@@ -39,6 +39,7 @@ let package = Package(
     .testTarget(
       name: "CELTests",
       dependencies: ["CEL"],
+      exclude: ["ParserFixtures"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .testTarget(
