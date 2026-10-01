@@ -96,10 +96,17 @@ package final class CostTracker {
       }
     case let t as any InterpretableConstructor:
       _ = dropArgs(t.initVals)
-      switch t.constructedType.kind {
-      case .list: cost &+= Cost.listCreateBaseCost
-      case .map: cost &+= Cost.mapCreateBaseCost
-      default: cost &+= Cost.structCreateBaseCost
+      // cel-go switches on `t.Type()` against the `types.ListType` / `types.MapType` singletons, which only
+      // list and map literals return: a message literal of a well-known type whose CEL type is a list or
+      // map (`google.protobuf.ListValue`, `Struct`) is still charged as a struct.
+      switch t {
+      case is EvalObj: cost &+= Cost.structCreateBaseCost
+      default:
+        switch t.constructedType.kind {
+        case .list: cost &+= Cost.listCreateBaseCost
+        case .map: cost &+= Cost.mapCreateBaseCost
+        default: cost &+= Cost.structCreateBaseCost
+        }
       }
     default:
       break
