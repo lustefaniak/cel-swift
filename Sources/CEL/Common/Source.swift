@@ -171,8 +171,21 @@ package struct TextSource: Source {
   }
 
   package static func string(_ scalars: ArraySlice<Unicode.Scalar>) -> String {
-    var view = String.UnicodeScalarView()
-    view.append(contentsOf: scalars)
-    return String(view)
+    // Encode straight into the string's storage: appending to a `UnicodeScalarView` grows and
+    // re-validates it scalar by scalar, which showed up in parser profiles (every token's text).
+    var length = 0
+    for scalar in scalars {
+      length += UTF8.width(scalar)
+    }
+    return String(unsafeUninitializedCapacity: length) { buffer in
+      var i = 0
+      for scalar in scalars {
+        UTF8.encode(scalar) { byte in
+          buffer[i] = byte
+          i += 1
+        }
+      }
+      return i
+    }
   }
 }
