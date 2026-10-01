@@ -95,6 +95,13 @@ let package = Package(
       exclude: ["skip.txt", "passing.txt"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
+    // Differential tests against cel-go through tools/oracle; see the test file header.
+    .testTarget(
+      name: "CELDifferentialTests",
+      dependencies: ["CEL", "CELExtensions"],
+      exclude: ["regressions.jsonl"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
     .testTarget(
       name: "CELPolicyTests",
       dependencies: ["CEL", "CELPolicy"],
