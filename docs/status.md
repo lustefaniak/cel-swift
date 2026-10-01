@@ -7,21 +7,20 @@ Snapshot: 2026-10-01; the API, CLI and docs rows after `bd4f5d0`.
 
 ## Conformance (cel-spec v0.25.3)
 
-2461 / 2508 checked, 2304 / 2339 parse-only, 14 entries in `Tests/CELConformanceTests/skip.txt` (each with reason).
+2473 / 2508 checked, 2310 / 2339 parse-only, `Tests/CELConformanceTests/skip.txt` is empty.
 Run `python3 tools/dashboard/dashboard.py --run` for the per-file table against cel-go, cel-rust and cel-cpp.
 
-What still fails or is skipped:
-- `enums` strong-enum tests (35): deferred by design, cel-go and cel-cpp skip them too.
-- `type_deduction`: 5 skipped exactly as cel-go skips them.
-- `string_ext` 2, `network_ext` 3: skipped with reasons (cel-go skips / rejects the same inputs).
-- A few cel-go-skipped singles (`timestamps` get_milliseconds, `optionals` map_optional_select_has).
+**cpp parity reached** (checked mode): every test cel-cpp passes, cel-swift passes. The ten cel-go skips that the spec
+and cel-cpp pass were closed by following the spec, each recorded in `docs/divergences.md`: duration
+`getMilliseconds` is the milliseconds portion; an optional met mid-path is selected into; list/map literals join `null`
+into a nullable type and a primitive into its wrapper; `indexOf` / `lastIndexOf` offsets past the end are errors (cel-go
+returns -1 pending a spec update, revisit on the next cel-spec bump); `ip()` accepts the hexadecimal IPv4-mapped form as
+the IPv4 address; the conformance matcher accepts a check error carrying an expected eval_error message
+(`network_ext/ip_type/is_ip_cidr_compile_error`).
 
-Parity is not reached yet: the dashboard reports 10 tests cel-rust passes and 8 cel-cpp passes (checked mode) that we
-fail or skip. They are all cases where cel-swift follows cel-go (which skips them) while the spec and the other
-implementations pass: `timestamps/duration_converters/get_milliseconds`, `optionals/.../map_optional_select_has`,
-`string_ext/value_errors/{indexof,lastindexof}_out_of_range`, the three skipped `network_ext` tests, and the
-`type_deductions` legacy-nullable / wrapper-promotion cases. Closing them means a deliberate divergence from cel-go
-toward the spec, each recorded in `docs/divergences.md` (plan: cpp parity is the bar).
+What still fails: only the `enums` strong-enum sections (35 checked, 29 parse-only), which cel-go and cel-cpp skip
+too. cel-rust "passes" 6 of them (`convert_int_too_big` / `_too_neg` / `convert_string_bad`, which expect an error that
+it raises for an unrelated reason); that is the whole remaining rust gap.
 
 ## Done (on main)
 
@@ -56,11 +55,16 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    custom macros, custom optimizers and decorators, proto AST conversion and the cel-go tests that need them
    (listed in the headers of `Tests/CELTests/API*Tests.swift`). The public `enum CEL` (only `specVersion`) shares
    the module's name, which breaks `CEL.Environment`-style qualification for clients; rename or drop it before 1.0.
-3. **Parity gap** — the spec-over-cel-go cases listed under Conformance; decide each, fix, record the divergence.
-4. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
+3. **Performance** — about 2–3× slower than cel-go (`swift run -c release CELBenchmarks`); `Value` copies through
    existential list/map/object payloads dominate. Parser rebuilds the ANTLR prediction cache per parse (~0.5 ms, and
    100+ ms for long inputs of nested unary operators, which keeps the parser fuzzer at ~10 exec/s);
    sharing it needs a lock in an `@unchecked Sendable` class (CLAUDE.md asks to raise that first).
+4. **Strong enums (optional, beyond cpp parity)** — the last 35 conformance tests (`enums/strong_proto2`,
+   `strong_proto3`). Needs an environment option (the `legacy_*` sections must keep passing), a typed enum value and
+   type (a public `Value` / `CELType` decision: new case or opaque type), enum type names resolving to types and to
+   conversion functions `E(int)` / `E(string)` with int32 range and name checks, `CELProtobuf` field reads and writes
+   producing and accepting enum values, `type()`, equality and `int()` on them, and `enum_value` in the conformance
+   value conversion. About one session after the API decision; cel-go and cel-cpp do not implement it either.
 
 ## Open decisions for the maintainer
 
