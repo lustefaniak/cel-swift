@@ -191,6 +191,12 @@ messages, error node ids, observed ids and runtime cost). The differences:
 - **Deep expressions are planned, checked and evaluated on a large stack.** Like the parser (see
   `LargeStack`), `ProgramEnvironment` runs the checker, the planner and evaluation on a thread with a stack
   sized for the expression depth when the calling thread's stack may not suffice; Go has growable stacks.
+- **An optional value in the middle of a select path is selected into.** cel-go's `applyQualifiers`
+  unwraps an optional only at the root of an attribute, so `{'foo': optional.none()}.foo.bar` fails with
+  `no such key: bar` (it skips `optionals/optionals/map_optional_select_has`). The checker already types
+  that selection as optional, and the spec and cel-cpp treat it like `.?bar`: here the result is
+  `optional.none()` and `has(...)` of it is `false`; `{'foo': optional.of({'bar': 1})}.foo.bar` is
+  `optional.of(1)`.
 
 ## Extensions (`CELExtensions`)
 

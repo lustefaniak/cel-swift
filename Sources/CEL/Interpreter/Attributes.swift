@@ -745,6 +745,16 @@ func applyQualifiers(_ vars: ExecutionFrame, _ obj: Value, _ qualifiers: [any Qu
     obj = inner
   }
   for qual in qualifiers {
+    // An optional reached through the path (`{'k': optional.none()}.k.f`) is selected into like a root
+    // optional, as the checker types it (optional_type(T).f is optional). cel-go only unwraps the root
+    // and reports a missing key here (docs/divergences.md).
+    if case .optional(let inner) = obj {
+      isOpt = true
+      guard let inner else {
+        return (obj, false)
+      }
+      obj = inner
+    }
     isOpt = isOpt || qual.isOptional
     if isOpt {
       let (qualObj, present) = try qual.qualifyIfPresent(vars, obj, presenceOnly: false)

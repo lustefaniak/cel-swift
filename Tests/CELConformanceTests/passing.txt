@@ -3030,6 +3030,8 @@ checked optionals/optionals/map_optional_entry_has
 parse-only optionals/optionals/map_optional_entry_has
 checked optionals/optionals/map_optional_has
 parse-only optionals/optionals/map_optional_has
+checked optionals/optionals/map_optional_select_has
+parse-only optionals/optionals/map_optional_select_has
 checked optionals/optionals/map_present_key_invalid_field
 parse-only optionals/optionals/map_present_key_invalid_field
 checked optionals/optionals/map_submap_optFlatMap_value
