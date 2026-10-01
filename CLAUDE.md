@@ -73,6 +73,12 @@ This is a library other packages depend on, so the public surface is the product
 
 - `third_party/cel-spec` is a submodule pinned to a release tag (currently v0.25.3). Bump deliberately, with
   the conformance dashboard diff in the commit.
+- Conformance: `swift test --filter CELConformanceTests` runs the cel-spec suite in checked and parse-only
+  mode against `Tests/CELConformanceTests/passing.txt` (regressions fail; `CEL_CONFORMANCE_UPDATE=1` rewrites
+  it) and `skip.txt`; `tools/dashboard/dashboard.py` prints the per-file table against cel-go, cel-rust and
+  cel-cpp. The runner seam is `Tests/CELConformanceTests/NotImplementedRunner.swift`.
+- `tools/oracle` answers parse / check / eval requests with cel-go over JSONL (protocol in its README);
+  `tools/gen-protos.sh` regenerates `Sources/CELSpecProtos`.
 - **Commit straight to `main`, no branches or PRs, until the repo is made public.** Run `swift build` and
   `swift test` first; CI runs on every push. Once public, switch to small PRs per feature area (see
   `docs/plan.md` § Working method).

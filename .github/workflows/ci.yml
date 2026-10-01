@@ -22,6 +22,8 @@ jobs:
       - run: swift --version
       - run: swift build --build-tests
       - run: swift test --skip-build
+      - name: Conformance dashboard
+        run: python3 tools/dashboard/dashboard.py --stale
 
   linux:
     runs-on: ubuntu-latest

@@ -23,11 +23,14 @@ struct TestResult: Codable, Sendable {
   var name: String
   /// The textproto file name without extension.
   var file: String
+  /// The section and test names as written in the file (`name` may carry a `#NN` duplicate suffix).
+  var section: String
+  var test: String
   var checked: ModeResult
   var parseOnly: ModeResult
 
   enum CodingKeys: String, CodingKey {
-    case name, file, checked
+    case name, file, section, test, checked
     case parseOnly = "parse_only"
   }
 
@@ -134,6 +137,8 @@ enum ConformanceSuite {
           TestResult(
             name: testCase.name,
             file: file.fileName,
+            section: testCase.section,
+            test: testCase.test.name,
             checked: perMode[.checked] ?? ModeResult(status: .notApplicable),
             parseOnly: perMode[.parseOnly] ?? ModeResult(status: .notApplicable)
           )
