@@ -56,3 +56,26 @@ jobs:
           go vet ./...
           go build .
           go test ./...
+
+  fuzz:
+    runs-on: ubuntu-latest
+    container: swift:6.0-noble
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build the fuzzers
+        run: Fuzz/build.sh
+      - name: Replay the seed corpus and regressions
+        run: Fuzz/run-all.sh replay
+      - name: Fuzz each target for 60 seconds
+        run: Fuzz/run-all.sh 60
+      - name: Upload crashing inputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: |
+            .build-fuzz-work/artifacts
+            .build-fuzz-work/*.log
+          if-no-files-found: ignore
