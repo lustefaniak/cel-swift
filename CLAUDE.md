@@ -69,6 +69,16 @@ This is a library other packages depend on, so the public surface is the product
 - **Documentation.** Every `public` declaration has a doc comment in DocC markup; the API design skill sets
   the shape.
 
+## Builds
+
+- **Run every `swift build` / `swift test` / `swift run` through `tools/build-guard/swiftlock`**, e.g.
+  `tools/build-guard/swiftlock swift build --build-tests -j 4`. It serialises builds machine-wide (parallel agent
+  worktrees each do a full build) and starts `swiftguard.sh`, which kills any swift-frontend over 8 GB. macOS
+  ignores `ulimit -v`/`-d`, and an unbounded frontend has already exhausted 64 GB and panicked the machine.
+- **No big generated Swift literals.** Fixture data goes into resource files (JSON lines, text) read at test time;
+  a 7,000-row array literal of tuples with optionals took the type checker past 30 GB. Generated tables in
+  `Sources` get explicit element types and stay split into small chunks.
+
 ## Repo
 
 - `third_party/cel-spec` is a submodule pinned to a release tag (currently v0.25.3). Bump deliberately, with

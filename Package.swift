@@ -99,6 +99,7 @@ let package = Package(
     .testTarget(
       name: "CELExtensionsTests",
       dependencies: ["CEL", "CELExtensions"],
+      resources: [.copy("Resources")],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     .target(

@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+# Run a build/test command while holding one of N machine-wide build slots, with the memory
+# watchdog running. macOS does not enforce ulimit -v / -d, so the watchdog (swiftguard.sh) is
+# what stops a runaway swift-frontend from exhausting RAM and panicking the kernel.
+#
+#   tools/build-guard/swiftlock swift build --build-tests -j 4
+#
+# SWIFTLOCK_SLOTS (default 1) sets how many guarded commands may run at once.
+import fcntl, os, subprocess, sys, time
+
+here = os.path.dirname(os.path.realpath(__file__))
+state = os.path.expanduser("~/.cache/cel-swift-build-guard")
+os.makedirs(state, exist_ok=True)
+
+def ensure_guard():
+    pidfile = os.path.join(state, "guard.pid")
+    try:
+        pid = int(open(pidfile).read().strip())
+        os.kill(pid, 0)
+        return
+    except (OSError, ValueError):
+        pass
+    p = subprocess.Popen(["/bin/bash", os.path.join(here, "swiftguard.sh")],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    open(pidfile, "w").write(str(p.pid))
+
+ensure_guard()
+slots = int(os.environ.get("SWIFTLOCK_SLOTS", "1"))
+fds = [open(os.path.join(state, f"slot{i}"), "w") for i in range(slots)]
+held, waited = None, False
+while held is None:
+    for f in fds:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            held = f
+            break
+        except BlockingIOError:
+            pass
+    if held is None:
+        if not waited:
+            print("swiftlock: waiting for a build slot...", file=sys.stderr, flush=True)
+            waited = True
+        time.sleep(3)
+sys.exit(subprocess.call(sys.argv[1:]))
