@@ -31,7 +31,7 @@ extension Library {
   ///
   /// Version 0 has the base64 functions and version 1 adds `json.encode`.
   ///
-  /// - Parameter version: the library version; ``Library/latestVersion`` enables everything.
+  /// - Parameter version: the library version; `Library.latestVersion` enables everything.
   public static func encoders(version: UInt32 = Library.latestVersion) -> Library {
     var decls = makeDeclarations([
       try FunctionDecl(

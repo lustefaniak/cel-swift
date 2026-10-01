@@ -42,7 +42,7 @@ public struct TestRunner: Sendable {
   ///   - environment: The environment test inputs and expected values are evaluated in; its
   ///     variables not bound by a test are unknown when the programs use partial evaluation.
   ///   - programs: The programs every test is run against. They should evaluate errors as values
-  ///     (``Program/Option/errorsAsValues``).
+  ///     (`Program.Option.errorsAsValues`).
   public init(environment: Environment, programs: [Program]) {
     self.environment = environment
     self.programs = programs

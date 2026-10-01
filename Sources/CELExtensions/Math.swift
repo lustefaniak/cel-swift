@@ -30,7 +30,7 @@ extension Library {
   /// Version 0 has `math.least` and `math.greatest`, version 1 adds rounding, floating point
   /// helpers, signedness and bitwise functions, and version 2 adds `math.sqrt`.
   ///
-  /// - Parameter version: the library version; ``Library/latestVersion`` enables everything.
+  /// - Parameter version: the library version; `Library.latestVersion` enables everything.
   public static func math(version: UInt32 = Library.latestVersion) -> Library {
     MathLibrary(version: version).library
   }

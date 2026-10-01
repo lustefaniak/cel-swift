@@ -33,7 +33,7 @@ extension Library {
 
   /// The bindings extension library at a given version.
   ///
-  /// - Parameter version: the library version; ``Library/latestVersion`` enables everything.
+  /// - Parameter version: the library version; `Library.latestVersion` enables everything.
   public static func bindings(version: UInt32 = Library.latestVersion) -> Library {
     var functions: [FunctionDecl] = []
     if version >= 1 {

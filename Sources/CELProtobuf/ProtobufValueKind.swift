@@ -291,7 +291,7 @@ extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
   }
 
   /// Enum fields of the enum type with the fully qualified name `typeName`: CEL `int`, or values of
-  /// the enum (``EnumValue``) when ``ProtobufTypes/usesStrongEnums`` is set.
+  /// the enum (`EnumValue`) when ``ProtobufTypes/usesStrongEnums`` is set.
   ///
   /// Assignment accepts `int`s and values of the enum, and checks the 32-bit range. Closed (proto2)
   /// enums cannot hold numbers they do not declare in Swift, so assigning one is an error.

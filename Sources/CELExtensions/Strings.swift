@@ -32,7 +32,7 @@ extension Library {
   /// cel-spec formatting rules, and version 5 limits the `format` precision to 100 by default.
   ///
   /// - Parameters:
-  ///   - version: the library version; ``Library/latestVersion`` enables everything.
+  ///   - version: the library version; `Library.latestVersion` enables everything.
   ///   - locale: the locale for `%f` and `%e` before version 4, for example `en_US`. Ignored from
   ///     version 4.
   ///   - maxPrecision: the largest precision a `format` clause may use; `0` means 100 from version

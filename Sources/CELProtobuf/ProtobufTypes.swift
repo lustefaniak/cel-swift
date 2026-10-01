@@ -117,9 +117,9 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
   public let usesJSONFieldNames: Bool
 
   /// Whether enum values, enum constants and enum fields are values of their enum type
-  /// (``EnumValue``) instead of `int`s.
+  /// (`EnumValue`) instead of `int`s.
   ///
-  /// ``Environment/Option/strongEnums`` sets it on the environment's types; set it here for message
+  /// `Environment.Option.strongEnums` sets it on the environment's types; set it here for message
   /// values created outside the environment, such as activation values, so they read the same way.
   /// `google.protobuf.NullValue` stays an `int`.
   public private(set) var usesStrongEnums: Bool
@@ -200,7 +200,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
   /// other messages from objects of the same type. The port of cel-go `ConvertToNative` for
   /// protobuf targets.
   ///
-  /// - Throws: ``EvalError`` if the value cannot be converted, including `null` for messages
+  /// - Throws: `EvalError` if the value cannot be converted, including `null` for messages
   ///   that have no null form.
   public func message<M: SwiftProtobuf.Message>(from value: Value, as type: M.Type) throws(EvalError) -> M {
     switch WellKnownTypes.convert(value, to: type, types: self) {

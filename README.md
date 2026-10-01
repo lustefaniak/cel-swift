@@ -50,8 +50,8 @@ ERROR: <input>:1:16: undeclared reference to 'limt' (in container '')
 The rest of the API covers custom functions with Swift implementations (`.function(...)`), cel-go's
 extension libraries (`import CELExtensions`, `.library(.strings)`), standard library subsets
 (`Library.standard(subset:)`), cost estimation and limits (`env.estimateCost`, `.costLimit`), partial
-evaluation with unknowns, and constant folding and inlining (`env.optimize`). The DocC catalog in
-`Sources/CEL/CEL.docc` has a getting-started article; build it with
+evaluation with unknowns, and constant folding and inlining (`env.optimize`). Every library has a DocC
+catalog (`Sources/<Module>/<Module>.docc`); the one for `CEL` has a getting-started article. Build them with
 `swift package generate-documentation` (needs the swift-docc plugin) or open the package in Xcode and
 choose Product > Build Documentation.
 
@@ -130,8 +130,8 @@ Before a release (see [CHANGELOG.md](CHANGELOG.md)), these checks run in CI as w
 
 - `tools/check-headers/check_headers.py`: every file under `Sources` carries the right license header
   and names the cel-go (or Go, ANTLR, go-yaml) source it ports.
-- `tools/check-docs/check-docs.sh`: every public declaration has a doc comment and the DocC catalogs
-  build without warnings.
+- `tools/check-docs/check-docs.sh`: every library product has a DocC catalog, every public declaration
+  has a doc comment and the catalogs build without warnings.
 - `tools/api-check/check-api.sh`: API-breaking changes against the last release tag.
 - `python3 tools/dashboard/dashboard.py --run`: the conformance table against cel-go, cel-rust and cel-cpp.
 

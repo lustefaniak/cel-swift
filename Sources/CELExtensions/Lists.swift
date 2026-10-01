@@ -29,7 +29,7 @@ extension Library {
   /// `lists.range`, `reverse` and `distinct`.
   ///
   /// - Parameters:
-  ///   - version: the library version; ``Library/latestVersion`` enables everything.
+  ///   - version: the library version; `Library.latestVersion` enables everything.
   ///   - maxRangeSize: the largest list `lists.range` creates; `0` disables the limit.
   public static func lists(
     version: UInt32 = Library.latestVersion, maxRangeSize: Int64 = 1_000_000

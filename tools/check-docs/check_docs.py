@@ -39,6 +39,10 @@ def main():
         for symbol in graph["symbols"]:
             if symbol["accessLevel"] not in ("public", "open"):
                 continue
+            # Extension blocks (`--emit-extension-block-symbols`) group members of extended types
+            # from other modules; their members carry the documentation.
+            if symbol["kind"]["identifier"] == "swift.extension":
+                continue
             total += 1
             lines = (symbol.get("docComment") or {}).get("lines") or []
             if not any(line["text"].strip() for line in lines):

@@ -44,6 +44,10 @@ behind it are recorded in `docs/decisions.md`.
     (`Environment.residual(of:state:)`), state tracking and exhaustive evaluation.
   - Constant folding and inlining optimizers (`ExpressionOptimizer`).
   - DocC catalog with a getting-started article whose examples run as tests.
+- DocC catalogs for every library product, each with a module page and a task article whose examples
+  run as tests: `CELExtensions` (enabling, pinning and bounding libraries), `CELProtobuf` (generating
+  and registering message types), `CELPolicy`, `CELTest` (running `tests.yaml` suites).
+  `tools/check-docs` fails when a library product has no catalog.
 - `CELExtensions`: cel-go's extension libraries with their versions and cost estimators: strings (with
   `format`), lists, math, sets, encoders, network (`ip`, `cidr`), regex, bindings (`cel.bind`, `cel.block`),
   two-variable comprehensions, protos.
@@ -79,6 +83,8 @@ Settled before the release after a design review, for code written against `main
   implementation at evaluation time (`docs/decisions.md` § 11).
 - `MapValue` requires `forEachKey(_:)` instead of `keys: [MapKey]`, so map adapters iterate without
   materializing their keys; `keys` is an extension (`docs/decisions.md` § 13).
+- Every `TypeProvider` requirement has a default that reports a miss, so a provider composed under a
+  `TypeRegistry` implements only the lookups it answers (`docs/decisions.md` § 14).
 
 ### Conformance
 
