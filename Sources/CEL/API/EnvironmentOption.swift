@@ -114,6 +114,9 @@ extension Environment {
       extraParserOptions += library.parserOptions
       decorators += library.decorators
       homogeneousLiteralExemptFunctions += library.homogeneousLiteralExemptFunctions
+      for validator in library.validators where !validators.contains(where: { $0.name == validator.name }) {
+        validators.append(validator)
+      }
     }
   }
 
