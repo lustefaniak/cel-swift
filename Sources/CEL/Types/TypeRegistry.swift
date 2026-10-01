@@ -63,7 +63,7 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   /// by an extension.
   ///
   /// - Throws: ``DeclarationError`` if a different type is already registered under the name.
-  public mutating func register(_ type: CELType) throws {
+  public mutating func register(_ type: CELType) throws(DeclarationError) {
     let name = type.runtimeTypeName
     if let existing = revTypeMap[name] {
       if !existing.isEquivalentType(type) {
@@ -76,7 +76,7 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
 
   /// Registers a struct type, making it available to the checker, to object construction and as
   /// a type value.
-  public mutating func register(_ descriptor: any StructTypeDescriptor) throws {
+  public mutating func register(_ descriptor: any StructTypeDescriptor) throws(DeclarationError) {
     // Well-known type names are not registered as type identifiers, since they map to CEL types
     // such as `map(string, dyn)` (cel-go `registerAllTypes`); their descriptors still are.
     if CELType.checkedWellKnowns[descriptor.typeName] == nil {

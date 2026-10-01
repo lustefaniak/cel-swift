@@ -244,12 +244,10 @@ package struct CheckerEnv: Sendable {
     var messages: [String] = []
     var current = fn
     if let existing = declarations.findFunction(fn.name) {
-      do {
+      do throws(DeclarationError) {
         current = try existing.merging(fn)
-      } catch let error as DeclarationError {
-        return [error.message]
       } catch {
-        return ["\(error)"]
+        return [error.message]
       }
     }
     for overload in current.overloads {

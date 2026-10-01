@@ -202,7 +202,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
   ///
   /// - Throws: ``EvalError`` if the value cannot be converted, including `null` for messages
   ///   that have no null form.
-  public func message<M: SwiftProtobuf.Message>(from value: Value, as type: M.Type) throws -> M {
+  public func message<M: SwiftProtobuf.Message>(from value: Value, as type: M.Type) throws(EvalError) -> M {
     switch WellKnownTypes.convert(value, to: type, types: self) {
     case .success(let message?):
       return message

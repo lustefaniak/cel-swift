@@ -45,7 +45,8 @@ public struct OverloadDecl: Sendable {
   /// Usage examples, one per line.
   public internal(set) var examples: [String] = []
   /// Whether the implementation is supplied at evaluation time rather than with the declaration.
-  public internal(set) var hasLateBinding = false
+  /// `package` until a runtime way to supply it exists, see `Option.lateBinding`.
+  package internal(set) var hasLateBinding = false
   /// Whether the overload accepts error and unknown arguments.
   public internal(set) var isNonStrict = false
   /// Traits the first argument must have.
@@ -65,7 +66,7 @@ public struct OverloadDecl: Sendable {
     resultType: CELType,
     isMemberFunction: Bool = false,
     options: [Option] = []
-  ) throws {
+  ) throws(DeclarationError) {
     self.id = id
     self.argumentTypes = argumentTypes
     self.resultType = resultType
@@ -223,7 +224,7 @@ package func maybeNoSuchOverload(_ functionName: String, _ args: [Value]) -> Val
 extension OverloadDecl {
   /// A configuration step applied when an ``OverloadDecl`` is created.
   public struct Option: Sendable {
-    let apply: @Sendable (inout OverloadDecl) throws -> Void
+    let apply: @Sendable (inout OverloadDecl) throws(DeclarationError) -> Void
 
     /// Documents the overload with usage examples.
     public static func examples(_ examples: String...) -> Option {
@@ -232,7 +233,7 @@ extension OverloadDecl {
 
     /// Provides a one-argument implementation, guarded at runtime by the declared signature.
     public static func unaryBinding(_ binding: @escaping FunctionBinding.Unary) -> Option {
-      Option { o in
+      Option { (o: inout OverloadDecl) throws(DeclarationError) in
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }
@@ -248,7 +249,7 @@ extension OverloadDecl {
 
     /// Provides a two-argument implementation, guarded at runtime by the declared signature.
     public static func binaryBinding(_ binding: @escaping FunctionBinding.Binary) -> Option {
-      Option { o in
+      Option { (o: inout OverloadDecl) throws(DeclarationError) in
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }
@@ -264,7 +265,7 @@ extension OverloadDecl {
 
     /// Provides a variadic implementation, guarded at runtime by the declared signature.
     public static func functionBinding(_ binding: @escaping FunctionBinding.Variadic) -> Option {
-      Option { o in
+      Option { (o: inout OverloadDecl) throws(DeclarationError) in
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }
@@ -276,9 +277,13 @@ extension OverloadDecl {
     }
 
     /// Marks the implementation as supplied at evaluation time, for functions with side effects
-    /// or results that cannot be computed ahead of time.
-    public static var lateBinding: Option {
-      Option { o in
+    /// or results that cannot be computed ahead of time; constant folding leaves their calls alone.
+    ///
+    /// `package`: cel-go v0.32 supplies the implementation only through the deprecated
+    /// `cel.Functions` program option, which has no counterpart here, so a public marker would
+    /// promise a runtime half that does not exist (`docs/decisions.md` § 11).
+    package static var lateBinding: Option {
+      Option { (o: inout OverloadDecl) throws(DeclarationError) in
         if o.hasBinding {
           throw DeclarationError("overload already has a binding: \(o.id)")
         }

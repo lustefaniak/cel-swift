@@ -24,6 +24,8 @@ the new module can use the core's `package` declarations.
 | 8 | Spec-over-cel-go defaults | keep the spec behaviour, no options | done |
 | 9 | Shared ANTLR prediction cache | shared cache with antlr-go's finer locking, owned per `Environment` | done |
 | 10 | Public names that abbreviate or clash | full words, no clash with dependencies | done |
+| 11 | `OverloadDecl.Option.lateBinding` without a runtime half | `package` until a supply path exists | done |
+| 12 | Untyped `throws` on closed error sets | typed throws on declarations, containers, registry and protobuf conversion | done |
 
 ## 1. Package name: keep `cel-swift`
 
@@ -119,3 +121,25 @@ SwiftProtobuf's; `CELTimestamp(secondsSinceEpoch:nanoseconds:)` takes the nanose
 struct with static members so outcomes can be added without breaking clients. The full list is in
 `CHANGELOG.md` § 0.1.0. Type names that are the port's vocabulary (`VariableDecl`, `FunctionDecl`,
 `OverloadDecl`, `CELType.typeParam`) stay.
+
+## 11. Late binding: `package` for 0.1
+
+`OverloadDecl.Option.lateBinding` (cel-go `LateFunctionBinding`) declares an overload whose implementation
+is supplied at evaluation time; the declaration validation and constant folding honour it. cel-go v0.32
+supplies such implementations only through the deprecated `cel.Functions` program option, and
+`Program.Option` has no counterpart, so the public marker promised a runtime half that did not exist and
+would have constrained its shape. The option and `hasLateBinding` on `OverloadDecl` and `FunctionDecl` are
+`package`; the ported cel-go tests keep using them. Making them public again, together with a program option
+that supplies bindings by overload id, is additive.
+
+## 12. Typed throws on closed error sets
+
+`Container`, `FunctionDecl`, `OverloadDecl` and `TypeRegistry` only ever throw `DeclarationError`, and
+`ProtobufTypes.message(from:as:)` only `EvalError`, so their public operations and option closures use
+`throws(DeclarationError)` and `throws(EvalError)`, like `Environment`, `compile` and `evaluate` already did.
+Callers composing the lower-level API keep the concrete error, and changing the thrown type after 0.1
+would break stored function types. With this every public throwing operation of the libraries has a
+concrete error type; plain `throws` is left only on `package` hooks whose closures run code from other
+targets (environment options, program decorators), which `Environment` maps to `DeclarationError`. On Swift 6.0 a closure only
+gets a typed throw when it says so (`{ (c: inout Container) throws(DeclarationError) in ... }`) and a
+`do` block only with `do throws(DeclarationError)`; both are written out.

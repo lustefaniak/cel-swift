@@ -68,6 +68,16 @@ written against `main`: `FieldType` → `StructFieldType` (no clash with SwiftPr
 (`.passed`, `.failed(wanted:failure:)`, `isPassed`, `isFailed`) so new outcomes can be added later. The
 `enum CEL` namespace was removed.
 
+### API shape
+
+Settled before the release after a design review, for code written against `main`:
+
+- Typed throws on every closed error set: `Container`, `FunctionDecl`, `OverloadDecl` and `TypeRegistry`
+  operations throw `DeclarationError`, `ProtobufTypes.message(from:as:)` throws `EvalError`
+  (`docs/decisions.md` § 12).
+- `OverloadDecl.Option.lateBinding` and `hasLateBinding` are no longer public: nothing could supply the
+  implementation at evaluation time (`docs/decisions.md` § 11).
+
 ### Conformance
 
 cel-spec v0.25.3: all 2508 tests pass in checked mode and all 2339 in parse-only mode, with an empty skip

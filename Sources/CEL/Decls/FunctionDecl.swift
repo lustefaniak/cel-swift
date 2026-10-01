@@ -58,12 +58,12 @@ public struct FunctionDecl: Sendable {
   ///
   /// - Throws: ``DeclarationError`` if the function has no overloads, if overloads collide, or if
   ///   bindings are defined twice.
-  public init(_ name: String, _ options: Option...) throws {
+  public init(_ name: String, _ options: Option...) throws(DeclarationError) {
     try self.init(name, options: options)
   }
 
   /// Creates a function declaration from an array of options.
-  public init(_ name: String, options: [Option]) throws {
+  public init(_ name: String, options: [Option]) throws(DeclarationError) {
     self.name = name
     for option in options {
       try option.apply(&self)
@@ -85,7 +85,7 @@ public struct FunctionDecl: Sendable {
   }
 
   /// Whether any overload is bound at evaluation time.
-  public var hasLateBinding: Bool {
+  package var hasLateBinding: Bool {
     overloads.contains { $0.hasLateBinding }
   }
 
@@ -97,7 +97,7 @@ public struct FunctionDecl: Sendable {
   /// Adds an overload, rejecting collisions with existing signatures.
   ///
   /// Redeclaring an overload with an identical signature is allowed and may supply its binding.
-  public mutating func addOverload(_ overload: OverloadDecl) throws {
+  public mutating func addOverload(_ overload: OverloadDecl) throws(DeclarationError) {
     for existing in overloads {
       let oID = existing.id
       if oID != overload.id && existing.signatureOverlaps(overload) {
@@ -140,7 +140,7 @@ public struct FunctionDecl: Sendable {
   ///
   /// Overloads of `other` are added after this declaration's; they must not collide, and the two
   /// declarations must not carry different singleton implementations.
-  public func merging(_ other: FunctionDecl) throws -> FunctionDecl {
+  public func merging(_ other: FunctionDecl) throws(DeclarationError) -> FunctionDecl {
     guard name == other.name else {
       throw DeclarationError("cannot merge unrelated functions. \(goQuote(name)) and \(goQuote(other.name))")
     }
@@ -153,9 +153,9 @@ public struct FunctionDecl: Sendable {
       merged.documentation = other.documentation
     }
     for overload in other.overloads {
-      do {
+      do throws(DeclarationError) {
         try merged.addOverload(overload)
-      } catch let error as DeclarationError {
+      } catch {
         throw DeclarationError("function declaration merge failed: \(error.message)")
       }
     }
@@ -197,7 +197,7 @@ public struct FunctionDecl: Sendable {
   /// - A singleton binding is registered under the function name only.
   ///
   /// - Throws: ``DeclarationError`` if a singleton is combined with overload or late bindings.
-  public func bindings() throws -> [FunctionBinding] {
+  public func bindings() throws(DeclarationError) -> [FunctionBinding] {
     var result: [FunctionBinding] = []
     var nonStrict = false
     var hasLateBinding = false
@@ -268,7 +268,7 @@ public struct FunctionDecl: Sendable {
 extension FunctionDecl {
   /// A configuration step applied when a ``FunctionDecl`` is created.
   public struct Option: Sendable {
-    let apply: @Sendable (inout FunctionDecl) throws -> Void
+    let apply: @Sendable (inout FunctionDecl) throws(DeclarationError) -> Void
 
     /// Describes the function's purpose; the lines are joined with newlines.
     public static func documentation(_ lines: String...) -> Option {
@@ -291,7 +291,7 @@ extension FunctionDecl {
     public static func overload(
       _ id: String, argumentTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
     ) -> Option {
-      Option { f in
+      Option { (f: inout FunctionDecl) throws(DeclarationError) in
         try f.addOverload(
           OverloadDecl(id: id, argumentTypes: argumentTypes, resultType: resultType, options: options))
       }
@@ -301,7 +301,7 @@ extension FunctionDecl {
     public static func memberOverload(
       _ id: String, argumentTypes: [CELType], resultType: CELType, _ options: OverloadDecl.Option...
     ) -> Option {
-      Option { f in
+      Option { (f: inout FunctionDecl) throws(DeclarationError) in
         try f.addOverload(
           OverloadDecl(
             id: id, argumentTypes: argumentTypes, resultType: resultType, isMemberFunction: true,
@@ -311,7 +311,7 @@ extension FunctionDecl {
 
     /// Adds an already constructed overload.
     public static func overload(_ overload: OverloadDecl) -> Option {
-      Option { try $0.addOverload(overload) }
+      Option { (f: inout FunctionDecl) throws(DeclarationError) in try f.addOverload(overload) }
     }
 
     /// Sets a one-argument implementation shared by every overload, dispatched on `traits`.
@@ -336,7 +336,7 @@ extension FunctionDecl {
     }
 
     private static func singleton(_ make: @escaping @Sendable (String) -> FunctionBinding) -> Option {
-      Option { f in
+      Option { (f: inout FunctionDecl) throws(DeclarationError) in
         if f.singleton != nil {
           throw DeclarationError("function already has a singleton binding: \(f.name)")
         }

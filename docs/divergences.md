@@ -85,7 +85,8 @@ by fixtures generated from cel-go (`tools/value-fixtures`). The differences:
 - **`TypeRegistry` has no protobuf database.** Message types are registered as `StructTypeDescriptor`s and
   enum values by name (`registerEnumValue`); `CELProtobuf` supplies both.
 - **No async bindings and no `Documentation()` / exprpb conversions.** `LateFunctionBinding` is kept as
-  `.lateBinding` with cel-go's validation; `AsyncBinding` is not ported. Declaration doc strings are
+  the `package` option `.lateBinding` with cel-go's validation (no runtime supply path, see
+  `docs/decisions.md` § 11); `AsyncBinding` is not ported. Declaration doc strings are
   stored but not rendered into cel-go's `common.Doc` signatures yet.
 - **`size_calc.go` (aggregate value sizes for cost tracking) is not ported** with the value layer; it
   belongs to the cost work (M4).

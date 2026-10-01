@@ -35,19 +35,19 @@ public struct Container: Sendable, Hashable {
   /// Creates a container by applying options to the root container.
   ///
   /// - Throws: ``DeclarationError`` for invalid names or colliding aliases.
-  public init(_ options: Option...) throws {
+  public init(_ options: Option...) throws(DeclarationError) {
     try self.init(options: options)
   }
 
   /// Creates a container by applying an array of options to the root container.
-  public init(options: [Option]) throws {
+  public init(options: [Option]) throws(DeclarationError) {
     for option in options {
       try option.apply(&self)
     }
   }
 
   /// Returns a copy of the container with further options applied.
-  public func extended(_ options: Option...) throws -> Container {
+  public func extended(_ options: Option...) throws(DeclarationError) -> Container {
     var copy = self
     for option in options {
       try option.apply(&copy)
@@ -103,11 +103,11 @@ public struct Container: Sendable, Hashable {
 extension Container {
   /// A configuration step applied to a ``Container``.
   public struct Option: Sendable {
-    let apply: @Sendable (inout Container) throws -> Void
+    let apply: @Sendable (inout Container) throws(DeclarationError) -> Void
 
     /// Sets the fully qualified container name, which must not start with a dot.
     public static func name(_ name: String) -> Option {
-      Option { c in
+      Option { (c: inout Container) throws(DeclarationError) in
         if name.utf8.first == UInt8(ascii: ".") {
           throw DeclarationError("container name must not contain a leading '.': \(name)")
         }
@@ -125,7 +125,7 @@ extension Container {
 
     /// Declares abbreviations from an array of qualified names.
     public static func abbreviations(_ qualifiedNames: [String]) -> Option {
-      Option { c in
+      Option { (c: inout Container) throws(DeclarationError) in
         for raw in qualifiedNames {
           let qn = trimmingGoSpace(raw)
           for scalar in qn.unicodeScalars where !isIdentifierChar(scalar) {
@@ -153,7 +153,7 @@ extension Container {
     private static func aliasAs(
       kind: String, qualifiedName: String, alias: String, requireQualified: Bool
     ) -> Option {
-      Option { c in
+      Option { (c: inout Container) throws(DeclarationError) in
         if alias.isEmpty || alias.utf8.contains(UInt8(ascii: ".")) {
           throw DeclarationError(
             "\(kind) must be non-empty and simple (not qualified): \(kind)=\(alias)")

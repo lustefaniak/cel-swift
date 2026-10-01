@@ -104,12 +104,13 @@ Ported from cel-go `common/decls` and `common/functions`.
 - `FunctionDecl(name, options...)` with `FunctionDecl.Option`: `.overload(id, argumentTypes:resultType:, opts...)`,
   `.memberOverload(...)`, `.singletonUnaryBinding(_:traits:)` / `Binary` / `Function`,
   `.disableTypeGuards(Bool)`, `.disableDeclaration(Bool)`, `.documentation(...)`.
-  `OverloadDecl.Option`: `.unaryBinding`, `.binaryBinding`, `.functionBinding`, `.lateBinding`,
-  `.nonStrict`, `.operandTraits`, `.examples`. Validation errors are `DeclarationError` with cel-go's
-  messages. `merging(_:)`, `subset(_:)`, `including/excluding(overloadIDs:)`, `addOverload`,
-  `overloads` (declaration order), `overload(withID:)`, `typeParameters`, `signatureEquals/Overlaps`.
+  `OverloadDecl.Option`: `.unaryBinding`, `.binaryBinding`, `.functionBinding`, `.nonStrict`,
+  `.operandTraits`, `.examples` (and the `package` `.lateBinding`, see `docs/decisions.md` § 11). Every
+  declaration operation throws `DeclarationError` (typed throws) with cel-go's messages. `merging(_:)`,
+  `subset(_:)`, `including/excluding(overloadIDs:)`, `addOverload`, `overloads` (declaration order),
+  `overload(withID:)`, `typeParameters`, `signatureEquals/Overlaps`.
 - `VariableDecl(name:type:)`, `VariableDecl(constant:type:value:)`, `.typeIdentifier(T)` (`int` : `type(int)`).
-- `FunctionDecl.bindings() throws -> [FunctionBinding]` follows cel-go `Bindings()`:
+- `FunctionDecl.bindings() throws(DeclarationError) -> [FunctionBinding]` follows cel-go `Bindings()`:
   - each overload with an implementation -> a binding named by its **overload id**, wrapped in the runtime
     type guard (`isAssignableRuntime` per argument, operand traits) unless `disableTypeGuards`;
   - one bound overload -> also registered under the **function name**;
