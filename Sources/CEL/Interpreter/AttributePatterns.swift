@@ -242,6 +242,16 @@ final class AttributeMatcher: NamespacedAttribute {
 
   func resolve(_ vars: ExecutionFrame) throws(ResolveError) -> Value {
     if let partial = vars.asPartialActivation() {
+      // cel-go hands matchesUnknownPatterns what AsPartialActivation finds. Outside comprehensions that is
+      // the caller's partial activation, which carries no execution frame, so resolving computed qualifiers
+      // there is invisible to observers (no cost, no recorded state). Inside a comprehension it is the
+      // folder, whose parent frame passes the context on, so the resolution is observed.
+      // Detach the evaluation context in the first case to the same effect.
+      let context = vars.context
+      if vars.parentFrame == nil {
+        vars.context = nil
+      }
+      defer { vars.context = context }
       if let unknown = try factory.matchesUnknownPatterns(
         vars, partial, attrID: attribute.id, variableNames: candidateVariableNames,
         qualifiers: matcherQualifiers)
