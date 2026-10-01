@@ -9,6 +9,7 @@ Swift/Go ratio.
   tools/bench/bench.py --swift-only --save before.tsv
   tools/bench/bench.py --swift-only --baseline before.tsv   # Swift now vs a saved Swift run
   tools/bench/bench.py --go-results go.tsv   # reuse a saved cel-go run
+  tools/bench/bench.py --swift-results a.tsv --baseline b.tsv   # compare two saved Swift runs
 
 Options --rounds, --round-ms, --filter and --phase are passed to both drivers.
 """
@@ -93,6 +94,7 @@ def main():
     p.add_argument("--save", help="write the Swift results to this TSV file")
     p.add_argument("--baseline", help="compare against a saved Swift TSV instead of cel-go")
     p.add_argument("--go-results", help="use a saved cel-go TSV instead of running the Go driver")
+    p.add_argument("--swift-results", help="use a saved Swift TSV instead of building and running CELBenchmarks")
     args = p.parse_args()
     if args.phase:
         matches = [phase for phase in PHASES if phase.startswith(args.phase)]
@@ -100,7 +102,11 @@ def main():
             p.error(f"--phase {args.phase}: expected one of {', '.join(PHASES)}")
         args.phase = matches[0]
 
-    swift_out = run_swift(args)
+    if args.swift_results:
+        with open(args.swift_results) as f:
+            swift_out = f.read()
+    else:
+        swift_out = run_swift(args)
     if args.save:
         with open(args.save, "w") as f:
             f.write(swift_out)
