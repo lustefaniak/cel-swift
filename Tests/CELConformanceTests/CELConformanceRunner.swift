@@ -18,12 +18,30 @@ let conformanceRunner: any ConformanceRunner = CELConformanceRunner()
 struct CELConformanceRunner: ConformanceRunner {
   var name: String { "cel-swift" }
 
-  func run(_ request: ConformanceRequest) -> ConformanceOutcome {
-    let test = request.test
+  /// cel-go's conformance environment, as far as the library has the pieces: the standard library,
+  /// optional types, errors on bad presence tests, identifier escapes.
+  static let baseEnvironment: ProgramEnvironment = {
+    var registry = TypeRegistry()
+    // cel-go `Types(types.OptionalType)`.
+    try? registry.register(CELType.optionalOfDyn)
     var env = ProgramEnvironment(
-      macros: test.disableMacros ? [] : Macro.allMacros,
+      functions: StandardLibrary.functions + OptionalLibrary.functions(),
+      variables: OptionalLibrary.types,
+      provider: registry,
+      macros: Macro.allMacros + OptionalLibrary.macros(),
       parserOptions: [.enableOptionalSyntax(true), .enableIdentEscapeSyntax(true)],
       errorOnBadPresenceTest: true)
+    env.decorators = [OptionalLibrary.decorator]
+    return env
+  }()
+
+  func run(_ request: ConformanceRequest) -> ConformanceOutcome {
+    let test = request.test
+    var env = Self.baseEnvironment
+    if test.disableMacros {
+      // cel-go clears the macros before adding the libraries, so library macros stay.
+      env.macros = OptionalLibrary.macros()
+    }
     var ast: AST
     do {
       ast = try env.parse(test.expr, description: test.name)

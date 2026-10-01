@@ -16,6 +16,9 @@
 // of cel/env.go it needs. The public `Environment` / `Program` API is designed separately and wraps
 // these package types.
 
+/// A planner decorator a library contributes to every program (cel-go `CustomDecoratorV2`).
+package typealias ProgramDecorator = @Sendable (any Interpretable) throws -> any Interpretable
+
 /// Program evaluation options (cel-go `EvalOption`).
 package struct EvalOptions: OptionSet, Sendable, Hashable {
   package let rawValue: Int
@@ -66,6 +69,8 @@ package struct ProgramEnvironment: Sendable {
   /// A presence test or optional selection on a non-container value is an error
   /// (cel-go `EnableErrorOnBadPresenceTest`).
   package var errorOnBadPresenceTest: Bool
+  /// Planner decorators contributed by libraries (cel-go `CustomDecorator` program options).
+  package var decorators: [ProgramDecorator] = []
 
   /// The standard environment: standard library functions and type identifiers, standard macros,
   /// the root container and the standard types.
@@ -157,6 +162,9 @@ package struct ProgramEnvironment: Sendable {
       : DefaultAttributeFactory(container: container, provider: provider, errorOnBadPresenceTest: errorOnBadPresenceTest)
     var planner = Planner(
       dispatcher: dispatcher, provider: provider, attrFactory: attrFactory, container: container, ast: ast)
+    for decorator in decorators {
+      planner.decorators.append(decorator)
+    }
     if options.interruptCheckFrequency > 0 {
       planner.decorators.append(decInterruptFolds())
     }
