@@ -119,3 +119,24 @@ conformance expression and 3000 mutated inputs). The remaining differences:
 - **Deeply nested input is parsed on a dedicated thread with a large stack.** Go grows goroutine stacks;
   Swift threads have fixed stacks, so when an input's nesting could exceed a small stack budget the parse
   runs on a temporary thread sized for it and the caller waits. Results are identical.
+
+## Protobuf (`CELProtobuf`)
+
+cel-go reflects over protobuf descriptors (`pb.Db`, `dynamicpb`); swift-protobuf has no dynamic messages, so
+`protoc-gen-cel-swift` generates a field table per message instead. The differences:
+
+- **Only generated types.** A message type is known when its `.proto` file was compiled with
+  `protoc-gen-cel-swift` and registered (`ProtobufTypes(files:)`); there is no `RegisterDescriptor` for a
+  runtime `FileDescriptorSet`. The well-known types are always registered, including `FieldMask` (cel-go
+  only has it when a registered file imports it).
+- **Closed (proto2) enums reject undeclared numbers.** cel-go stores any int32 in a proto2 enum field; a
+  swift-protobuf closed enum cannot hold an undeclared value, so assigning one is an `invalid enum value`
+  error. Open (proto3) enums keep unknown numbers as in cel-go.
+- **Extension equality covers registered extensions only.** `pb.Equal` ranges over every set field; here
+  extension fields take part in equality when their file is registered. Unknown fields are compared as
+  cel-go does (bytes, then grouped by field number).
+- **Map fields and `Struct` iterate in sorted key order** instead of Go's randomized map order.
+- **Error texts mention proto type names, not Go reflect types**, e.g. `unsupported type conversion from
+  'double' to int64` where cel-go prints `... to int64` via `reflect.Type`; the prefixes cel-go tests match
+  (`field type conversion error`, `unsupported field type`, `type conversion error`, `no such field`,
+  `unknown type`) are the same.

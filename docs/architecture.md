@@ -163,3 +163,31 @@ Planner/attributes (variable resolution against `Container`, qualifiers, `index 
 special forms above, comprehensions (with a mutable accumulator), list/map/message literals (map key type
 validation as cel-go; `TypeProvider.newValue` for messages), optional field selection, the
 dispatcher over `FunctionBinding`s, error labelling, unknown propagation and state tracking, cost.
+
+## Protobuf (`Sources/CELProtobuf`, `Sources/protoc-gen-cel-swift`)
+
+Ported from cel-go `common/types/pb` and the protobuf half of `common/types/provider.go` / `object.go`.
+swift-protobuf has no dynamic messages, so the descriptor walk cel-go does at runtime happens at build time:
+
+- `protoc-gen-cel-swift` (a protoc plugin on `SwiftProtobufPluginLibrary`, run next to `protoc-gen-swift`
+  with the same `Visibility` / `FileNaming` / `ProtoPathModuleMappings` options) writes `foo.cel.swift`
+  per `foo.proto`: one `ProtobufFile` constant `<Prefix><File>_CELFile` with the file's message types
+  (field tables), enum values, extensions, its swift-protobuf extension map and its imports.
+- A field is `ProtobufField<M>.singular / .repeated / .map(name, number:, jsonName:, keyPath, kind,
+  presence:)`: a key path into the swift-protobuf property plus a `ProtobufValueKind` (`.int32`, `.uint64`,
+  `.float`, `.bytes`, `.enumeration`, `.message`, ...) that converts values both ways with cel-go's
+  `ConvertToNative` rules (int32 range checks, `null` leaves message fields unset, JSON mapping for
+  `Value`/`Struct`/`ListValue`, packing for `Any`). Presence is `.implicit` (proto3 non-zero, Go's -0.0 rule),
+  `.explicit(\.hasX)` or `.oneof { ... }`.
+- `ProtobufTypes` is the database (cel-go `pb.Db`) and implements `TypeProvider` and `TypeAdapter`; compose
+  it under a `TypeRegistry` with `TypeRegistry(composing: protos, adapter: protos)`. Well-known type files
+  (generated into `Sources/CELProtobuf/WellKnownTypes`) are always included; registering a file registers
+  its imports.
+- `ProtobufObject` (`ObjectValue`) wraps a message with its type and the `ProtobufTypes` it came from (for
+  `Any` unpacking). Field access unwraps well-known types (unset wrappers / `Any` / `Value` read as `null`);
+  equality is `pb.Equal` (NaN unequal, `Any` unpacked, unknown fields grouped by number).
+- `ProtobufTypes.value(of:)` converts a host message to a CEL value; `message(from:as:)` converts back
+  (cel-go `ConvertToNative` to a proto type, including packing into `Any`).
+- `CELSpecProtos` holds the conformance messages with their adapters, `CELSpecProtos.protobufTypes`, and
+  `Cel_Expr_Value` / `Cel_Expr_ExprValue` conversions (cel-go `cel/io.go`). `CELGoTestProtos` holds cel-go's
+  `test/proto{2,3}pb` messages for ported tests. `tools/gen-protos.sh` regenerates all of them.
