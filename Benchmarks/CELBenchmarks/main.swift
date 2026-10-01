@@ -2,11 +2,13 @@
 // as the cel-go driver in tools/bench/go so the two can be compared (tools/bench/bench.py).
 //
 //   swift run -c release CELBenchmarks [--cases tools/bench/cases.json] [--rounds 5] [--round-ms 100]
-//                                      [--filter name] [--phase eval]
+//                                      [--filter name] [--phase eval] [--threads n]
 //
 // Each phase is calibrated to rounds of about --round-ms, run --rounds times, and the fastest round's time per
 // operation is printed as one tab-separated line: name, phase, ns/op. Bindings are CEL expressions
 // evaluated once with the lists extension, so both drivers build their inputs the same way.
+// With --threads n every round runs the operation on n threads at once and ns/op is wall time divided
+// by all operations, i.e. inverse throughput (shows contention on shared state; Swift driver only).
 
 import CEL
 import CELExtensions
@@ -25,6 +27,7 @@ struct Options {
   var roundMilliseconds = 100
   var filter: String?
   var phase: String?
+  var threads = 1
 
   init(_ arguments: [String]) {
     var iterator = arguments.dropFirst().makeIterator()
@@ -36,6 +39,7 @@ struct Options {
       case "--round-ms": roundMilliseconds = Int(value) ?? roundMilliseconds
       case "--filter": filter = value
       case "--phase": phase = value
+      case "--threads": threads = max(1, Int(value) ?? 1)
       default: fail("unknown argument \(argument)")
       }
     }
@@ -78,8 +82,16 @@ func measure(_ options: Options, _ body: () -> Void) -> Double {
   var perOp: [Double] = []
   for _ in 0..<options.rounds {
     let start = now()
-    for _ in 0..<n { body() }
-    perOp.append(Double(now() - start) / Double(n))
+    if options.threads > 1 {
+      withoutActuallyEscaping(body) { body in
+        DispatchQueue.concurrentPerform(iterations: options.threads) { _ in
+          for _ in 0..<n { body() }
+        }
+      }
+    } else {
+      for _ in 0..<n { body() }
+    }
+    perOp.append(Double(now() - start) / Double(n * options.threads))
   }
   return perOp.min() ?? 0
 }
