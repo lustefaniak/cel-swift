@@ -3,20 +3,38 @@
 A pure-Swift implementation of the [Common Expression Language](https://github.com/google/cel-spec),
 ported from [cel-go](https://github.com/cel-expr/cel-go) and measured against the cel-spec conformance suite.
 
-Status: pre-release, preparing 0.1. The parser, checker, interpreter, cost model, unknowns and residuals,
+Status: 0.1.0, the first release. The parser, checker, interpreter, cost model, unknowns and residuals,
 standard library, cel-go's extension libraries, protobuf support, CEL policies and the `tests.yaml` runner
-are ported. 2473 of 2508 cel-spec conformance tests pass in checked mode; every test cel-cpp passes,
-cel-swift passes, and the rest are the strong-enum tests cel-go and cel-cpp skip too.
+are ported, and every cel-spec conformance test passes.
 [docs/status.md](docs/status.md) has the current state, [docs/plan.md](docs/plan.md) the milestones,
 [docs/divergences.md](docs/divergences.md) every deliberate difference from cel-go and
 [CHANGELOG.md](CHANGELOG.md) the releases.
+
+## Conformance
+
+The cel-spec v0.25.3 conformance suite, checked mode (parse, type-check, evaluate), against the skip lists
+each implementation's own conformance runner keeps:
+
+| Implementation | Passing | Not passing |
+|---|---|---|
+| cel-swift | **2508 / 2508 (100%)** | none |
+| [cel-go](https://github.com/cel-expr/cel-go) v0.32.0 | 2380 / 2508 (94.9%) | 46 strong enums, 5 type deduction, 4 fields, 2 string extensions, 1 optional, 1 timestamp; the 69 network extension tests are not run |
+| [cel-cpp](https://github.com/google/cel-cpp) | 2386 / 2508 (95.1%) | 46 strong enums and 7 others; the 69 network extension tests are not run |
+| [cel-rust](https://github.com/cel-rust/cel-rust) | 1283 / 2508 (51.2%) | 1225 skipped |
+
+Parse-only mode passes 2339 / 2339. Every test cel-go or cel-cpp passes, cel-swift passes too. Where
+cel-swift passes a test cel-go skips, it follows the spec and cel-cpp, and the difference from cel-go is
+recorded in [docs/divergences.md](docs/divergences.md). Strong enums are behind
+`Environment.Option.strongEnums` (off by default, so the legacy enum tests pass as well). The other
+implementations' numbers come from their skip lists at the commits in `tools/dashboard/data` (cel-go: the
+`third_party/cel-go` submodule); `python3 tools/dashboard/dashboard.py --run` prints the per-file table.
 
 ## Usage
 
 Add the package and depend on the products you need:
 
 ```swift
-.package(url: "https://github.com/lustefaniak/cel-swift.git", branch: "main"),
+.package(url: "https://github.com/lustefaniak/cel-swift.git", from: "0.1.0"),
 ```
 
 | Product | Contents | Dependencies |

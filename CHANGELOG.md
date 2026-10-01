@@ -7,7 +7,7 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 
 ## [Unreleased]
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-01
 
 First release, for PRBar. A port of cel-go v0.32.0, tested against cel-spec v0.25.3. The API decisions
 behind it are recorded in `docs/decisions.md`.
@@ -133,8 +133,8 @@ custom macros, optimizers or interpreter decorators yet), textproto test suites.
 Against cel-go on the benchmark expressions (`docs/performance.md`, `tools/bench/bench.py`): evaluation takes
 1.6 to 3.3 times as long, checking 1.3 to 2 times (faster on long expressions), planning about 3 times.
 `Value` boxes its list, map, object and error payloads (`indirect` cases), which halved evaluation time
-without changing the public cases. Parsing took about 8 times as long as cel-go before the shared ANTLR
-prediction cache (`docs/decisions.md` § 9); update this line with its numbers when it lands.
+without changing the public cases. Parsing takes 2 to 3 times as long as cel-go with the shared ANTLR prediction
+cache (`docs/decisions.md` § 9; about 8 times before it), and concurrent parses on one environment scale.
 
-<!-- On release: replace "Unreleased" in the 0.1.0 heading with the date (YYYY-MM-DD), update the numbers
-above, switch the README install snippet to `from: "0.1.0"`, and add the compare links below. -->
+[Unreleased]: https://github.com/lustefaniak/cel-swift/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/lustefaniak/cel-swift/releases/tag/0.1.0
