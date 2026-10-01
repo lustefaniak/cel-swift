@@ -71,12 +71,14 @@ extension YAMLNode {
   /// - Throws: ``YAMLError`` for a mapping with duplicate keys or a scalar whose explicit tag does
   ///   not fit its text.
   public func decodeValue() throws(YAMLError) -> YAMLValue? {
-    var decoder = YAMLDecoder()
-    let value = try decoder.decodeValue(self)
-    if let error = decoder.unmarshalError {
-      throw error
+    try withStack(depth: decodeDepthBound) { () throws(YAMLError) -> YAMLValue? in
+      var decoder = YAMLDecoder()
+      let value = try decoder.decodeValue(self)
+      if let error = decoder.unmarshalError {
+        throw error
+      }
+      return value
     }
-    return value
   }
 }
 
@@ -87,8 +89,18 @@ extension YAMLNode {
 /// abort a decode in go-yaml (a custom unmarshaler failing, an explicit tag that does not fit its
 /// value) are thrown.
 package struct YAMLDecoder {
+  /// The deepest nesting of collections decoded, counting those reached through aliases.
+  ///
+  /// go-yaml has no such limit (Go stacks grow), but its scanner rejects documents nested deeper
+  /// than 10000 levels, and the libyaml used here those deeper than 1000. Aliases can splice
+  /// anchored trees into each other and nest a decoded value deeper than its document; the limit
+  /// keeps decoded values shallow enough to compare and release on any thread.
+  package static let maxDepth = 1000
+
   /// The collected `line N: ...` type errors.
   package private(set) var errors: [String] = []
+  /// The number of collections being decoded.
+  private var depth = 0
 
   package init() {}
 
@@ -119,6 +131,18 @@ package struct YAMLDecoder {
   package static func isNull(_ node: YAMLNode) -> Bool {
     guard let n = content(of: node) else { return true }
     return n.kind == .scalar && n.shortTag == YAMLTags.null
+  }
+
+  /// Enters a collection's content; balanced by ``ascend()``.
+  private mutating func descend() throws(YAMLError) {
+    if depth >= Self.maxDepth {
+      throw YAMLError(message: "yaml: exceeded max depth of \(Self.maxDepth)")
+    }
+    depth += 1
+  }
+
+  private mutating func ascend() {
+    depth -= 1
   }
 
   private mutating func terror(_ n: YAMLNode, _ tag: String, _ typeName: String) {
@@ -242,6 +266,8 @@ package struct YAMLDecoder {
       case .merge: return .string(n.value)
       }
     case .sequence:
+      try descend()
+      defer { ascend() }
       var items: [YAMLValue] = []
       for child in n.content {
         items.append(try decodeValue(child) ?? .null)
@@ -249,6 +275,8 @@ package struct YAMLDecoder {
       return .list(items)
     case .mapping:
       guard checkUniqueKeys(n) else { return nil }
+      try descend()
+      defer { ascend() }
       var entries: [YAMLValue.Entry] = []
       var i = 0
       while i + 1 < n.content.count {
@@ -274,6 +302,8 @@ package struct YAMLDecoder {
     guard let n = Self.content(of: node) else { return nil }
     switch n.kind {
     case .sequence:
+      try descend()
+      defer { ascend() }
       var items: [T] = []
       for child in n.content {
         if let item = try element(&self, child) {
@@ -304,6 +334,8 @@ package struct YAMLDecoder {
     switch n.kind {
     case .mapping:
       guard checkUniqueKeys(n) else { return nil }
+      try descend()
+      defer { ascend() }
       var result: [String: T] = [:]
       var i = 0
       while i + 1 < n.content.count {
@@ -348,6 +380,8 @@ package struct YAMLDecoder {
     switch n.kind {
     case .mapping:
       guard checkUniqueKeys(n) else { return false }
+      try descend()
+      defer { ascend() }
       var done: Set<String> = []
       var i = 0
       while i + 1 < n.content.count {

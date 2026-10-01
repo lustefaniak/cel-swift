@@ -45,7 +45,7 @@ struct YAMLLimitsTests {
 
   /// go-yaml accepts up to 10000 nested collections; libyaml, which reads the events here, stops
   /// before 1000. Below that, composing and decoding must not overflow a 512 KiB thread stack.
-  @Test(.disabled("overflows the stack: the composer and the decoder recurse once per level"))
+  @Test
   func deepNestingDecodes() throws {
     let depth = 900
     for text in [Self.flowSequences(depth), Self.blockMappings(depth)] {
@@ -56,11 +56,44 @@ struct YAMLLimitsTests {
   }
 
   /// Deeper documents are an error, as in go-yaml (whose limit is 10000 levels).
-  @Test(.disabled("overflows the stack: the composer recurses once per level"))
+  @Test
   func deeperNestingIsAnError() throws {
     for text in [Self.flowSequences(10_001), Self.blockMappings(10_001)] {
       #expect(throws: YAMLError.self) { try YAMLNode.parseDocument(text) }
       #expect(throws: YAMLError.self) { try EnvironmentConfig(yaml: text) }
+    }
+  }
+
+  /// Anchors whose content nests 100 levels, the others aliasing the previous one 99 levels down:
+  /// decoding the last nests `1 + 99 * links` levels.
+  static func aliasChain(links: Int, indent: String = "") -> String {
+    var text = indent + "a0: &a0 " + flowSequences(100)
+    for link in 1..<links {
+      text += indent + "a\(link): &a\(link) " + String(repeating: "[", count: 99) + "*a\(link - 1)"
+        + String(repeating: "]", count: 99) + "\n"
+    }
+    return text
+  }
+
+  /// Aliases splice anchored trees into each other, so a decoded value can nest deeper than its
+  /// document. go-yaml decodes any depth; here decoding stops at `YAMLDecoder.maxDepth` (1000),
+  /// so that decoded values can be compared and released on any thread.
+  @Test func aliasNestingIsBounded() throws {
+    let document = try #require(try YAMLNode.parseDocument(Self.aliasChain(links: 9)))
+    guard case .map(let entries)? = try document.decodeValue() else {
+      Issue.record("not a map")
+      return
+    }
+    #expect(Self.nesting(entries[8].value) == 892)
+    // Equality and release recurse once per level on the calling thread.
+    #expect(entries[8].value == entries[8].value)
+
+    let deeper = try #require(try YAMLNode.parseDocument(Self.aliasChain(links: 11)))
+    #expect(throws: YAMLError(message: "yaml: exceeded max depth of 1000")) { try deeper.decodeValue() }
+    #expect(throws: YAMLError(message: "yaml: exceeded max depth of 1000")) {
+      try EnvironmentConfig(
+        yaml: "anchors:\n" + Self.aliasChain(links: 11, indent: "  ")
+          + "validators:\n- name: v\n  config:\n    deep: *a10\n")
     }
   }
 
@@ -77,7 +110,7 @@ struct YAMLLimitsTests {
 
   /// cel-go parses rules nested to any depth and stops compiling them past `maxNestedExpressions`
   /// (100 by default) with an error.
-  @Test(.disabled("overflows the stack: compiling recurses deeper than a thread's stack allows"))
+  @Test
   func deeplyNestedRules() throws {
     let compiler = PolicyCompiler()
     let shallow = try PolicyParser().parse(PolicySource(Self.nestedRules(90), description: "nested.yaml"))

@@ -15,7 +15,7 @@
   import Android
 #endif
 
-enum LargeStack {
+package enum LargeStack {
   #if DEBUG
     /// Conservative stack use per nesting unit in unoptimized builds.
     static let bytesPerUnit = 16 << 10
@@ -43,7 +43,7 @@ enum LargeStack {
   }
 
   /// The stack size needed for `units` nesting units, or nil when the calling thread suffices.
-  static func requiredStackSize(units: Int) -> Int? {
+  package static func requiredStackSize(units: Int) -> Int? {
     let needed = 64 << 10 + units * bytesPerUnit
     if needed <= inlineBudget {
       return nil
@@ -62,7 +62,7 @@ enum LargeStack {
 
   /// Runs `body` on a new thread with the given stack size and waits for it; runs it on the calling
   /// thread if a thread cannot be created.
-  static func run(stackSize: Int, _ body: () -> Void) {
+  package static func run(stackSize: Int, _ body: () -> Void) {
     withoutActuallyEscaping(body) { escapable in
       let work = Work(escapable)
       let arg = Unmanaged.passRetained(work).toOpaque()

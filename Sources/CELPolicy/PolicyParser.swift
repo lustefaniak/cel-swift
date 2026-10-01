@@ -343,7 +343,8 @@ public struct PolicyParserContext: Sendable {
       reportError(atID: 0, "got yaml node of kind \(docNode?.goKindValue ?? 0), wanted mapping node")
       return nil
     }
-    return parsePolicy(root)
+    // The parser recurses through nested rules and does not follow aliases.
+    return withStack(depth: root.shape.height) { parsePolicy(root) }
   }
 
   /// Parses `node` as though it is the top-level policy.

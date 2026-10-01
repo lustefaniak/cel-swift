@@ -19,6 +19,18 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
   models the lists as non-optional values.
 - **A `null` test input binding decodes as an empty `TestInputValue`.** go-yaml stores a nil pointer, which
   celtest dereferences and crashes on.
+- **Documents nest at most about 1000 levels.** go-yaml's scanner stops at 10000 levels
+  (`exceeded max depth of 10000`); the libyaml bundled with Yams stops at 1000, counting block
+  indentation and flow nesting together, with its own message (`Maximum nesting level reached, set
+  with yaml_set_max_nest_level())`). The composer keeps go-yaml's 10000 bound as well.
+- **Decoding stops at 1000 nested collections, aliases included** (`yaml: exceeded max depth of
+  1000`). go-yaml has no decoding limit, and aliases can splice anchored trees into each other so that
+  a value nests deeper than its document; the limit keeps decoded values shallow enough to compare and
+  release on any thread. Documents without aliases never reach it.
+- **The recursive passes run on a large stack.** Decoding, the policy parser and the policy compiler
+  recurse once per nesting level, as go-yaml and cel-go do; Swift threads have fixed stacks, so for
+  deep documents these passes run on a temporary thread sized for the depth (as the CEL parser does,
+  see Parser) and the caller waits. The composer uses an explicit stack. Results are the same.
 - **`ConfigToYAML` is not ported.** Its output layout is go-yaml's emitter's, and nothing in the policy
   pipeline writes configs.
 - **Model types are values.** cel-go's `Policy`, `Rule`, `Match` and `Variable` are mutable pointers shared

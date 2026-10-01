@@ -59,6 +59,15 @@ public struct PolicyCompiler: Sendable {
   /// - Returns: The composed expression and the environment to create programs from.
   /// - Throws: ``PolicyError`` with every compile error, positioned in the policy file.
   public func compile(_ policy: Policy, environment: Environment) throws(PolicyError) -> CompiledPolicy {
+    // Compiling and composing recurse several frames per nested rule.
+    try withStack(depth: policy.ruleDepth * 8) { () throws(PolicyError) -> CompiledPolicy in
+      try compileOnCurrentThread(policy, environment: environment)
+    }
+  }
+
+  private func compileOnCurrentThread(_ policy: Policy, environment: Environment) throws(PolicyError)
+    -> CompiledPolicy
+  {
     let env: Environment
     do {
       env = try environment.withPolicySupport()
@@ -125,5 +134,22 @@ extension Environment {
   /// composed policies use (cel-go `tools/compiler` `extensionOpt`).
   package func withPolicySupport() throws(DeclarationError) -> Environment {
     try extending(options: [.library(.optionalTypes()), .library(.bindings())])
+  }
+}
+
+extension Policy {
+  /// How deep rules nest through matches (a policy with one rule is 1), computed without recursion.
+  var ruleDepth: Int {
+    var depth = 0
+    var stack: [(Rule, Int)] = rule.map { [($0, 1)] } ?? []
+    while let (rule, level) = stack.popLast() {
+      depth = Swift.max(depth, level)
+      for match in rule.matches {
+        if let nested = match.rule {
+          stack.append((nested, level + 1))
+        }
+      }
+    }
+    return depth
   }
 }

@@ -63,10 +63,14 @@ public struct TestSuite: Sendable, Hashable {
     guard let doc = try YAMLNode.parseDocument(yaml) else {
       return
     }
-    var decoder = YAMLDecoder()
-    try decoder.decodeSuite(doc, into: &self)
-    if let error = decoder.unmarshalError {
-      throw error
+    self = try withStack(depth: doc.decodeDepthBound) { () throws(YAMLError) -> TestSuite in
+      var suite = TestSuite()
+      var decoder = YAMLDecoder()
+      try decoder.decodeSuite(doc, into: &suite)
+      if let error = decoder.unmarshalError {
+        throw error
+      }
+      return suite
     }
   }
 }

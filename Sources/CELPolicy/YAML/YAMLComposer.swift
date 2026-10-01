@@ -63,6 +63,9 @@ extension YAMLNode {
 }
 
 private final class YAMLComposer {
+  /// The deepest nesting of collections accepted: go-yaml's `max_flow_level` and `max_indents`.
+  static let maxDepth = 10000
+
   private var parser = yaml_parser_t()
   private var event = yaml_event_t()
   private var hasEvent = false
@@ -89,24 +92,83 @@ private final class YAMLComposer {
     }
   }
 
+  /// A collection or document whose content is being parsed.
+  private struct Frame {
+    var node: YAMLNode
+    var anchor: String
+    /// For a document: whether its content node has been parsed.
+    var hasContent = false
+  }
+
+  /// go-yaml's `parser.parse` and the `document`, `sequence` and `mapping` methods it calls,
+  /// with the recursion replaced by a stack of open nodes: Swift threads have fixed stacks.
   func parse() throws(YAMLError) -> YAMLNode? {
     try initialize()
-    switch try peek() {
-    case YAML_SCALAR_EVENT:
-      return try scalar()
-    case YAML_ALIAS_EVENT:
-      return try alias()
-    case YAML_MAPPING_START_EVENT:
-      return try mapping()
-    case YAML_SEQUENCE_START_EVENT:
-      return try sequence()
-    case YAML_DOCUMENT_START_EVENT:
-      return try document()
-    case YAML_STREAM_END_EVENT:
-      // Happens when attempting to decode an empty buffer.
-      return nil
-    default:
-      throw YAMLError(message: "yaml: internal error: attempted to parse unknown event")
+    var stack: [Frame] = []
+    while true {
+      let type = try peek()
+      var finished: YAMLNode?
+      if let top = stack.last {
+        switch top.node.kind {
+        case .document where top.hasContent:
+          try expect(YAML_DOCUMENT_END_EVENT)
+          finished = stack.removeLast().node
+        case .sequence where type == YAML_SEQUENCE_END_EVENT:
+          try expect(YAML_SEQUENCE_END_EVENT)
+          var frame = stack.removeLast()
+          register(frame.anchor, &frame.node)
+          finished = frame.node
+        case .mapping where type == YAML_MAPPING_END_EVENT:
+          try expect(YAML_MAPPING_END_EVENT)
+          var frame = stack.removeLast()
+          register(frame.anchor, &frame.node)
+          finished = frame.node
+        default:
+          break
+        }
+      }
+      if finished == nil {
+        switch type {
+        case YAML_SCALAR_EVENT:
+          finished = try scalar()
+        case YAML_ALIAS_EVENT:
+          finished = try alias()
+        case YAML_MAPPING_START_EVENT:
+          try checkDepth(stack)
+          stack.append(try mappingStart())
+          continue
+        case YAML_SEQUENCE_START_EVENT:
+          try checkDepth(stack)
+          stack.append(try sequenceStart())
+          continue
+        case YAML_DOCUMENT_START_EVENT:
+          let n = node(kind: .document, defaultTag: "", tag: "", value: "")
+          try expect(YAML_DOCUMENT_START_EVENT)
+          stack.append(Frame(node: n, anchor: ""))
+          continue
+        case YAML_STREAM_END_EVENT:
+          // Happens when attempting to decode an empty buffer. Inside a document go-yaml's
+          // `parseChild` appends nothing, and expecting the document end then fails.
+          guard let top = stack.last else {
+            return nil
+          }
+          guard top.node.kind == .document else {
+            throw YAMLError(message: "yaml: attempted to go past the end of stream; corrupted value?")
+          }
+          stack[stack.count - 1].hasContent = true
+          continue
+        default:
+          throw YAMLError(message: "yaml: internal error: attempted to parse unknown event")
+        }
+      }
+      guard let node = finished else { continue }
+      if stack.isEmpty {
+        return node
+      }
+      stack[stack.count - 1].node.content.append(node)
+      if stack[stack.count - 1].node.kind == .document {
+        stack[stack.count - 1].hasContent = true
+      }
     }
   }
 
@@ -193,21 +255,6 @@ private final class YAMLComposer {
     )
   }
 
-  private func parseChild(_ parent: inout YAMLNode) throws(YAMLError) {
-    if let child = try parse() {
-      parent.content.append(child)
-    }
-  }
-
-  private func document() throws(YAMLError) -> YAMLNode {
-    var n = node(kind: .document, defaultTag: "", tag: "", value: "")
-    try expect(YAML_DOCUMENT_START_EVENT)
-    try parseChild(&n)
-    _ = try peek()
-    try expect(YAML_DOCUMENT_END_EVENT)
-    return n
-  }
-
   private func alias() throws(YAMLError) -> YAMLNode {
     let name = Self.string(event.data.alias.anchor)
     var n = node(kind: .alias, defaultTag: "", tag: "", value: name)
@@ -252,7 +299,7 @@ private final class YAMLComposer {
     return n
   }
 
-  private func sequence() throws(YAMLError) -> YAMLNode {
+  private func sequenceStart() throws(YAMLError) -> Frame {
     let data = event.data.sequence_start
     var n = node(kind: .sequence, defaultTag: YAMLTags.seq, tag: Self.string(data.tag), value: "")
     if data.style == YAML_FLOW_SEQUENCE_STYLE {
@@ -261,15 +308,10 @@ private final class YAMLComposer {
     let anchor = Self.string(data.anchor)
     register(anchor, &n)
     try expect(YAML_SEQUENCE_START_EVENT)
-    while try peek() != YAML_SEQUENCE_END_EVENT {
-      try parseChild(&n)
-    }
-    try expect(YAML_SEQUENCE_END_EVENT)
-    register(anchor, &n)
-    return n
+    return Frame(node: n, anchor: anchor)
   }
 
-  private func mapping() throws(YAMLError) -> YAMLNode {
+  private func mappingStart() throws(YAMLError) -> Frame {
     let data = event.data.mapping_start
     var n = node(kind: .mapping, defaultTag: YAMLTags.map, tag: Self.string(data.tag), value: "")
     if data.style == YAML_FLOW_MAPPING_STYLE {
@@ -278,13 +320,19 @@ private final class YAMLComposer {
     let anchor = Self.string(data.anchor)
     register(anchor, &n)
     try expect(YAML_MAPPING_START_EVENT)
-    while try peek() != YAML_MAPPING_END_EVENT {
-      try parseChild(&n)
-      try parseChild(&n)
-    }
-    try expect(YAML_MAPPING_END_EVENT)
-    register(anchor, &n)
-    return n
+    return Frame(node: n, anchor: anchor)
+  }
+
+  /// Fails when a collection would nest deeper than ``maxDepth``, as go-yaml's scanner does. The
+  /// libyaml bundled with Yams has a lower limit (1000 levels, counting block indentation and flow
+  /// nesting), which stops such documents first; this keeps the bound if that one is lifted.
+  private func checkDepth(_ stack: [Frame]) throws(YAMLError) {
+    // A document is only ever the bottom frame.
+    let depth = stack.count - (stack.first?.node.kind == .document ? 1 : 0)
+    guard depth >= Self.maxDepth else { return }
+    let line = Int(event.start_mark.line)
+    let at = line == 0 ? "" : "line \(line + 1): "
+    throw YAMLError(message: "yaml: \(at)exceeded max depth of \(Self.maxDepth)")
   }
 
   /// Records an anchored node. go-yaml stores a pointer when the node starts, so aliases see the

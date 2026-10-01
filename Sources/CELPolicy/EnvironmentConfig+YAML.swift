@@ -32,10 +32,14 @@ extension EnvironmentConfig {
     guard let doc = try YAMLNode.parseDocument(yaml) else {
       return
     }
-    var decoder = YAMLDecoder()
-    try decoder.decodeConfig(doc, into: &self)
-    if let error = decoder.unmarshalError {
-      throw error
+    self = try withStack(depth: doc.decodeDepthBound) { () throws(YAMLError) -> EnvironmentConfig in
+      var config = EnvironmentConfig()
+      var decoder = YAMLDecoder()
+      try decoder.decodeConfig(doc, into: &config)
+      if let error = decoder.unmarshalError {
+        throw error
+      }
+      return config
     }
   }
 }
