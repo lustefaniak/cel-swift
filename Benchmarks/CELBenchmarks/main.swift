@@ -1,99 +1,128 @@
-// Interpreter benchmarks: a policy-sized expression and comprehension-heavy expressions, planned once
-// and evaluated many times.
+// Benchmarks: parse, check, plan and eval of the expressions in tools/bench/cases.json, timed the same way
+// as the cel-go driver in tools/bench/go so the two can be compared (tools/bench/bench.py).
 //
-//   swift run -c release CELBenchmarks [iterations] [benchmark-name]
+//   swift run -c release CELBenchmarks [--cases tools/bench/cases.json] [--rounds 5] [--round-ms 100]
+//                                      [--filter name] [--phase eval]
 //
-// Prints the mean time per evaluation. Not part of the test suite; numbers are for spotting
-// pathological slowness, not for comparing machines.
+// Each phase is calibrated to rounds of about --round-ms, run --rounds times, and the fastest round's time per
+// operation is printed as one tab-separated line: name, phase, ns/op. Bindings are CEL expressions
+// evaluated once with the lists extension, so both drivers build their inputs the same way.
 
 import CEL
+import CELExtensions
+import Foundation
 
-#if canImport(Darwin)
-  import Darwin
-#elseif canImport(Glibc)
-  import Glibc
-#elseif canImport(Musl)
-  import Musl
-#endif
-
-struct Benchmark {
+struct BenchCase: Decodable {
   var name: String
   var expr: String
-  var variables: [VariableDecl]
-  var bindings: [String: Value]
+  var variables: [String: String]
+  var bindings: [String: String]
 }
 
-let pr: Value = [
-  "additions": 120, "deletions": 30, "author": "octocat", "draft": false,
-  "labels": ["bug", "backend", "needs-review"],
-  "files": .list(ArrayList((0..<40).map { i in ["path": .string("src/module\(i % 7)/file\(i).swift"), "changes": .int(Int64(i * 3))] as Value })),
-]
-let review: Value = ["confidence": 0.91, "risk": "low", "approvals": 2]
+struct Options {
+  var casesPath = "tools/bench/cases.json"
+  var rounds = 5
+  var roundMilliseconds = 100
+  var filter: String?
+  var phase: String?
 
-let benchmarks = [
-  Benchmark(
-    name: "policy",
-    expr: """
-      !pr.draft
-        && pr.additions + pr.deletions <= 400
-        && review.confidence >= 0.85
-        && review.risk in ['low', 'medium']
-        && (review.approvals >= 2 || pr.author in ['octocat', 'hubot'])
-        && !('do-not-merge' in pr.labels)
-        && pr.labels.exists(l, l == 'bug' || l.startsWith('feat'))
-        && pr.files.all(f, !f.path.endsWith('.lock') && f.changes < 500)
-      """,
-    variables: [
-      VariableDecl(name: "pr", type: .map(key: .string, value: .dyn)),
-      VariableDecl(name: "review", type: .map(key: .string, value: .dyn)),
-    ],
-    bindings: ["pr": pr, "review": review]),
-  Benchmark(
-    name: "comprehension-map-filter",
-    expr: "xs.map(x, x * 2).filter(y, y % 3 == 0).map(z, z + 1).size() > 0",
-    variables: [VariableDecl(name: "xs", type: .list(.int))],
-    bindings: ["xs": .list(ArrayList((0..<1000).map { Value.int(Int64($0)) }))]),
-  Benchmark(
-    name: "comprehension-nested",
-    expr: "xs.all(x, ys.exists(y, y == x % 50))",
-    variables: [VariableDecl(name: "xs", type: .list(.int)), VariableDecl(name: "ys", type: .list(.int))],
-    bindings: [
-      "xs": .list(ArrayList((0..<200).map { Value.int(Int64($0)) })),
-      "ys": .list(ArrayList((0..<50).map { Value.int(Int64($0)) })),
-    ]),
-  Benchmark(
-    name: "string-ops",
-    expr: "pr.files.filter(f, f.path.contains('module3')).map(f, f.path.size()).size() >= 1",
-    variables: [VariableDecl(name: "pr", type: .map(key: .string, value: .dyn))],
-    bindings: ["pr": pr]),
-]
-
-func now() -> Double {
-  var ts = timespec()
-  clock_gettime(CLOCK_MONOTONIC, &ts)
-  return Double(ts.tv_sec) + Double(ts.tv_nsec) / 1e9
-}
-
-let iterations = CommandLine.arguments.count > 1 ? Int(CommandLine.arguments[1]) ?? 2000 : 2000
-let only = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : nil
-for benchmark in benchmarks where only == nil || benchmark.name == only {
-  do {
-    var env = ProgramEnvironment()
-    try env.declare(benchmark.variables)
-    let program = try env.program(try env.compile(benchmark.expr))
-    let activation = MapActivation(benchmark.bindings)
-    let warm = program.eval(activation).value
-    guard case .bool(true) = warm else {
-      print("\(benchmark.name): unexpected result \(warm)")
-      continue
+  init(_ arguments: [String]) {
+    var iterator = arguments.dropFirst().makeIterator()
+    while let argument = iterator.next() {
+      let value = iterator.next() ?? ""
+      switch argument {
+      case "--cases": casesPath = value
+      case "--rounds": rounds = Int(value) ?? rounds
+      case "--round-ms": roundMilliseconds = Int(value) ?? roundMilliseconds
+      case "--filter": filter = value
+      case "--phase": phase = value
+      default: fail("unknown argument \(argument)")
+      }
     }
-    let start = now()
-    for _ in 0..<iterations {
-      _ = program.eval(activation)
-    }
-    let perEval = (now() - start) / Double(iterations)
-    print("\(benchmark.name): \((perEval * 1e8).rounded() / 100) µs/eval over \(iterations) iterations")
-  } catch {
-    print("\(benchmark.name): \(error)")
   }
+}
+
+func fail(_ message: String) -> Never {
+  FileHandle.standardError.write(Data("bench: \(message)\n".utf8))
+  exit(1)
+}
+
+func celType(_ name: String) -> CELType {
+  switch name {
+  case "int": return .int
+  case "string": return .string
+  case "dyn": return .dyn
+  case "list(int)": return .list(.int)
+  case "map(string, dyn)": return .map(key: .string, value: .dyn)
+  default: fail("unknown type \(name)")
+  }
+}
+
+func now() -> UInt64 { DispatchTime.now().uptimeNanoseconds }
+
+/// The nanoseconds per call of `body` in the fastest of `rounds` rounds of about `roundMilliseconds`
+/// each: the round least disturbed by other load on the machine.
+func measure(_ options: Options, _ body: () -> Void) -> Double {
+  let target = UInt64(options.roundMilliseconds) * 1_000_000
+  var n = 1
+  while true {
+    let start = now()
+    for _ in 0..<n { body() }
+    let elapsed = now() - start
+    if elapsed >= target / 10 {
+      n = max(1, Int(Double(n) * Double(target) / Double(max(elapsed, 1))))
+      break
+    }
+    n *= 2
+  }
+  var perOp: [Double] = []
+  for _ in 0..<options.rounds {
+    let start = now()
+    for _ in 0..<n { body() }
+    perOp.append(Double(now() - start) / Double(n))
+  }
+  return perOp.min() ?? 0
+}
+
+let options = Options(CommandLine.arguments)
+guard let data = FileManager.default.contents(atPath: options.casesPath) else {
+  fail("cannot read \(options.casesPath)")
+}
+let cases: [BenchCase]
+do {
+  cases = try JSONDecoder().decode([BenchCase].self, from: data)
+} catch {
+  fail("\(options.casesPath): \(error)")
+}
+
+do {
+  let bindingEnv = try Environment(.library(.lists))
+  for benchCase in cases where options.filter == nil || benchCase.name == options.filter {
+    let env = try Environment(.variables(benchCase.variables.mapValues(celType)))
+    var bindings: [String: Value] = [:]
+    for (name, expr) in benchCase.bindings {
+      bindings[name] = try bindingEnv.program(bindingEnv.compile(expr)).evaluate().value
+    }
+    let variables = Variables(bindings)
+
+    let parsed = try env.parse(benchCase.expr)
+    let checked = try env.check(parsed)
+    let program = try env.program(checked)
+    let result = try program.evaluate(variables).value
+    guard case .bool(true) = result else {
+      fail("\(benchCase.name): unexpected result \(result)")
+    }
+
+    func report(_ phase: String, _ body: () -> Void) {
+      guard options.phase == nil || options.phase == phase else { return }
+      let ns = measure(options, body)
+      print("\(benchCase.name)\t\(phase)\t\((ns * 10).rounded() / 10)")
+    }
+    report("parse") { _ = try? env.parse(benchCase.expr) }
+    report("check") { _ = try? env.check(parsed) }
+    report("plan") { _ = try? env.program(checked) }
+    report("eval") { _ = try? program.evaluate(variables) }
+  }
+} catch {
+  fail("\(error)")
 }

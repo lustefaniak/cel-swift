@@ -70,10 +70,10 @@ let package = Package(
       dependencies: ["CEL", "CELExtensions", "CELCommandLine"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
-    // Interpreter benchmarks: swift run -c release CELBenchmarks
+    // Parse/check/plan/eval benchmarks against cel-go: tools/bench/run.sh
     .executableTarget(
       name: "CELBenchmarks",
-      dependencies: ["CEL"],
+      dependencies: ["CEL", "CELExtensions"],
       path: "Benchmarks/CELBenchmarks",
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),

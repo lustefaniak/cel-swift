@@ -1,0 +1,90 @@
+[
+ {
+  "name": "arith",
+  "expr": "x + y * 2 - z / 3 > 10 && x % 7 != 0",
+  "variables": {
+   "x": "int",
+   "y": "int",
+   "z": "int"
+  },
+  "bindings": {
+   "x": "120",
+   "y": "35",
+   "z": "9"
+  }
+ },
+ {
+  "name": "select-chain",
+  "expr": "a.b.c.d == 1 && has(a.b.e) && a.b['c']['d'] + 1 == 2 && a.f[2] == 'z'",
+  "variables": {
+   "a": "map(string, dyn)"
+  },
+  "bindings": {
+   "a": "{'b': {'c': {'d': 1}, 'e': true}, 'f': ['x', 'y', 'z']}"
+  }
+ },
+ {
+  "name": "literals",
+  "expr": "{'a': x, 'b': [x, x + 1, x + 2], 'c': {'d': string(x)}}.size() == 3",
+  "variables": {
+   "x": "int"
+  },
+  "bindings": {
+   "x": "7"
+  }
+ },
+ {
+  "name": "policy",
+  "expr": "!pr.draft\n  && pr.additions + pr.deletions <= 400\n  && review.confidence >= 0.85\n  && review.risk in ['low', 'medium']\n  && (review.approvals >= 2 || pr.author in ['octocat', 'hubot'])\n  && !('do-not-merge' in pr.labels)\n  && pr.labels.exists(l, l == 'bug' || l.startsWith('feat'))\n  && pr.files.all(f, !f.path.endsWith('.lock') && f.changes < 500)",
+  "variables": {
+   "pr": "map(string, dyn)",
+   "review": "map(string, dyn)"
+  },
+  "bindings": {
+   "pr": "{'additions': 120, 'deletions': 30, 'author': 'octocat', 'draft': false, 'labels': ['bug', 'backend', 'needs-review'], 'files': lists.range(40).map(i, {'path': 'src/module' + string(i % 7) + '/file' + string(i) + '.swift', 'changes': i * 3})}",
+   "review": "{'confidence': 0.91, 'risk': 'low', 'approvals': 2}"
+  }
+ },
+ {
+  "name": "comprehension-map-filter",
+  "expr": "xs.map(x, x * 2).filter(y, y % 3 == 0).map(z, z + 1).size() > 0",
+  "variables": {
+   "xs": "list(int)"
+  },
+  "bindings": {
+   "xs": "lists.range(1000)"
+  }
+ },
+ {
+  "name": "comprehension-nested",
+  "expr": "xs.all(x, ys.exists(y, y == x % 50))",
+  "variables": {
+   "xs": "list(int)",
+   "ys": "list(int)"
+  },
+  "bindings": {
+   "xs": "lists.range(200)",
+   "ys": "lists.range(50)"
+  }
+ },
+ {
+  "name": "string-ops",
+  "expr": "pr.files.filter(f, f.path.contains('module3')).map(f, f.path.size()).size() >= 1",
+  "variables": {
+   "pr": "map(string, dyn)"
+  },
+  "bindings": {
+   "pr": "{'files': lists.range(40).map(i, {'path': 'src/module' + string(i % 7) + '/file' + string(i) + '.swift', 'changes': i * 3})}"
+  }
+ },
+ {
+  "name": "long-or",
+  "expr": "x == 0 || x == 1 || x == 2 || x == 3 || x == 4 || x == 5 || x == 6 || x == 7 || x == 8 || x == 9 || x == 10 || x == 11 || x == 12 || x == 13 || x == 14 || x == 15 || x == 16 || x == 17 || x == 18 || x == 19 || x == 20 || x == 21 || x == 22 || x == 23 || x == 24 || x == 25 || x == 26 || x == 27 || x == 28 || x == 29 || x == 30 || x == 31 || x == 32 || x == 33 || x == 34 || x == 35 || x == 36 || x == 37 || x == 38 || x == 39 || x == 40 || x == 41 || x == 42 || x == 43 || x == 44 || x == 45 || x == 46 || x == 47 || x == 48 || x == 49 || x == 50 || x == 51 || x == 52 || x == 53 || x == 54 || x == 55 || x == 56 || x == 57 || x == 58 || x == 59",
+  "variables": {
+   "x": "int"
+  },
+  "bindings": {
+   "x": "59"
+  }
+ }
+]
