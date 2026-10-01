@@ -12,7 +12,9 @@
 //   CEL_DIFF_EXTENSION_COSTS=0                           leave costs of extension function calls out
 //   CEL_DIFF_ORACLE=path                                 use a prebuilt oracle binary
 //
-// regressions.jsonl holds minimised failures with cel-go's answer, so it runs without Go. An entry with
+// regressions.jsonl holds minimised failures with cel-go's answer, so `regressions()` replays it without Go
+// (`generatedCases()` is the only test that needs the oracle; `replay()` and `adHoc()` are triage helpers that
+// run only when their environment variables are set). An entry with
 // `known_issue` is an open bug: it runs inside `withKnownIssue` and starts failing once the bug is fixed,
 // which is the cue to drop the field.
 
@@ -253,9 +255,14 @@ struct DifferentialTests {
     try Data(text.utf8).write(to: regressionsFile)
   }
 
+  /// Replays `regressions.jsonl` against the cel-go answers stored in it; needs neither Go nor the
+  /// oracle. A missing or empty file fails rather than passing with nothing replayed.
   @Test func regressions() throws {
     var swift = SwiftSide()
-    for entry in try Self.loadRegressions() {
+    let entries = try Self.loadRegressions()
+    try #require(
+      !entries.isEmpty, "no regressions read from \(Self.regressionsFile.path); the replay would check nothing")
+    for entry in entries {
       let request = try #require(entry["request"])
       let expected = Outcome(oracle: try #require(entry["expected"]))
       let observed = swift.run(request)
