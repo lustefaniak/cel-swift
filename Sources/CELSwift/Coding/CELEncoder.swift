@@ -29,9 +29,12 @@ import CEL
 ///   var additions: Int
 ///   var labels: [String]
 /// }
+/// struct Facts: Codable {
+///   var pr: ChangeRequest
+/// }
 /// let variables = try CELEncoder().encodeVariables(
 ///   Facts(pr: ChangeRequest(repo: "acme/api", additions: 12, labels: ["bug"])))
-/// // ["pr": ChangeRequest{repo: "acme/api", additions: 12, labels: ["bug"]}]
+/// // ["pr": MyApp.ChangeRequest{repo: "acme/api", additions: 12, labels: ["bug"]}]
 /// ```
 public struct CELEncoder: Sendable {
   /// How field names and structs are represented; must match the options of the schema the
