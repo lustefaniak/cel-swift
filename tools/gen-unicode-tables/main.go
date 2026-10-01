@@ -13,6 +13,8 @@
 //
 // Simple case folding (unicode.SimpleFold) is dumped as sorted (r, SimpleFold(r))
 // pairs for every rune that does not fold to itself.
+//
+// Both lists are written as hex strings decoded by UnicodeTables.decodeHex on first use.
 package main
 
 import (
@@ -173,32 +175,29 @@ func main() {
 	}
 	p("  ]\n\n")
 
+	// The two big tables are emitted as hex strings (8 digits per UInt32) and decoded on first
+	// use: Swift compiles a string literal as static data, while an 11k-element array literal
+	// adds several seconds to every optimized build.
+	hexTable := func(name string, values []uint32) {
+		p("  static let %s: [UInt32] = decodeHex(\n", name)
+		p("    \"\"\"\n")
+		var line strings.Builder
+		for i, v := range values {
+			fmt.Fprintf(&line, "%08x", v)
+			if i%12 == 11 || i == len(values)-1 {
+				p("    %s\n", line.String())
+				line.Reset()
+			}
+		}
+		p("    \"\"\")\n")
+	}
+
 	p("  /// Simple case folding: pairs (r, unicode.SimpleFold(r)) for every r that does not fold to itself,\n")
 	p("  /// sorted by r.\n")
-	p("  static let foldPairs: [UInt32] = [\n")
-	for i := 0; i < len(folds); i += 8 {
-		p("   ")
-		for _, v := range folds[i:min(i+8, len(folds))] {
-			p(" 0x%05x,", v)
-		}
-		p("\n")
-	}
-	p("  ]\n\n")
-
+	hexTable("foldPairs", folds)
+	p("\n")
 	p("  /// Packed ranges, lo<<11 | (hi-lo).\n")
-	p("  static let ranges: [UInt32] = [\n")
-	var line strings.Builder
-	for i, v := range data {
-		if i%8 == 0 {
-			line.WriteString("   ")
-		}
-		fmt.Fprintf(&line, " 0x%08x,", v)
-		if i%8 == 7 || i == len(data)-1 {
-			p("%s\n", line.String())
-			line.Reset()
-		}
-	}
-	p("  ]\n")
+	hexTable("ranges", data)
 	p("}\n")
 	fmt.Fprintf(os.Stderr, "ranges: %d, fold pairs: %d\n", len(data), len(folds)/2)
 }

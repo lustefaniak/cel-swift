@@ -47,6 +47,30 @@ enum UnicodeTables {
 
   static let maxRune: Rune = 0x10FFFF
 
+  /// Decodes a generated table: 8 lowercase hex digits per value, line breaks ignored.
+  static func decodeHex(_ s: String) -> [UInt32] {
+    var out: [UInt32] = []
+    out.reserveCapacity(s.utf8.count / 8)
+    var v: UInt32 = 0
+    var digits = 0
+    for c in s.utf8 {
+      let d: UInt32
+      switch c {
+      case UInt8(ascii: "0")...UInt8(ascii: "9"): d = UInt32(c - UInt8(ascii: "0"))
+      case UInt8(ascii: "a")...UInt8(ascii: "f"): d = UInt32(c - UInt8(ascii: "a") + 10)
+      default: continue
+      }
+      v = v << 4 | d
+      digits += 1
+      if digits == 8 {
+        out.append(v)
+        v = 0
+        digits = 0
+      }
+    }
+    return out
+  }
+
   /// unicode.Categories["Cn"].
   static var cn: TableRef {
     categories["Cn", default: TableRef(start: 0, count: 0)]
