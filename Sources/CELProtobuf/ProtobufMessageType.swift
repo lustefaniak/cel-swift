@@ -111,6 +111,8 @@ struct ErasedField: Sendable {
   let typed: any Sendable
   let get: @Sendable (any SwiftProtobuf.Message, ProtobufTypes) -> Value
   let isSet: @Sendable (any SwiftProtobuf.Message) -> Bool
+  /// See ``ProtobufField/patchJSON``.
+  let patchJSON: (@Sendable (any SwiftProtobuf.Message, inout Google_Protobuf_Value?, ProtobufTypes) -> Void)?
 
   init<M>(_ field: ProtobufField<M>, isExtension: Bool) {
     name = field.name
@@ -128,6 +130,14 @@ struct ErasedField: Sendable {
     isSet = { message in
       guard let m = message as? M else { return false }
       return field.isSet(m)
+    }
+    if let patch = field.patchJSON {
+      patchJSON = { message, json, types in
+        guard let m = message as? M else { return }
+        patch(m, &json, types)
+      }
+    } else {
+      patchJSON = nil
     }
   }
 }

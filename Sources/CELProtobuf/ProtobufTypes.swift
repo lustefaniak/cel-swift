@@ -228,6 +228,25 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
     return messageType.equal(x, y, self)
   }
 
+  /// Corrects the JSON swift-protobuf wrote for a message to what protojson (and so cel-go) writes:
+  /// every `google.protobuf.NullValue` is `null`, in nested messages too.
+  func patchJSON(of message: any SwiftProtobuf.Message, _ json: inout Google_Protobuf_Value) {
+    guard let messageType = messageType(of: message), case .structValue(var object)? = json.kind else {
+      return
+    }
+    var changed = false
+    for field in messageType.fields {
+      guard let patch = field.patchJSON else { continue }
+      var element = object.fields[field.jsonName]
+      patch(message, &element, self)
+      object.fields[field.jsonName] = element
+      changed = true
+    }
+    if changed {
+      json.structValue = object
+    }
+  }
+
   // MARK: TypeProvider
 
   /// The number of an enum value given its fully qualified name, or an `unknown enum name` error.

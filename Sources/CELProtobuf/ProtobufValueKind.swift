@@ -43,6 +43,10 @@ public struct ProtobufValueKind<V: Sendable>: Sendable {
   /// Map key conversions, for the kinds that can be map keys.
   let toMapKey: (@Sendable (V) -> MapKey)?
   let fromMapKey: (@Sendable (MapKey) -> V?)?
+  /// Corrects the JSON swift-protobuf wrote for a value to protojson's, for the kinds where they
+  /// differ: `google.protobuf.NullValue` (always `null` in protojson) and messages that may contain
+  /// such values. `nil` when swift-protobuf's JSON is already protojson's.
+  var patchJSON: (@Sendable (V, inout Google_Protobuf_Value, ProtobufTypes) -> Void)? = nil
 }
 
 extension ProtobufValueKind {
@@ -252,6 +256,18 @@ extension ProtobufValueKind where V == Data {
   }
 }
 
+/// protojson's `null` for a `google.protobuf.NullValue`, whatever its number.
+@Sendable private func nullJSON<V>(_: V, _ json: inout Google_Protobuf_Value, _: ProtobufTypes) {
+  json = Google_Protobuf_Value(nilLiteral: ())
+}
+
+/// The protojson corrections inside a nested message.
+@Sendable private func messageJSON<V: SwiftProtobuf.Message>(
+  _ message: V, _ json: inout Google_Protobuf_Value, _ types: ProtobufTypes
+) {
+  types.patchJSON(of: message, &json)
+}
+
 extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
   /// Enum fields: CEL `int` (strong enum types are not supported, as in cel-go).
   ///
@@ -276,7 +292,10 @@ extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
       equal: { a, b, _ in a.rawValue == b.rawValue },
       unsetValue: nil,
       toMapKey: nil,
-      fromMapKey: nil
+      fromMapKey: nil,
+      // protojson writes every NullValue as `null`; swift-protobuf writes the number of a map
+      // value other than NULL_VALUE.
+      patchJSON: V.self == Google_Protobuf_NullValue.self ? nullJSON : nil
     )
   }
 }
@@ -295,7 +314,9 @@ extension ProtobufValueKind where V: SwiftProtobuf.Message {
       equal: { a, b, types in types.messagesEqual(a, b) },
       unsetValue: WellKnownTypes.isNullWhenUnset(name) ? .null : nil,
       toMapKey: nil,
-      fromMapKey: nil
+      fromMapKey: nil,
+      // Well-known types have JSON forms of their own and hold no enum fields.
+      patchJSON: name.hasPrefix("google.protobuf.") ? nil : messageJSON
     )
   }
 }

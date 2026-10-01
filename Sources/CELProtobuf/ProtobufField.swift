@@ -38,6 +38,9 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
   let isSet: @Sendable (M) -> Bool
   let set: @Sendable (inout M, Value, ProtobufTypes) -> EvalError?
   let equal: @Sendable (M, M, ProtobufTypes) -> Bool
+  /// Corrects the field's JSON as swift-protobuf wrote it (`nil` when the field was left out) to
+  /// protojson's; `nil` when the two always agree. See ``ProtobufValueKind/patchJSON``.
+  var patchJSON: (@Sendable (M, inout Google_Protobuf_Value?, ProtobufTypes) -> Void)? = nil
 
   /// How a singular field tracks presence, which decides `has()`.
   public enum Presence: Sendable {
@@ -106,7 +109,8 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
           return false
         }
         return !aSet || kind.equal(a[keyPath: keyPath], b[keyPath: keyPath], types)
-      }
+      },
+      patchJSON: singularJSONPatch(keyPath, kind)
     )
   }
 
@@ -158,7 +162,8 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
           return false
         }
         return true
-      }
+      },
+      patchJSON: repeatedJSONPatch(keyPath, kind)
     )
   }
 
@@ -220,8 +225,65 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
           guard let vy = y[k], value.equal(vx, vy, types) else { return false }
         }
         return true
-      }
+      },
+      patchJSON: mapJSONPatch(keyPath, key, value)
     )
+  }
+}
+
+extension ProtobufField {
+  typealias JSONPatch = @Sendable (M, inout Google_Protobuf_Value?, ProtobufTypes) -> Void
+
+  static func singularJSONPatch<V>(
+    _ keyPath: WritableKeyPath<M, V> & Sendable, _ kind: ProtobufValueKind<V>
+  ) -> JSONPatch? {
+    guard let patch = kind.patchJSON else { return nil }
+    return { m, json, types in
+      guard var present = json else { return }
+      patch(m[keyPath: keyPath], &present, types)
+      json = present
+    }
+  }
+
+  static func repeatedJSONPatch<V>(
+    _ keyPath: WritableKeyPath<M, [V]> & Sendable, _ kind: ProtobufValueKind<V>
+  ) -> JSONPatch? {
+    guard let patch = kind.patchJSON else { return nil }
+    return { m, json, types in
+      guard case .listValue(var list)? = json?.kind else { return }
+      for (index, element) in m[keyPath: keyPath].enumerated() where index < list.values.count {
+        patch(element, &list.values[index], types)
+      }
+      json?.listValue = list
+    }
+  }
+
+  static func mapJSONPatch<K: Hashable, V>(
+    _ keyPath: WritableKeyPath<M, [K: V]> & Sendable, _ key: ProtobufValueKind<K>,
+    _ value: ProtobufValueKind<V>
+  ) -> JSONPatch? {
+    guard let patch = value.patchJSON, let toMapKey = key.toMapKey else { return nil }
+    return { m, json, types in
+      guard case .structValue(var object)? = json?.kind else { return }
+      for (k, v) in m[keyPath: keyPath] {
+        let name = jsonMapKey(toMapKey(k))
+        guard var element = object.fields[name] else { continue }
+        patch(v, &element, types)
+        object.fields[name] = element
+      }
+      json?.structValue = object
+    }
+  }
+}
+
+/// A map key as a JSON object member name, as protojson writes it.
+func jsonMapKey(_ key: MapKey) -> String {
+  switch key.value {
+  case .bool(let b): return b ? "true" : "false"
+  case .int(let i): return String(i)
+  case .uint(let u): return String(u)
+  case .string(let s): return s
+  default: return ""
   }
 }
 

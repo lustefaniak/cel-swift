@@ -318,6 +318,7 @@ enum WellKnownTypes {
       do {
         let data = try proto.message.jsonUTF8Data()
         json = try Google_Protobuf_Value(jsonUTF8Data: data)
+        proto.types.patchJSON(of: proto.message, &json)
       } catch {
         return .failure(EvalError("\(error)"))
       }

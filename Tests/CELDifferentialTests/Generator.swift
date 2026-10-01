@@ -180,11 +180,6 @@ enum KnownGaps {
   /// rejects `proto2.TestAllTypes{standalone_enum: 10}` (`invalid enum value 10 for NestedEnum`) where
   /// cel-go stores 10. Message literals give proto2 enum fields declared values only.
   static let closedEnums = true
-
-  /// A `google.protobuf.NullValue` field holding a number other than 0 converts to that number in a JSON
-  /// `Value` (SwiftProtobuf's JSON encoding) where cel-go writes null (regression nullvalue-json-0).
-  /// Message literals give NullValue fields 0 only.
-  static let nullValueNumbers = true
 }
 
 struct Generator {
@@ -452,8 +447,8 @@ struct Generator {
           // KnownGaps.closedEnums: only declared values for proto2 enums.
           value = closedEnumLiteral(f.type, max: 2)
         } else if f.name.contains("null_value") && f.type != .null {
-          // KnownGaps.nullValueNumbers: NULL_VALUE (0) only.
-          value = closedEnumLiteral(f.type, max: 0)
+          // Numbers other than NULL_VALUE (0) too: protojson writes each as null.
+          value = closedEnumLiteral(f.type, max: 5)
         } else if (f.isWrapper || f.type == .null) && rng.chance(25) {
           value = Node("null", [], .null)
         } else if case .message = f.type, depth <= 0 {

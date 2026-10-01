@@ -84,9 +84,6 @@ Found by the differential suite and not fixed; the generator steers around them 
 - **Proto2 enums are closed in SwiftProtobuf.** `proto2.TestAllTypes{standalone_enum: 10}` (and enum lists and map
   values) fails with `invalid enum value 10 for NestedEnum`; cel-go stores the number. Needs proto2 enum fields to
   carry unknown numbers (generated adapters or a raw-value path), or a documented divergence.
-- **A non-zero `google.protobuf.NullValue` in a message converted to JSON** comes out as that number:
-  SwiftProtobuf's JSON encoding writes unrecognised enum numbers, protojson writes `null` (regression
-  `nullvalue-json-0`, a known issue). Reading the field gives the number in both.
 - **Error naming of a null read from a wrapper field**: cel-go says `structpb.NullValue`, cel-swift `types.Null`
   (`invalid qualifier type: ...`); cel-swift has one null value. Excused in the comparison.
 - **cel-go bug, not ours**: the runtime cost trackers of `ext/lists.go` `distinct` and `sort` cast their argument to a
