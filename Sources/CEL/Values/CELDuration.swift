@@ -48,18 +48,29 @@ public struct CELDuration: Sendable, Hashable, Comparable {
   static let nanosPerMinute: Int64 = 60 * nanosPerSecond
   static let nanosPerHour: Int64 = 60 * nanosPerMinute
 
-  /// The whole hours, truncated toward zero. Port of Go `Duration.Hours` converted to `int`.
-  var hours: Int64 { nanoseconds / CELDuration.nanosPerHour }
-  /// The whole minutes, truncated toward zero.
-  var minutes: Int64 { nanoseconds / CELDuration.nanosPerMinute }
-  /// The whole seconds, truncated toward zero.
-  var seconds: Int64 { nanoseconds / CELDuration.nanosPerSecond }
-  /// The whole milliseconds, truncated toward zero.
+  /// The hours as cel-go computes them: Go `Duration.Hours` (a float64) converted to `int`. The
+  /// float sum rounds up when the duration is a few nanoseconds short of a whole hour and the hour
+  /// count is large, so this is not always the truncated quotient.
+  var hours: Int64 { Self.goTruncated(nanoseconds, unit: CELDuration.nanosPerHour) }
+  /// The minutes as Go `Duration.Minutes` converted to `int` (see ``hours``).
+  var minutes: Int64 { Self.goTruncated(nanoseconds, unit: CELDuration.nanosPerMinute) }
+  /// The seconds as Go `Duration.Seconds` converted to `int` (see ``hours``).
+  var seconds: Int64 { Self.goTruncated(nanoseconds, unit: CELDuration.nanosPerSecond) }
+  /// The whole milliseconds, truncated toward zero (Go `Duration.Milliseconds` is integer division).
   var milliseconds: Int64 { nanoseconds / CELDuration.nanosPerMillisecond }
   /// The milliseconds within the current second, truncated toward zero (`duration('1.234s')` has 234):
   /// what the spec's `getMilliseconds` returns. cel-go returns ``milliseconds`` (docs/divergences.md).
   var millisecondsOfSecond: Int64 {
     (nanoseconds % CELDuration.nanosPerSecond) / CELDuration.nanosPerMillisecond
+  }
+
+  /// Go `Duration.Hours`/`Minutes`/`Seconds`, `float64(d/unit) + float64(d%unit)/float64(unit)`, then
+  /// Go's float-to-int conversion, which truncates toward zero. The result is at most the whole
+  /// quotient plus one, so the conversion back to `Int64` cannot overflow.
+  private static func goTruncated(_ nanoseconds: Int64, unit: Int64) -> Int64 {
+    let whole = nanoseconds / unit
+    let rest = nanoseconds % unit
+    return Int64(Double(whole) + Double(rest) / Double(unit))
   }
 
   /// The duration in seconds as a double, computed as Go `Duration.Seconds` does.
