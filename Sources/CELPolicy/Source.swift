@@ -12,48 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Ported from cel-go policy/source.go, with the parts of common/source.go and common/location.go it
-// relies on.
-//
-// TODO(core): `Sources/CEL/Common/Source.swift` is being written in parallel. Once it lands,
-// `PolicySource` should wrap the core `Source` (as cel-go's `policy.Source` embeds `common.Source`)
-// and `RelativeSource` should conform to the core source protocol so the CEL parser can report
-// positions relative to the policy file. Until then the line-offset logic lives here.
+// Ported from cel-go policy/source.go.
+
+import CEL
 
 /// The contents of a policy file, with the line table used to map character offsets to positions.
 ///
 /// Offsets and columns count Unicode scalars, as CEL source positions do.
-public struct PolicySource: Sendable, Hashable {
-  /// The full text of the policy file.
-  public let content: String
-  /// A short description of the source, typically the file path; it prefixes error messages.
-  public let description: String
-
-  let scalars: [Unicode.Scalar]
-  /// Character offsets at which lines start: entry `i` is the offset of line `i + 2`. The last
-  /// entry is one past the end of the content.
-  let lineOffsets: [Int32]
+public struct PolicySource: Sendable {
+  let text: TextSource
 
   /// Creates a source from the text of a policy file.
   ///
   /// - Parameters:
   ///   - content: The policy text.
-  ///   - description: A short description of the source, typically the file path.
+  ///   - description: A short description of the source, typically the file path; it prefixes
+  ///     error messages.
   public init(_ content: String, description: String = "<input>") {
-    self.content = content
-    self.description = description
-    let scalars = Array(content.unicodeScalars)
-    self.scalars = scalars
-    var offsets: [Int32] = []
-    if !scalars.isEmpty {
-      for (i, s) in scalars.enumerated() where s == "\n" {
-        offsets.append(Int32(i + 1))
-      }
-      offsets.append(Int32(scalars.count + 1))
-    } else {
-      offsets.append(0)
-    }
-    self.lineOffsets = offsets
+    self.text = TextSource(content, description: description)
   }
 
   /// Creates a source from the bytes of a policy file, decoded as UTF-8.
@@ -65,57 +41,16 @@ public struct PolicySource: Sendable, Hashable {
     self.init(String(decoding: Array(bytes), as: UTF8.self), description: description)
   }
 
+  /// The full text of the policy file.
+  public var content: String { text.content }
+
+  /// A short description of the source, typically the file path; it prefixes error messages.
+  public var description: String { text.description }
+
   /// Returns the text of a 1-based line without its line break, or `nil` when the line does not
   /// exist.
   public func snippet(line: Int) -> String? {
-    guard let start = lineOffset(line), !scalars.isEmpty else { return nil }
-    let end: Int
-    if let next = lineOffset(line + 1) {
-      end = Int(next) - 1
-    } else {
-      end = scalars.count
-    }
-    return slice(Int(start), end)
-  }
-
-  func slice(_ start: Int, _ end: Int) -> String {
-    let lo = max(0, min(start, scalars.count))
-    let hi = max(lo, min(end, scalars.count))
-    var view = String.UnicodeScalarView()
-    view.append(contentsOf: scalars[lo..<hi])
-    return String(view)
-  }
-
-  /// The character offset of a location, or `nil` when its line does not exist.
-  func locationOffset(_ location: PolicyLocation) -> Int32? {
-    guard let lineOffset = lineOffset(location.line) else { return nil }
-    return lineOffset + Int32(location.column)
-  }
-
-  /// The location of a character offset.
-  func offsetLocation(_ offset: Int32) -> PolicyLocation {
-    var line = 1
-    var lineStart: Int32 = 0
-    for o in lineOffsets {
-      if o > offset {
-        break
-      }
-      line += 1
-    }
-    if line > 1 {
-      lineStart = lineOffsets[line - 2]
-    }
-    return PolicyLocation(line: line, column: Int(offset - lineStart))
-  }
-
-  private func lineOffset(_ line: Int) -> Int32? {
-    if line == 1 {
-      return 0
-    }
-    if line > 1 && line <= lineOffsets.count {
-      return lineOffsets[line - 2]
-    }
-    return nil
+    text.snippet(line: line)
   }
 
   /// Returns a source for a fragment of this file whose first character sits at the given line
@@ -129,52 +64,82 @@ public struct PolicySource: Sendable, Hashable {
   ///   - line: The 1-based line of the fragment start in this file.
   ///   - column: The 0-based column of the fragment start in this file.
   public func relative(_ content: String, line: Int, column: Int) -> RelativeSource {
-    RelativeSource(parent: self, content: content, absoluteLocation: PolicyLocation(line: line, column: column))
+    RelativeSource(
+      parent: self,
+      local: TextSource(content, description: description),
+      absoluteLocation: Location(line: line, column: column))
+  }
+}
+
+extension PolicySource: Source {
+  package var lineOffsets: [Int32] { text.lineOffsets }
+  package var scalars: [Unicode.Scalar] { text.scalars }
+
+  package func locationOffset(_ location: Location) -> Int32? {
+    text.locationOffset(location)
+  }
+
+  package func offsetLocation(_ offset: Int32) -> Location? {
+    text.offsetLocation(offset)
+  }
+
+  package func newLocation(line: Int, column: Int) -> Location {
+    text.newLocation(line: line, column: column)
   }
 }
 
 /// An embedded source fragment within a larger ``PolicySource``.
 ///
-/// The fragment's ``content`` is the embedded text, while positions map back to the enclosing file.
-public struct RelativeSource: Sendable, Hashable {
+/// The fragment's ``content`` is the embedded text, while descriptions, line tables, snippets and
+/// locations are those of the enclosing file, so a CEL parser reading the fragment reports
+/// positions in the policy file.
+public struct RelativeSource: Sendable {
   /// The enclosing policy file.
   public let parent: PolicySource
+  let local: TextSource
+  let absoluteLocation: Location
+
   /// The embedded text.
-  public let content: String
-  let absoluteLocation: PolicyLocation
+  public var content: String { local.content }
 
   /// The 1-based line in the parent file where the fragment starts.
   public var line: Int { absoluteLocation.line }
+
   /// The 0-based column in the parent file where the fragment starts.
   public var column: Int { absoluteLocation.column }
 
-  init(parent: PolicySource, content: String, absoluteLocation: PolicyLocation) {
-    self.parent = parent
-    self.content = content
-    self.absoluteLocation = absoluteLocation
-  }
-
   /// Returns the 1-based line and 0-based column in the parent file of a character offset
   /// relative to the start of the fragment, or `nil` when the fragment start is not in the file.
+  ///
+  /// - Parameter offset: An offset into ``content``, counted in Unicode scalars.
   public func absoluteLocation(ofOffset offset: Int) -> (line: Int, column: Int)? {
     guard let loc = offsetLocation(Int32(offset)) else { return nil }
     return (loc.line, loc.column)
   }
+}
 
-  func offsetLocation(_ offset: Int32) -> PolicyLocation? {
+extension RelativeSource: Source {
+  package var description: String { parent.description }
+  package var lineOffsets: [Int32] { parent.lineOffsets }
+  package var scalars: [Unicode.Scalar] { local.scalars }
+
+  package func locationOffset(_ location: Location) -> Int32? {
+    parent.locationOffset(location)
+  }
+
+  /// The absolute location given the relative offset, if found.
+  package func offsetLocation(_ offset: Int32) -> Location? {
     guard let absOffset = parent.locationOffset(absoluteLocation) else {
       return nil
     }
     return parent.offsetLocation(absOffset + offset)
   }
-}
 
-/// A 1-based line and 0-based column, as cel-go's `common.Location`.
-///
-/// TODO(core): replace with the core location type once `Sources/CEL/Common` lands.
-struct PolicyLocation: Sendable, Hashable {
-  var line: Int
-  var column: Int
+  package func newLocation(line: Int, column: Int) -> Location {
+    parent.newLocation(line: line, column: column)
+  }
 
-  static let none = PolicyLocation(line: -1, column: -1)
+  package func snippet(line: Int) -> String? {
+    parent.snippet(line: line)
+  }
 }

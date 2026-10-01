@@ -18,6 +18,8 @@
 // cel-go models policies as mutable reference types; here they are value types and the parser
 // and tag visitors mutate them through `inout`.
 
+import CEL
+
 /// A parsed CEL policy: a name, optional imports and a rule tree whose expressions are CEL source
 /// strings tracked back to their position in the policy file.
 ///
@@ -182,11 +184,11 @@ public struct Policy: Sendable {
   /// The policy file the policy was parsed from.
   public let source: PolicySource
 
-  var sourceInfo: PolicySourceInfo
+  var sourceInfo: SourceInfo
   var semanticStorage: Semantic?
   private var metadata: [String: any Sendable]
 
-  init(source: PolicySource, sourceInfo: PolicySourceInfo) {
+  init(source: PolicySource, sourceInfo: SourceInfo) {
     self.name = ValueString(value: "")
     self.description = ValueString(value: "")
     self.imports = []
@@ -215,8 +217,8 @@ public struct Policy: Sendable {
   ///
   /// - Parameter id: A ``ValueString/id`` or a `sourceID` of a policy element.
   public func location(of id: Int64) -> (line: Int, column: Int)? {
-    guard sourceInfo.offsetRanges[id] != nil else { return nil }
-    let loc = sourceInfo.startLocation(of: id)
+    guard sourceInfo.offsetRange(id) != nil else { return nil }
+    let loc = sourceInfo.startLocation(id)
     return (loc.line, loc.column)
   }
 

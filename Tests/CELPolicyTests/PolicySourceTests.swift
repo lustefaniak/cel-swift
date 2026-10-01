@@ -1,3 +1,4 @@
+import CEL
 import Testing
 
 @testable import CELPolicy
@@ -18,8 +19,8 @@ struct PolicySourceTests {
   @Test func offsetsCountUnicodeScalars() {
     let source = PolicySource("ž: 1\nb: 2\n")
     #expect(source.lineOffsets == [5, 10, 11])
-    #expect(source.offsetLocation(6) == PolicyLocation(line: 2, column: 1))
-    #expect(source.locationOffset(PolicyLocation(line: 2, column: 1)) == 6)
+    #expect(source.offsetLocation(6) == Location(line: 2, column: 1))
+    #expect(source.locationOffset(Location(line: 2, column: 1)) == 6)
   }
 
   /// The block scalar outputs of `yaml_parsing_cel_error` start at column 0 of their first line;
@@ -78,14 +79,14 @@ struct PolicySourceTests {
 
   @Test func errorDisplayUsesWideMarkersForMultibyteCharacters() {
     var errors = PolicyError(source: PolicySource("ažíb\n", description: "<input>"))
-    errors.report(id: 0, location: PolicyLocation(line: 1, column: 2), message: "bad")
+    errors.report(id: 0, location: Location(line: 1, column: 2), message: "bad")
     #expect(errors.description == "ERROR: <input>:1:3: bad\n | ažíb\n | .\u{ff0e}\u{ff3e}")
   }
 
   @Test func errorDisplaySortsByLocationAndTruncates() {
     var errors = PolicyError(source: PolicySource("a\nb\n", description: "f"))
-    errors.report(id: 0, location: PolicyLocation(line: 2, column: 0), message: "second")
-    errors.report(id: 0, location: PolicyLocation(line: 1, column: 0), message: "first")
+    errors.report(id: 0, location: Location(line: 2, column: 0), message: "second")
+    errors.report(id: 0, location: Location(line: 1, column: 0), message: "first")
     #expect(errors.description == "ERROR: f:1:1: first\n | a\n | ^\nERROR: f:2:1: second\n | b\n | ^")
 
     var many = PolicyError(source: PolicySource("", description: "f"))

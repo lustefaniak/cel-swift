@@ -14,6 +14,7 @@
 
 // Ported from cel-go policy/parser_test.go and the policyTests table of policy/helper_test.go.
 
+import CEL
 import Testing
 
 @testable import CELPolicy
@@ -438,7 +439,7 @@ struct PolicyParserTests {
 
   @Test func policyAndRuleSemanticMethods() {
     let source = PolicySource("")
-    var p = Policy(source: source, sourceInfo: PolicySourceInfo(source: source))
+    var p = Policy(source: source, sourceInfo: SourceInfo(source: source))
     #expect(p.semantic == .firstMatch)
     p.setSemantic(.aggregate)
     #expect(p.semantic == .aggregate)

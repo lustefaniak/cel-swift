@@ -1,3 +1,4 @@
+import CEL
 import Foundation
 import Testing
 
@@ -90,14 +91,14 @@ struct DifferentialTests {
   }
 
   private func dumpValueString(_ p: Policy, _ label: String, _ v: Policy.ValueString, _ out: inout String) {
-    let loc = p.sourceInfo.startLocation(of: v.id)
-    let off = p.sourceInfo.offsetRanges[v.id]?.start ?? 0
+    let loc = p.sourceInfo.startLocation(v.id)
+    let off = p.sourceInfo.offsetRange(v.id)?.start ?? 0
     out += "\(label) id=\(v.id) loc=\(loc.line):\(loc.column) off=\(off) value=\(goQuote(v.value))\n"
   }
 
   private func dumpRule(_ p: Policy, _ prefix: String, _ r: Policy.Rule?, _ out: inout String) {
     guard let r else { return }
-    let loc = p.sourceInfo.startLocation(of: r.sourceID)
+    let loc = p.sourceInfo.startLocation(r.sourceID)
     out += "\(prefix)rule id=\(r.sourceID) loc=\(loc.line):\(loc.column)\n"
     dumpValueString(p, prefix + "rule.id", r.id ?? .init(value: ""), &out)
     dumpValueString(p, prefix + "rule.description", r.description ?? .init(value: ""), &out)
@@ -106,7 +107,7 @@ struct DifferentialTests {
       dumpValueString(p, prefix + "var.expr", v.expression, &out)
     }
     for m in r.matches {
-      let loc = p.sourceInfo.startLocation(of: m.sourceID)
+      let loc = p.sourceInfo.startLocation(m.sourceID)
       out += "\(prefix)match id=\(m.sourceID) loc=\(loc.line):\(loc.column)\n"
       dumpValueString(p, prefix + "match.cond", m.condition, &out)
       if let o = m.output { dumpValueString(p, prefix + "match.output", o, &out) }

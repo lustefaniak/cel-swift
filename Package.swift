@@ -52,7 +52,7 @@ let package = Package(
     ),
     .testTarget(
       name: "CELPolicyTests",
-      dependencies: ["CELPolicy"],
+      dependencies: ["CEL", "CELPolicy"],
       exclude: ["Goldens"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),

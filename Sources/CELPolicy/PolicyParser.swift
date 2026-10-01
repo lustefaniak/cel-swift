@@ -15,6 +15,8 @@
 // Ported from cel-go policy/parser.go (Parser, ParserOption, ParserContext, TagVisitor,
 // parserImpl).
 
+import CEL
+
 /// Handles policy fields the parser does not know, such as embedder-specific metadata.
 ///
 /// The parser calls the visitor for every unrecognized key of a policy, rule, match or variable
@@ -193,7 +195,7 @@ public struct PolicyParser: Sendable {
       inlineStyleVariables: simpleVariables
     )
     let policy = context.parseYAML()
-    if !context.errors.issues.isEmpty || context.errors.reportedCount > 0 {
+    if !context.errors.isEmpty {
       throw context.errors
     }
     guard var policy else {
@@ -212,7 +214,7 @@ public struct PolicyParserContext {
   let visitor: any PolicyTagVisitor
   let source: PolicySource
   let inlineStyleVariables: Bool
-  var sourceInfo: PolicySourceInfo
+  var sourceInfo: SourceInfo
   var errors: PolicyError
   private var id: Int64 = 0
 
@@ -220,7 +222,7 @@ public struct PolicyParserContext {
     self.visitor = visitor
     self.source = source
     self.inlineStyleVariables = inlineStyleVariables
-    self.sourceInfo = PolicySourceInfo(source: source)
+    self.sourceInfo = SourceInfo(source: source)
     self.errors = PolicyError(source: source)
   }
 
@@ -248,7 +250,7 @@ public struct PolicyParserContext {
     if line > 1 {
       offsetStart = sourceInfo.lineOffsets[line - 2]
     }
-    sourceInfo.offsetRanges[id] = .init(start: offsetStart + col - 1, stop: offsetStart + col - 1)
+    sourceInfo.setOffsetRange(id, OffsetRange(start: offsetStart + col - 1, stop: offsetStart + col - 1))
     return id
   }
 
@@ -258,7 +260,7 @@ public struct PolicyParserContext {
   ///   - id: The identifier of a recorded source position.
   ///   - message: The error message.
   public mutating func reportError(atID id: Int64, _ message: String) {
-    errors.report(id: id, location: sourceInfo.startLocation(of: id), message: message)
+    errors.report(id: id, location: sourceInfo.startLocation(id), message: message)
   }
 
   /// Creates a string value from a scalar node and records its position.
@@ -288,9 +290,9 @@ public struct PolicyParserContext {
           raw += "\n"
         }
       }
-      let offset = sourceInfo.offsetRanges[self.id] ?? .init(start: 0, stop: 0)
+      let offset = sourceInfo.offsetRange(self.id) ?? OffsetRange(start: 0, stop: 0)
       let offsetStart = offset.start - (Int32(node.column) - 1)
-      sourceInfo.offsetRanges[self.id] = .init(start: offsetStart, stop: offsetStart)
+      sourceInfo.setOffsetRange(self.id, OffsetRange(start: offsetStart, stop: offsetStart))
       return Policy.ValueString(id: id, value: raw)
     }
     return Policy.ValueString(id: id, value: node.value)

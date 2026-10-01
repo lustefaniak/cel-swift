@@ -9,6 +9,11 @@ The conformance test data comes from cel-spec (https://github.com/google/cel-spe
 Copyright Google LLC, licensed under the Apache License, Version 2.0. It is
 included as a git submodule under third_party/cel-spec, not copied.
 
+The YAML node composer, scalar resolver and decoder in Sources/CELPolicy/YAML
+are ported from go-yaml v3 (https://github.com/yaml/go-yaml),
+Copyright (c) 2011-2019 Canonical Ltd, licensed under the Apache License,
+Version 2.0. Those files keep its copyright notice in their header.
+
 The CELRegex target is a port of the Go regexp and regexp/syntax packages,
 Copyright The Go Authors, licensed under the BSD 3-Clause License:
 
