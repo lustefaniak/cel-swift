@@ -11,6 +11,7 @@ let package = Package(
     .library(name: "CELTest", targets: ["CELTest"]),
     .library(name: "CELProtobuf", targets: ["CELProtobuf"]),
     .executable(name: "protoc-gen-cel-swift", targets: ["protoc-gen-cel-swift"]),
+    .executable(name: "cel-swift", targets: ["cel-swift"]),
   ],
   dependencies: [
     // 1.38 requires Swift 6.1; stay on 1.37.x while the floor is 6.0.
@@ -61,6 +62,12 @@ let package = Package(
     .target(
       name: "CELTest",
       dependencies: ["CEL", "CELPolicy"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    ),
+    // The cel-swift command line tool: eval, check, parse, repl (see Sources/cel-swift/Command.swift).
+    .executableTarget(
+      name: "cel-swift",
+      dependencies: ["CEL", "CELExtensions"],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
     // Interpreter benchmarks: swift run -c release CELBenchmarks
