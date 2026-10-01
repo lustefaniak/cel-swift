@@ -198,11 +198,20 @@ private func flatten(_ list: any ListValue, _ depth: Int64) -> Value {
   return .list(ArrayList(out))
 }
 
+/// Appends the elements of `list`, descending `depth` levels into nested lists. cel-go recurses once
+/// per level; host lists can be nested deeper than a Swift thread's stack allows, so the walk keeps
+/// its own stack of partly visited lists. The output order is the same.
 private func flatten(_ list: any ListValue, _ depth: Int64, into out: inout [Value]) {
-  for i in 0..<list.count {
-    let val = list.element(at: i)
-    if case .list(let nested) = val, depth > 0 {
-      flatten(nested, depth - 1, into: &out)
+  var stack: [(list: any ListValue, next: Int, depth: Int64)] = [(list, 0, depth)]
+  while let top = stack.last {
+    if top.next == top.list.count {
+      stack.removeLast()
+      continue
+    }
+    stack[stack.count - 1].next += 1
+    let val = top.list.element(at: top.next)
+    if case .list(let nested) = val, top.depth > 0 {
+      stack.append((nested, 0, top.depth - 1))
     } else {
       out.append(val)
     }

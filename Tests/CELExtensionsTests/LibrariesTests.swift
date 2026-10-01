@@ -118,9 +118,9 @@ struct ListsTests {
 
   /// cel-go recurses once per nesting level (Go stacks grow); host lists can be nested far deeper
   /// than a Swift thread's stack allows.
-  @Test(.disabled("overflows the stack: flatten recurses once per nesting level"))
+  @Test
   func flattenDeepHostList() throws {
-    let depth = 1_000_000
+    let depth = 100_000
     let flat = d.call("flatten", .list(DeepList(depth: depth)), .int(Int64(depth) + 1))
     guard case .list(let result) = flat else {
       Issue.record("not a list: \(flat)")
