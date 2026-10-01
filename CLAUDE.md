@@ -76,7 +76,7 @@ This is a library other packages depend on, so the public surface is the product
 - Conformance: `swift test --filter CELConformanceTests` runs the cel-spec suite in checked and parse-only
   mode against `Tests/CELConformanceTests/passing.txt` (regressions fail; `CEL_CONFORMANCE_UPDATE=1` rewrites
   it) and `skip.txt`; `tools/dashboard/dashboard.py` prints the per-file table against cel-go, cel-rust and
-  cel-cpp. The runner seam is `Tests/CELConformanceTests/NotImplementedRunner.swift`.
+  cel-cpp. The runner is `Tests/CELConformanceTests/CELConformanceRunner.swift`.
 - `tools/oracle` answers parse / check / eval requests with cel-go over JSONL (protocol in its README);
   `tools/gen-protos.sh` regenerates `Sources/CELSpecProtos`.
 - **Commit straight to `main`, no branches or PRs, until the repo is made public.** Run `swift build` and
