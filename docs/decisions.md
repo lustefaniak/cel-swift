@@ -23,6 +23,7 @@ the new module can use the core's `package` declarations.
 | 7 | Strong enums | no new `Value` / `CELType` cases, opaque object value behind an option | decided: implementing |
 | 8 | Spec-over-cel-go defaults | keep the spec behaviour, no options | done |
 | 9 | Shared ANTLR prediction cache | shared cache with antlr-go's finer locking | decided: implementing |
+| 10 | Public names that abbreviate or clash | full words, no clash with dependencies | done |
 
 ## 1. Package name: keep `cel-swift`
 
@@ -94,3 +95,14 @@ made parsing about 8 times slower than cel-go. The cache is shared, with antlr-g
 DFA state lookup and insertion and edge updates, compute target states outside the lock) so concurrent
 parses scale; owned by the parser per `Environment` if process-wide state is a problem. The coarse-lock
 prototype (`perf/shared-parser-cache`) serialized concurrent parses.
+
+## 10. Public names: full words, no clashes with dependencies
+
+Renames are free before 0.1, so the public surface follows the Swift API design guidelines: words spelled
+out where cel-go abbreviates (`expressionID`, `argumentTypes`, `typeParameters`, `libraryNames`), with the
+cel-go name kept in the documentation; `StructFieldType` instead of `FieldType`, which clashed with
+SwiftProtobuf's; `CELTimestamp(secondsSinceEpoch:nanoseconds:)` takes the nanoseconds as `Int32` in
+`0..<1_000_000_000` (a precondition) so nothing is truncated or wrapped silently; `TestResult.Outcome` is a
+struct with static members so outcomes can be added without breaking clients. The full list is in
+`CHANGELOG.md` § 0.1.0. Type names that are the port's vocabulary (`VariableDecl`, `FunctionDecl`,
+`OverloadDecl`, `CELType.typeParam`) stay.

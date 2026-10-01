@@ -54,6 +54,19 @@ behind it are recorded in `docs/decisions.md`.
 - `cel-swift` command line tool: `eval`, `check`, `parse`, `repl` and `policy test` (same results as
   cel-go's `celtest`).
 
+### API naming
+
+Swift names spell words out where cel-go abbreviates (`expressionID`, `argumentTypes`, `typeParameters`);
+declarations that port a cel-go type name it in their documentation. Renamed before the release, for code
+written against `main`: `FieldType` → `StructFieldType` (no clash with SwiftProtobuf's `FieldType`; the
+`CELFieldType` alias is gone), `EvalError.exprID` → `expressionID`, `UnknownSet(exprID:)` / `exprIDs` /
+`attributeTrails(forExprID:)` → `expressionID`, `OverloadDecl.argTypes` and the `argTypes:` labels of
+`.overload` / `.memberOverload` → `argumentTypes`, `OverloadDecl.typeParams` → `typeParameters`,
+`Environment.libraries` → `libraryNames`. `CELTimestamp` takes `nanoseconds: Int32` in `0..<1_000_000_000`
+(a precondition, matching its storage) and its properties are read-only. `TestResult.Outcome` is a struct
+(`.passed`, `.failed(wanted:failure:)`, `isPassed`, `isFailed`) so new outcomes can be added later. The
+`enum CEL` namespace was removed.
+
 ### Conformance
 
 cel-spec v0.25.3: 2473 / 2508 tests pass in checked mode, 2310 / 2339 in parse-only mode, with an empty skip
