@@ -111,8 +111,58 @@ package struct Regexp: Sendable, CustomStringConvertible {
   /// The number of instructions in the compiled program (Go's `len(prog.Inst)`).
   package var programSize: Int { prog.inst.count }
 
+  /// The instruction count of `pattern` as cel-go's `types.RegexProgramSize` computes it:
+  /// `len(syntax.Compile(syntax.Parse(pattern, syntax.Perl)).Inst)`, without simplifying.
+  ///
+  /// cel-go skips `Simplify`, so Go's compiler panics on counted repetitions (`a{2}`). Here such
+  /// patterns are simplified before compiling instead, giving the size of the program that
+  /// actually runs.
+  package static func programSize(_ pattern: String) throws(RegexpError) -> Int {
+    var re = try Syntax.parse(pattern, .perl)
+    if re.containsRepeat() {
+      re = re.simplify()
+    }
+    return Syntax.compile(re).inst.count
+  }
+
   /// minInputLen walks the regexp to find the minimum length of any matchable input.
-  static func minInputLen(_ re: Syntax.Regexp) -> Int {
+  ///
+  /// Go's version recurses; this runs the same computation with an explicit stack, because
+  /// simplified trees can be deeper than a 512 KB thread stack allows.
+  static func minInputLen(_ root: Syntax.Regexp) -> Int {
+    // Frames of (node, results of the children visited so far).
+    var stack: [(re: Syntax.Regexp, children: [Int])] = [(root, [])]
+    while true {
+      let top = stack.count - 1
+      let re = stack[top].re
+      let needed = minInputLenChildren(re)
+      if stack[top].children.count < needed {
+        stack.append((re.sub[stack[top].children.count], []))
+        continue
+      }
+      let value = minInputLen(re, stack[top].children)
+      stack.removeLast()
+      if stack.isEmpty {
+        return value
+      }
+      stack[stack.count - 1].children.append(value)
+    }
+  }
+
+  /// The number of children whose minInputLen Go's recursion looks at.
+  private static func minInputLenChildren(_ re: Syntax.Regexp) -> Int {
+    switch re.op {
+    case .capture, .plus, .repeat:
+      return 1
+    case .concat, .alternate:
+      return re.sub.count
+    default:
+      return 0
+    }
+  }
+
+  /// One step of Go's minInputLen, given the values for the children.
+  private static func minInputLen(_ re: Syntax.Regexp, _ children: [Int]) -> Int {
     switch re.op {
     case .anyChar, .anyCharNotNL, .charClass:
       return 1
@@ -127,24 +177,13 @@ package struct Regexp: Sendable, CustomStringConvertible {
       }
       return l
     case .capture, .plus:
-      return minInputLen(re.sub[0])
+      return children[0]
     case .repeat:
-      return re.min * minInputLen(re.sub[0])
+      return re.min * children[0]
     case .concat:
-      var l = 0
-      for sub in re.sub {
-        l += minInputLen(sub)
-      }
-      return l
+      return children.reduce(0, +)
     case .alternate:
-      var l = minInputLen(re.sub[0])
-      for sub in re.sub.dropFirst() {
-        let lnext = minInputLen(sub)
-        if lnext < l {
-          l = lnext
-        }
-      }
-      return l
+      return children.min() ?? 0
     default:
       return 0
     }

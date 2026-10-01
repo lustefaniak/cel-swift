@@ -117,6 +117,13 @@ extension Syntax.Regexp {
   }
 }
 
+extension Syntax.Regexp {
+  /// Reports whether the tree contains an OpRepeat node, which only Simplify removes.
+  func containsRepeat() -> Bool {
+    op == .repeat || sub.contains { $0.containsRepeat() }
+  }
+}
+
 /// simplify1 implements Simplify for the unary OpStar,
 /// OpPlus, and OpQuest operators. It returns the simple regexp
 /// equivalent to

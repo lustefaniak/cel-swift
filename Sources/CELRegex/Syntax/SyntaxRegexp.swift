@@ -29,6 +29,31 @@ extension Syntax {
       self.flags = flags
     }
 
+    /// Releases the subtree iteratively. Simplified trees can be thousands of nodes deep
+    /// (x{1,1000} becomes x(x(x...)?)?), and the default recursive release would overflow a
+    /// 512 KB thread stack; Go's garbage collector has no such recursion.
+    deinit {
+      if sub.isEmpty && nextFree == nil {
+        return
+      }
+      var stack = sub
+      sub = []
+      if let f = nextFree {
+        stack.append(f)
+        nextFree = nil
+      }
+      while var node = stack.popLast() {
+        if isKnownUniquelyReferenced(&node) {
+          stack.append(contentsOf: node.sub)
+          node.sub = []
+          if let f = node.nextFree {
+            stack.append(f)
+            node.nextFree = nil
+          }
+        }
+      }
+    }
+
     /// Resets every field, like Go's `*re = Regexp{}`.
     func reset() {
       op = .noMatch

@@ -386,41 +386,44 @@ struct Machine {
         q.denseT[j] = -1
         q.sparse[Int(pc)] = UInt32(j)
 
-        let i = prog[Int(pc)]
-        switch i.op {
+        let ipc = Int(pc)
+        let iop = prog[ipc].op
+        let iout = prog[ipc].out
+        let iarg = prog[ipc].arg
+        switch iop {
         case .fail:
           // nothing
           break again
         case .alt, .altMatch:
-          work.append(.explore(i.arg))
-          pc = i.out
+          work.append(.explore(iarg))
+          pc = iout
           continue again
         case .emptyWidth:
-          if cond.match(Syntax.EmptyOp(rawValue: UInt8(truncatingIfNeeded: i.arg))) {
-            pc = i.out
+          if cond.match(Syntax.EmptyOp(rawValue: UInt8(truncatingIfNeeded: iarg))) {
+            pc = iout
             continue again
           }
           break again
         case .nop:
-          pc = i.out
+          pc = iout
           continue again
         case .capture:
-          if Int(i.arg) < ncap {
-            let slot = Int(capRef) * ncap + Int(i.arg)
+          if Int(iarg) < ncap {
+            let slot = Int(capRef) * ncap + Int(iarg)
             let opos = caps[slot]
             caps[slot] = pos
-            work.append(.restore(i.arg, opos))
+            work.append(.restore(iarg, opos))
             pendingRestores += 1
-            pc = i.out
+            pc = iout
             continue again
           } else {
-            pc = i.out
+            pc = iout
             continue again
           }
         case .match, .rune, .rune1, .runeAny, .runeAnyNotNL:
           // Inside a capture's subtree Go passes no spare thread, so the spare
           // (whose slots may be the ones being temporarily modified) is never consumed there.
-          var nt: Int32
+          let nt: Int32
           if t >= 0 && pendingRestores == 0 {
             nt = t
             t = -1

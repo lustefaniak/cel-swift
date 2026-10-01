@@ -80,7 +80,92 @@ private struct Compiler {
     _ = inst(.fail)
   }
 
-  mutating func compile(_ re: Syntax.Regexp) -> Frag {
+  /// Pending work for the explicit-stack compile.
+  private enum Task {
+    case enter(Syntax.Regexp)
+    case captureEnd(cap: Int, bra: Frag)
+    case star(nongreedy: Bool)
+    case plus(nongreedy: Bool)
+    case quest(nongreedy: Bool)
+    case concatNext(Syntax.Regexp, Int)
+    case concatCat(Syntax.Regexp, Int)
+    case alternateNext(Syntax.Regexp, Int)
+    case alternateAlt(Syntax.Regexp, Int)
+  }
+
+  /// compile is Go's recursive compile, run with an explicit stack: simplified trees can be
+  /// thousands of nodes deep (x{0,1000} nests 2000 levels), more than a 512 KB thread stack
+  /// holds. Instructions are emitted in exactly the order of Go's recursion.
+  mutating func compile(_ root: Syntax.Regexp) -> Frag {
+    var tasks: [Task] = [.enter(root)]
+    var results: [Frag] = []
+    while let task = tasks.popLast() {
+      switch task {
+      case .enter(let re):
+        switch re.op {
+        case .capture:
+          let bra = cap(UInt32(re.cap << 1))
+          tasks.append(.captureEnd(cap: re.cap, bra: bra))
+          tasks.append(.enter(re.sub[0]))
+        case .star:
+          tasks.append(.star(nongreedy: re.flags.contains(.nonGreedy)))
+          tasks.append(.enter(re.sub[0]))
+        case .plus:
+          tasks.append(.plus(nongreedy: re.flags.contains(.nonGreedy)))
+          tasks.append(.enter(re.sub[0]))
+        case .quest:
+          tasks.append(.quest(nongreedy: re.flags.contains(.nonGreedy)))
+          tasks.append(.enter(re.sub[0]))
+        case .concat:
+          if re.sub.isEmpty {
+            results.append(nop())
+          } else {
+            tasks.append(.concatNext(re, 1))
+            tasks.append(.enter(re.sub[0]))
+          }
+        case .alternate:
+          results.append(Frag())
+          tasks.append(.alternateNext(re, 0))
+        default:
+          results.append(compileLeaf(re))
+        }
+      case .captureEnd(let c, let bra):
+        let sub = results.removeLast()
+        let ket = cap(UInt32(c << 1 | 1))
+        results.append(cat(cat(bra, sub), ket))
+      case .star(let nongreedy):
+        results.append(star(results.removeLast(), nongreedy))
+      case .plus(let nongreedy):
+        results.append(plus(results.removeLast(), nongreedy))
+      case .quest(let nongreedy):
+        results.append(quest(results.removeLast(), nongreedy))
+      case .concatNext(let re, let i):
+        if i < re.sub.count {
+          tasks.append(.concatCat(re, i))
+          tasks.append(.enter(re.sub[i]))
+        }
+      case .concatCat(let re, let i):
+        let f2 = results.removeLast()
+        let f1 = results.removeLast()
+        results.append(cat(f1, f2))
+        tasks.append(.concatNext(re, i + 1))
+      case .alternateNext(let re, let i):
+        if i < re.sub.count {
+          tasks.append(.alternateAlt(re, i))
+          tasks.append(.enter(re.sub[i]))
+        }
+      case .alternateAlt(let re, let i):
+        let f2 = results.removeLast()
+        let f1 = results.removeLast()
+        results.append(alt(f1, f2))
+        tasks.append(.alternateNext(re, i + 1))
+      }
+    }
+    return results[0]
+  }
+
+  /// The cases of Go's compile that do not recurse.
+  private mutating func compileLeaf(_ re: Syntax.Regexp) -> Frag {
     switch re.op {
     case .noMatch:
       return fail()
@@ -118,37 +203,8 @@ private struct Compiler {
       return empty(.wordBoundary)
     case .noWordBoundary:
       return empty(.noWordBoundary)
-    case .capture:
-      let bra = cap(UInt32(re.cap << 1))
-      let sub = compile(re.sub[0])
-      let ket = cap(UInt32(re.cap << 1 | 1))
-      return cat(cat(bra, sub), ket)
-    case .star:
-      return star(compile(re.sub[0]), re.flags.contains(.nonGreedy))
-    case .plus:
-      return plus(compile(re.sub[0]), re.flags.contains(.nonGreedy))
-    case .quest:
-      return quest(compile(re.sub[0]), re.flags.contains(.nonGreedy))
-    case .concat:
-      if re.sub.isEmpty {
-        return nop()
-      }
-      var f = Frag()
-      for (i, sub) in re.sub.enumerated() {
-        if i == 0 {
-          f = compile(sub)
-        } else {
-          f = cat(f, compile(sub))
-        }
-      }
-      return f
-    case .alternate:
-      var f = Frag()
-      for sub in re.sub {
-        f = alt(f, compile(sub))
-      }
-      return f
     default:
+      // OpRepeat: the regexp must have been simplified (Go panics the same way).
       preconditionFailure("regexp: unhandled case in compile")
     }
   }
