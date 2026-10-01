@@ -25,7 +25,8 @@ common=(-dict=Fuzz/cel.dict -max_len=4096 -timeout=10 -rss_limit_mb=2048 -malloc
 
 if [ "$duration" = replay ]; then
   # A directory of inputs is executed once each; any crash, timeout or OOM fails the run.
-  exec "$binary" "${common[@]}" -runs=0 "$@" "$seeds" "$regressions"
+  mkdir -p "$work/artifacts/$target"
+  exec "$binary" "${common[@]}" -runs=0 -artifact_prefix="$work/artifacts/$target/" "$@" "$seeds" "$regressions"
 fi
 
 mkdir -p "$work/corpus-$target" "$work/artifacts/$target"

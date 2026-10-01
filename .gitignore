@@ -9,3 +9,5 @@ DerivedData/
 /tools/oracle/oracle
 /Package.resolved
 .claude/worktrees/
+/.build-fuzz
+/.build-fuzz-work
