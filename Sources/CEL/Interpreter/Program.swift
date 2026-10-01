@@ -71,6 +71,11 @@ package struct ProgramEnvironment: Sendable {
   package var errorOnBadPresenceTest: Bool
   /// Planner decorators contributed by libraries (cel-go `CustomDecorator` program options).
   package var decorators: [ProgramDecorator] = []
+  /// Static cost estimators contributed by libraries (cel-go `CostEstimatorOptions`).
+  package var costEstimateOptions = CostEstimateOptions()
+  /// Runtime cost trackers contributed by libraries, by overload id (cel-go `CostTrackerOptions`);
+  /// trackers in the program's ``ProgramOptions`` take precedence.
+  package var costTrackers: [String: FunctionTracker] = [:]
   /// Options for the type checker.
   package var checkerOptions: [CheckerOption] = []
   /// Declares the standard type identifiers (`int`, `list`, ...) as variables, as cel-go's
@@ -161,6 +166,20 @@ package struct ProgramEnvironment: Sendable {
     return try check(ast, source: TextSource(text, description: description))
   }
 
+  /// Estimates the cost of a checked AST with the environment's cost options (cel-go
+  /// `Env.EstimateCost`); `options` are applied after the environment's.
+  package func estimateCost(
+    _ checked: AST, estimator: any CostEstimator = DefaultCostEstimator(),
+    options: CostEstimateOptions? = nil
+  ) -> CostEstimate {
+    var merged = costEstimateOptions
+    if let options {
+      merged.presenceTestHasCost = options.presenceTestHasCost
+      merged.merge(options)
+    }
+    return Checker.estimateCost(checked, estimator: estimator, options: merged)
+  }
+
   /// Plans a program for a checked or parse-only AST (cel-go `newProgram`).
   package func program(
     _ ast: AST, options: ProgramOptions = ProgramOptions(), dispatcher: Dispatcher? = nil
@@ -193,6 +212,7 @@ package struct ProgramEnvironment: Sendable {
       }
       if evalOptions.contains(.trackCost) {
         var costOptions = options.costTracker
+        costOptions.overloadTrackers.merge(costTrackers) { programTracker, _ in programTracker }
         costOptions.limit = options.costLimit ?? costOptions.limit
         observers.append(CostObserver(costOptions))
       }

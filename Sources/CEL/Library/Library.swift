@@ -59,6 +59,13 @@ public struct Library: Sendable {
   /// `CustomDecorator`), such as the `cel.@block` evaluation.
   package var decorators: [ProgramDecorator] = []
 
+  /// Static cost estimators for the library's overloads (cel-go `CostEstimatorOptions`).
+  package var costEstimateOptions = CostEstimateOptions()
+
+  /// Runtime cost trackers for the library's overloads, by overload id (cel-go
+  /// `CostTrackerOptions` with `OverloadCostTracker`).
+  package var costTrackers: [String: FunctionTracker] = [:]
+
   /// Names of libraries that must be configured in the same environment, with the error an
   /// environment reports when one is missing (cel-go checks this with an `EnvOption`).
   package var requiredLibraries: [(name: String, error: String)]
