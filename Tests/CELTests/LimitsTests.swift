@@ -93,7 +93,9 @@ private func elapsedSeconds(_ body: () throws -> Void) rethrows -> Double {
   }
 
   // Deeply nested or very long inputs must produce an error or a value, never a crash.
-  @Test(arguments: [
+  // Built outside the @Test attribute: as an inline literal, Swift 6.0/6.1 cannot type-check the
+  // macro expansion in reasonable time.
+  static let deepInputs: [String] = [
     String(repeating: "(", count: 50_000) + "1" + String(repeating: ")", count: 50_000),
     String(repeating: "[", count: 50_000) + String(repeating: "]", count: 50_000),
     String(repeating: "-", count: 50_000) + "1",
@@ -105,7 +107,9 @@ private func elapsedSeconds(_ body: () throws -> Void) rethrows -> Double {
     Array(repeating: "x", count: 20_000).joined(separator: " ? x : "),
     String(repeating: "{1: ", count: 20_000) + "1" + String(repeating: "}", count: 20_000),
     String(repeating: "[1].map(x, ", count: 5_000) + "x" + String(repeating: ")", count: 5_000),
-  ])
+  ]
+
+  @Test(arguments: deepInputs)
   func deepInputsDoNotCrash(_ text: String) throws {
     let env = try Environment(.variable("a", .dyn), .variable("x", .bool))
     do {

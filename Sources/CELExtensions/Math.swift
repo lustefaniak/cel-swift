@@ -131,9 +131,9 @@ struct MathLibrary {
           .overload("math_sign_double", argTypes: [.double], resultType: .double, .unaryBinding(sign)),
           .overload("math_sign_int", argTypes: [.int], resultType: .int, .unaryBinding(sign)),
           .overload("math_sign_uint", argTypes: [.uint], resultType: .uint, .unaryBinding(sign))),
-        try bitwise("math.bitAnd", "math_bitAnd", &, &),
-        try bitwise("math.bitOr", "math_bitOr", |, |),
-        try bitwise("math.bitXor", "math_bitXor", ^, ^),
+        try bitwise("math.bitAnd", "math_bitAnd", { $0 & $1 }, { $0 & $1 }),
+        try bitwise("math.bitOr", "math_bitOr", { $0 | $1 }, { $0 | $1 }),
+        try bitwise("math.bitXor", "math_bitXor", { $0 ^ $1 }, { $0 ^ $1 }),
         try FunctionDecl(
           "math.bitNot",
           .overload(
