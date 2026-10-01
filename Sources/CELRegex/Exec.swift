@@ -246,7 +246,13 @@ struct Machine {
   /// Capture slots of all threads; thread t owns caps[t*ncap ..< (t+1)*ncap].
   /// Thread 0 is the machine's matchcap and is never pooled. At most 2n threads are alive at
   /// once (one per entry of the two queues), so 2n+1 threads never need to grow.
-  private let caps: UnsafeMutablePointer<Int>
+  ///
+  /// Go allocates a thread's slots when the thread is created; here the buffer starts small and
+  /// doubles when a new thread needs room, so memory follows the threads actually alive rather
+  /// than the bound (which is quadratic in the pattern for capture-heavy patterns).
+  private var caps: UnsafeMutablePointer<Int>
+  /// The number of threads `caps` has room for.
+  private(set) var allocatedThreads: Int
   private let maxThreads: Int
   private var nthreads = 1
   private let pool: UnsafeMutablePointer<Int32>  // pool of available threads
@@ -265,8 +271,9 @@ struct Machine {
     q1 = Queue(n)
     self.ncap = ncap
     maxThreads = 2 * n + 2
-    caps = .allocate(capacity: Swift.max(maxThreads * ncap, 1))
-    caps.initialize(repeating: -1, count: Swift.max(maxThreads * ncap, 1))
+    allocatedThreads = Swift.min(maxThreads, 8)
+    caps = .allocate(capacity: Swift.max(allocatedThreads * ncap, 1))
+    caps.initialize(repeating: -1, count: Swift.max(allocatedThreads * ncap, 1))
     pool = .allocate(capacity: maxThreads)
     work = .allocate(capacity: n + 1)
   }
@@ -280,9 +287,6 @@ struct Machine {
   }
 
   var matchcap: [Int] { Array(UnsafeBufferPointer(start: caps, count: ncap)) }
-
-  /// The number of threads whose capture slots are allocated.
-  var allocatedThreads: Int { maxThreads }
 
   @inline(__always)
   private mutating func free(_ t: Int32) {
@@ -306,9 +310,24 @@ struct Machine {
       return pool[poolCount]
     }
     precondition(nthreads < maxThreads, "regexp: thread bound exceeded")
+    if nthreads == allocatedThreads {
+      growCaps()
+    }
     let t = Int32(nthreads)
     nthreads += 1
     return t
+  }
+
+  /// Doubles the room in `caps`, up to the thread bound.
+  private mutating func growCaps() {
+    let threads = Swift.min(maxThreads, allocatedThreads * 2)
+    let grown = UnsafeMutablePointer<Int>.allocate(capacity: Swift.max(threads * ncap, 1))
+    let used = allocatedThreads * ncap
+    grown.moveInitialize(from: caps, count: used)
+    (grown + used).initialize(repeating: -1, count: Swift.max(threads * ncap, 1) - used)
+    caps.deallocate()
+    caps = grown
+    allocatedThreads = threads
   }
 
   @inline(__always)

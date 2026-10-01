@@ -48,7 +48,8 @@ struct LinearTimeTests {
   /// gigabytes for a few thousand groups.
   @Test func captureSlotsFollowLiveThreads() throws {
     let groups = 500
-    let re = try Regexp.compile(String(repeating: "(a)", count: groups))
+    // Anchored, so that no thread starts past the first position.
+    let re = try Regexp.compile("^" + String(repeating: "(a)", count: groups))
     let input = Array(String(repeating: "a", count: groups).utf8)
     re.flat.withPointers { p in
       var m = Machine(re, p, ncap: 2 * (re.numSubexp + 1))
@@ -57,9 +58,7 @@ struct LinearTimeTests {
       #expect(matched)
       #expect(m.matchcap[2 * groups + 1] == groups)
       // One thread per step is alive here; Go allocates a handful.
-      withKnownIssue("capture slots for 2n + 2 threads are allocated up front") {
-        #expect(m.allocatedThreads <= 16, "\(m.allocatedThreads) threads for \(groups) groups")
-      }
+      #expect(m.allocatedThreads <= 16, "\(m.allocatedThreads) threads for \(groups) groups")
     }
   }
 
