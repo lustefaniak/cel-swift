@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // Ported from cel-go policy/composer.go.
+//
+// The passes run through the core's static optimizer (`Environment.optimize(_:sourceOverride:pass:)`).
+// cel-go's passes return the optimized AST; here they replace `OptimizerContext.ast.expr`, whose
+// source info is the factory's.
 
 import CEL
 
@@ -42,22 +46,27 @@ package struct RuleComposer: Sendable {
 
   /// Composes a compiled rule into a single checked AST (cel-go `Compose`).
   package func compose(_ rule: CompiledRule) -> (ast: AST?, errors: CELErrors) {
-    let (ruleRoot, rootErrors) = env.compileSource(TextSource("true"))
-    let source: any Source = rule.source ?? TextSource("true")
+    let rootSource = TextSource("true")
+    let (ruleRoot, rootErrors) = env.compileSource(rootSource)
+    // ruleRoot is a placeholder expression used as the root of the AST before optimization; the
+    // composed expression reports positions in the policy source instead.
+    let source: any Source = rule.source ?? rootSource
     guard let ruleRoot else {
       return (nil, rootErrors)
     }
-    let composer = RuleComposerPass(rule: rule)
-    let (composed, errors, composedSource) = optimize(
-      composer, env: env, ast: ruleRoot, source: TextSource("true"), sourceOverride: source)
-    guard let composed else {
-      return (nil, errors)
+    do {
+      var composer = RuleComposerPass(rule: rule)
+      let composed = try env.optimize(
+        CheckedExpression(ast: ruleRoot, source: rootSource), sourceOverride: source
+      ) { composer.optimize(&$0) }
+      var unnester = RuleUnnesterPass(
+        nextVarIndex: composer.varIndices.count, varIndices: composer.varIndices,
+        exprUnnestHeight: exprUnnestHeight)
+      let unnested = try env.optimize(composed) { unnester.optimize(&$0) }
+      return (unnested.ast, CELErrors(source: source))
+    } catch {
+      return (nil, error.errors)
     }
-    let unnester = RuleUnnesterPass(
-      nextVarIndex: composer.state.varIndices.count, varIndices: composer.state.varIndices,
-      exprUnnestHeight: exprUnnestHeight)
-    let (unnested, unnestErrors, _) = optimize(unnester, env: env, ast: composed, source: composedSource)
-    return (unnested, unnestErrors)
   }
 }
 
@@ -69,19 +78,19 @@ struct VarIndex {
   var celType: CELType
 }
 
-final class ComposerState {
+/// cel-go `ruleComposerImpl`.
+struct RuleComposerPass {
+  let rule: CompiledRule
   var nextVarIndex = 0
   var varIndices: [VarIndex] = []
   var scopes: [[String: Int]] = []
-}
 
-/// cel-go `ruleComposerImpl`.
-struct RuleComposerPass: ASTOptimizer {
-  let rule: CompiledRule
-  let state = ComposerState()
+  init(rule: CompiledRule) {
+    self.rule = rule
+  }
 
   func lookupLocal(_ name: String) -> Int? {
-    for scope in state.scopes.reversed() {
+    for scope in scopes.reversed() {
       if let idx = scope[name] {
         return idx
       }
@@ -89,187 +98,177 @@ struct RuleComposerPass: ASTOptimizer {
     return nil
   }
 
-  func optimize(_ ctx: OptimizerContext, _ ast: AST) -> AST {
-    let ruleExpr = optimizeRule(ctx, rule, asList: false)
-    if state.varIndices.isEmpty {
-      return ctx.newAST(ruleExpr)
+  mutating func optimize(_ ctx: inout OptimizerContext) {
+    // The input is a placeholder expression, completely replaced by the composed rule.
+    let ruleExpr = optimizeRule(&ctx, rule, asList: false)
+    if varIndices.isEmpty {
+      ctx.ast.expr = ruleExpr
+      return
     }
     var varExprs: [Expr] = []
-    for vi in state.varIndices {
+    for vi in varIndices {
       varExprs.append(vi.expr)
       do {
-        try ctx.extendEnv(variables: [VariableDecl(name: vi.indexVar, type: vi.celType)])
+        try ctx.extendEnvironment(variables: [VariableDecl(name: vi.indexVar, type: vi.celType)])
       } catch {
-        ctx.reportError(atID: ruleExpr.id, "\(error)")
+        ctx.reportError(at: ruleExpr.id, "\(error)")
       }
     }
-    let blockExpr = ctx.newCall("cel.@block", [ctx.newList(varExprs), ruleExpr])
-    return ctx.newAST(blockExpr)
+    let list = ctx.newList(varExprs, [])
+    ctx.ast.expr = ctx.newCall("cel.@block", [list, ruleExpr])
   }
 
-  func optimizeRule(_ ctx: OptimizerContext, _ r: CompiledRule, asList: Bool) -> Expr {
-    state.scopes.append([:])
-    defer { state.scopes.removeLast() }
+  mutating func optimizeRule(_ ctx: inout OptimizerContext, _ r: CompiledRule, asList: Bool) -> Expr {
+    scopes.append([:])
+    defer { scopes.removeLast() }
     for v in r.variables {
-      registerVariable(ctx, v)
+      registerVariable(&ctx, v)
     }
     let isAggregate = r.semantic == .aggregate
     let returnList = isAggregate || asList
-    var output = createBaseStep(ctx, returnList: returnList, hasOptionalOutput: r.hasOptionalOutput)
+    var output = createBaseStep(&ctx, returnList: returnList, hasOptionalOutput: r.hasOptionalOutput)
 
     for m in r.matches.reversed() {
-      let cond = m.condition.map { ctx.copyASTAndMetadata($0) } ?? ctx.newLiteral(.bool(true))
+      let cond = m.condition.map { ctx.copyASTAndMetadata($0) } ?? ctx.newConstant(.bool(true))
       let currentStep: CompositionStep
       if let outputValue = m.output {
-        var out = outputValue.expr.map { ctx.copyASTAndMetadata($0) } ?? ctx.newLiteral(.null)
+        var out = outputValue.expr.map { ctx.copyASTAndMetadata($0) } ?? ctx.newConstant(.null)
         if returnList {
-          out = ctx.newList([out])
+          out = ctx.newList([out], [])
         }
-        currentStep = CompositionStep(ctx: ctx, isOptional: false, condition: cond, expr: out)
+        currentStep = CompositionStep(isOptional: false, condition: cond, expr: out)
       } else if let child = m.nestedRule {
-        let nested = optimizeRule(ctx, child, asList: returnList)
-        currentStep = CompositionStep(ctx: ctx, isOptional: child.hasOptionalOutput, condition: cond, expr: nested)
+        let nested = optimizeRule(&ctx, child, asList: returnList)
+        currentStep = CompositionStep(isOptional: child.hasOptionalOutput, condition: cond, expr: nested)
       } else {
-        ctx.reportError(atID: cond.id, "unknown match kind: \(m.sourceID)")
+        ctx.reportError(at: cond.id, "unknown match kind: \(m.sourceID)")
         return cond
       }
       if isAggregate {
-        output = combineAggregate(ctx, currentStep, output)
+        output = combineAggregate(&ctx, currentStep, output)
       } else {
-        output = currentStep.combine(output)
+        output = currentStep.combine(&ctx, output)
       }
     }
 
-    var matchExpr = output?.expr ?? ctx.newLiteral(.null)
-    rewriteVariableNames(ctx, &matchExpr)
+    var matchExpr = output?.expr ?? ctx.newConstant(.null)
+    rewriteVariableNames(&ctx, &matchExpr)
     return matchExpr
   }
 
-  func createBaseStep(_ ctx: OptimizerContext, returnList: Bool, hasOptionalOutput: Bool) -> CompositionStep? {
+  func createBaseStep(_ ctx: inout OptimizerContext, returnList: Bool, hasOptionalOutput: Bool) -> CompositionStep? {
     if returnList {
-      return CompositionStep(ctx: ctx, isOptional: false, condition: ctx.newLiteral(.bool(true)), expr: ctx.newList([]))
+      return CompositionStep(isOptional: false, condition: ctx.newConstant(.bool(true)), expr: ctx.newList([], []))
     }
     if hasOptionalOutput {
       return CompositionStep(
-        ctx: ctx, isOptional: true, condition: ctx.newLiteral(.bool(true)), expr: ctx.newCall("optional.none", []))
+        isOptional: true, condition: ctx.newConstant(.bool(true)), expr: ctx.newCall("optional.none", []))
     }
     return nil
   }
 
-  func combineAggregate(_ ctx: OptimizerContext, _ step: CompositionStep, _ accumulated: CompositionStep?)
+  func combineAggregate(_ ctx: inout OptimizerContext, _ step: CompositionStep, _ accumulated: CompositionStep?)
     -> CompositionStep
   {
-    let trueCondition = ctx.newLiteral(.bool(true))
+    let trueCondition = ctx.newConstant(.bool(true))
     let currentListPart = step.expr
     let conditionalListPart: Expr
     if step.isConditional {
-      let emptyList = ctx.newList([])
+      let emptyList = ctx.newList([], [])
       conditionalListPart = ctx.newCall(Operators.conditional, [step.condition, currentListPart, emptyList])
     } else {
       conditionalListPart = currentListPart
     }
     guard let accumulated else {
-      return CompositionStep(ctx: ctx, isOptional: false, condition: trueCondition, expr: conditionalListPart)
+      return CompositionStep(isOptional: false, condition: trueCondition, expr: conditionalListPart)
     }
     if case .list(let l) = accumulated.expr.kind, l.elements.isEmpty {
-      return CompositionStep(ctx: ctx, isOptional: false, condition: trueCondition, expr: conditionalListPart)
+      return CompositionStep(isOptional: false, condition: trueCondition, expr: conditionalListPart)
     }
     let concatenated = ctx.newCall(Operators.add, [conditionalListPart, accumulated.expr])
-    return CompositionStep(ctx: ctx, isOptional: false, condition: trueCondition, expr: concatenated)
+    return CompositionStep(isOptional: false, condition: trueCondition, expr: concatenated)
   }
 
-  func rewriteVariableNames(_ ctx: OptimizerContext, _ expr: inout Expr) {
-    expr.postOrderTransform { e in
+  func rewriteVariableNames(_ ctx: inout OptimizerContext, _ expr: inout Expr) {
+    expr.transformPostOrder { e in
       guard let name = e.asIdent, name.utf8.starts(with: "variables.".utf8), let idx = lookupLocal(name) else {
         return
       }
-      ctx.updateExpr(&e, ctx.newIdent(state.varIndices[idx].indexVar))
+      let ident = ctx.newIdent(varIndices[idx].indexVar)
+      ctx.updateExpr(&e, ident)
     }
   }
 
-  func registerVariable(_ ctx: OptimizerContext, _ v: CompiledVariable) {
+  mutating func registerVariable(_ ctx: inout OptimizerContext, _ v: CompiledVariable) {
     let varName = "variables.\(v.name)"
-    let indexVar = "@index\(state.nextVarIndex)"
-    var varExpr = v.expr.map { ctx.copyASTAndMetadata($0) } ?? ctx.newLiteral(.null)
-    rewriteVariableNames(ctx, &varExpr)
-    state.varIndices.append(
+    let indexVar = "@index\(nextVarIndex)"
+    var varExpr = v.expr.map { ctx.copyASTAndMetadata($0) } ?? ctx.newConstant(.null)
+    rewriteVariableNames(&ctx, &varExpr)
+    varIndices.append(
       VarIndex(
-        index: state.nextVarIndex, indexVar: indexVar, localVar: varName, expr: varExpr,
+        index: nextVarIndex, indexVar: indexVar, localVar: varName, expr: varExpr,
         celType: v.declaration.type))
-    if !state.scopes.isEmpty {
-      state.scopes[state.scopes.count - 1][varName] = state.varIndices.count - 1
+    if !scopes.isEmpty {
+      scopes[scopes.count - 1][varName] = varIndices.count - 1
     }
-    state.nextVarIndex += 1
+    nextVarIndex += 1
   }
 }
 
 /// cel-go `ruleUnnesterImpl`.
-struct RuleUnnesterPass: ASTOptimizer {
-  final class State {
-    var nextVarIndex: Int
-    var varIndices: [VarIndex]
-
-    init(nextVarIndex: Int, varIndices: [VarIndex]) {
-      self.nextVarIndex = nextVarIndex
-      self.varIndices = varIndices
-    }
-  }
-
-  let state: State
+struct RuleUnnesterPass {
+  var nextVarIndex: Int
+  var varIndices: [VarIndex]
   let exprUnnestHeight: Int
 
-  init(nextVarIndex: Int, varIndices: [VarIndex], exprUnnestHeight: Int) {
-    self.state = State(nextVarIndex: nextVarIndex, varIndices: varIndices)
-    self.exprUnnestHeight = exprUnnestHeight
-  }
-
-  func optimize(_ ctx: OptimizerContext, _ a: AST) -> AST {
+  mutating func optimize(_ ctx: inout OptimizerContext) {
+    let a = ctx.ast
     var ruleExpr = a.expr
     var varExprs: [Expr] = []
     var varDecls: [VariableDecl] = []
-    let unnestOffset = state.nextVarIndex
+    let unnestOffset = nextVarIndex
     if let call = ruleExpr.asCall, call.function == "cel.@block", call.args.count == 2 {
       ruleExpr = call.args[1]
       let blockExprs = call.args[0].asList?.elements ?? []
-      if blockExprs.count != state.varIndices.count {
-        ctx.reportError(atID: ruleExpr.id, "ast block list and computed one have different sizes")
-        return a
+      if blockExprs.count != varIndices.count {
+        ctx.reportError(at: ruleExpr.id, "ast block list and computed one have different sizes")
+        return
       }
       // cel-go reuses `vi.expr`, a pointer the previous pass renumbered in place; the Swift
       // values keep the old ids, so the slots come from the block in the checked AST instead.
-      for (i, vi) in state.varIndices.enumerated() {
-        state.varIndices[i].expr = blockExprs[i]
+      for (i, vi) in varIndices.enumerated() {
+        varIndices[i].expr = blockExprs[i]
         varDecls.append(VariableDecl(name: vi.indexVar, type: vi.celType))
         varExprs.append(blockExprs[i])
       }
     }
     if !varDecls.isEmpty {
       do {
-        try ctx.extendEnv(variables: varDecls)
+        try ctx.extendEnvironment(variables: varDecls)
       } catch {
-        ctx.reportError(atID: ruleExpr.id, "\(error)")
+        ctx.reportError(at: ruleExpr.id, "\(error)")
       }
     }
 
     // Types of the checked rule expression, for the unnested slot declarations.
-    maybeUnnestRule(ctx, &ruleExpr, typeOf: { a.type(of: $0) })
-    if state.varIndices.isEmpty {
-      return a
+    maybeUnnestRule(&ctx, &ruleExpr, typeOf: { a.type(of: $0) })
+    if varIndices.isEmpty {
+      return
     }
-    for i in unnestOffset..<state.varIndices.count {
-      let vi = state.varIndices[i]
+    for i in unnestOffset..<varIndices.count {
+      let vi = varIndices[i]
       varExprs.append(vi.expr)
       do {
-        try ctx.extendEnv(variables: [VariableDecl(name: vi.indexVar, type: vi.celType)])
+        try ctx.extendEnvironment(variables: [VariableDecl(name: vi.indexVar, type: vi.celType)])
       } catch {
-        ctx.reportError(atID: ruleExpr.id, "\(error)")
+        ctx.reportError(at: ruleExpr.id, "\(error)")
       }
     }
-    let blockExpr = ctx.newCall("cel.@block", [ctx.newList(varExprs), ruleExpr])
-    return ctx.newAST(blockExpr)
+    let list = ctx.newList(varExprs, [])
+    ctx.ast.expr = ctx.newCall("cel.@block", [list, ruleExpr])
   }
 
-  func maybeUnnestRule(_ ctx: OptimizerContext, _ ruleExpr: inout Expr, typeOf: (Int64) -> CELType) {
+  mutating func maybeUnnestRule(_ ctx: inout OptimizerContext, _ ruleExpr: inout Expr, typeOf: (Int64) -> CELType) {
     var heights = AST(expr: ruleExpr, sourceInfo: SourceInfo(source: nil)).heights
     var unnestMap: [Int64: Bool] = [:]
     var unnestExprs: [NavigableExpr] = []
@@ -311,21 +310,24 @@ struct RuleUnnesterPass: ASTOptimizer {
         continue
       }
       reduceHeight(&heights, e, exprUnnestHeight)
-      registerUnnestVariable(ctx, &ruleExpr, e.id, type: typeOf(e.id))
+      registerUnnestVariable(&ctx, &ruleExpr, e.id, type: typeOf(e.id))
     }
   }
 
-  func registerUnnestVariable(_ ctx: OptimizerContext, _ ruleExpr: inout Expr, _ id: Int64, type: CELType) {
-    let indexVar = "@index\(state.nextVarIndex)"
+  mutating func registerUnnestVariable(
+    _ ctx: inout OptimizerContext, _ ruleExpr: inout Expr, _ id: Int64, type: CELType
+  ) {
+    let indexVar = "@index\(nextVarIndex)"
     // The current state of the node, with already unnested descendants replaced.
-    guard let current = ruleExpr.node(id: id) else {
+    guard let current = ruleExpr.node(id) else {
       return
     }
-    let copy = ctx.copyASTAndMetadata(ctx.newAST(current))
-    state.varIndices.append(
-      VarIndex(index: state.nextVarIndex, indexVar: indexVar, localVar: "", expr: copy, celType: type))
-    ctx.updateExpr(in: &ruleExpr, id: id, ctx.newIdent(indexVar))
-    state.nextVarIndex += 1
+    let copy = ctx.copyASTAndMetadata(AST(expr: current, sourceInfo: ctx.ast.sourceInfo))
+    varIndices.append(
+      VarIndex(index: nextVarIndex, indexVar: indexVar, localVar: "", expr: copy, celType: type))
+    let ident = ctx.newIdent(indexVar)
+    ruleExpr.updateNode(id) { ctx.updateExpr(&$0, ident) }
+    nextVarIndex += 1
   }
 }
 
@@ -352,7 +354,6 @@ func reduceHeight(_ heights: inout [Int64: Int], _ e: NavigableExpr, _ amount: I
 /// An intermediate stage of composition: a condition and an output, optional or not
 /// (cel-go `compositionStep`, `nonOptionalCompositionStep`, `optionalCompositionStep`).
 struct CompositionStep {
-  let ctx: OptimizerContext
   let isOptional: Bool
   let condition: Expr
   let expr: Expr
@@ -364,16 +365,16 @@ struct CompositionStep {
     return true
   }
 
-  func combine(_ step: CompositionStep?) -> CompositionStep {
+  func combine(_ ctx: inout OptimizerContext, _ step: CompositionStep?) -> CompositionStep {
     guard let step else {
       return self
     }
-    let trueCondition = ctx.newLiteral(.bool(true))
+    let trueCondition = ctx.newConstant(.bool(true))
     if !isOptional {
       if step.isOptional {
         if isConditional {
           return CompositionStep(
-            ctx: ctx, isOptional: true, condition: trueCondition,
+            isOptional: true, condition: trueCondition,
             expr: ctx.newCall(
               Operators.conditional, [condition, ctx.newCall("optional.of", [expr]), step.expr]))
         }
@@ -383,30 +384,30 @@ struct CompositionStep {
         return self
       }
       return CompositionStep(
-        ctx: ctx, isOptional: false, condition: trueCondition,
+        isOptional: false, condition: trueCondition,
         expr: ctx.newCall(Operators.conditional, [condition, expr, step.expr]))
     }
     if step.isOptional {
       if isConditional {
         return CompositionStep(
-          ctx: ctx, isOptional: true, condition: trueCondition,
+          isOptional: true, condition: trueCondition,
           expr: ctx.newCall(Operators.conditional, [condition, expr, step.expr]))
       }
       if !isOptionalNone(step.expr) {
         return CompositionStep(
-          ctx: ctx, isOptional: true, condition: trueCondition,
-          expr: ctx.newMemberCall("or", target: expr, [step.expr]))
+          isOptional: true, condition: trueCondition,
+          expr: ctx.newMemberCall("or", expr, [step.expr]))
       }
       return self
     }
     if isConditional {
       return CompositionStep(
-        ctx: ctx, isOptional: true, condition: trueCondition,
+        isOptional: true, condition: trueCondition,
         expr: ctx.newCall(Operators.conditional, [condition, expr, ctx.newCall("optional.of", [step.expr])]))
     }
     return CompositionStep(
-      ctx: ctx, isOptional: false, condition: trueCondition,
-      expr: ctx.newMemberCall("orValue", target: expr, [step.expr]))
+      isOptional: false, condition: trueCondition,
+      expr: ctx.newMemberCall("orValue", expr, [step.expr]))
   }
 }
 

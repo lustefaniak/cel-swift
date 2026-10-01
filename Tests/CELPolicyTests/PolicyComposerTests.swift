@@ -127,15 +127,13 @@ struct PolicyComposerTests {
 
   /// A composer combining two unconditional non-optional steps: the first wins
   /// (cel-go `testUnconditionalComposer`).
-  struct UnconditionalComposer: ASTOptimizer {
-    func optimize(_ ctx: OptimizerContext, _ ast: AST) -> AST {
-      let trueCond = ctx.newLiteral(.bool(true))
-      let out1 = ctx.newLiteral(.string("first"))
-      let out2 = ctx.newLiteral(.string("second"))
-      let s = CompositionStep(ctx: ctx, isOptional: false, condition: trueCond, expr: out1)
-      let step = CompositionStep(ctx: ctx, isOptional: false, condition: trueCond, expr: out2)
-      return ctx.newAST(s.combine(step).expr)
-    }
+  static func unconditionalComposer(_ ctx: inout OptimizerContext) {
+    let trueCond = ctx.newConstant(.bool(true))
+    let out1 = ctx.newConstant(.string("first"))
+    let out2 = ctx.newConstant(.string("second"))
+    let s = CompositionStep(isOptional: false, condition: trueCond, expr: out1)
+    let step = CompositionStep(isOptional: false, condition: trueCond, expr: out2)
+    ctx.ast.expr = s.combine(&ctx, step).expr
   }
 
   // Unreachable through the policy format (the compiler rejects unreachable outputs), but kept
@@ -143,10 +141,8 @@ struct PolicyComposerTests {
   @Test func nonOptionalCompositionStepUnconditionalCombine() throws {
     let env = try Environment()
     let dummy = try env.compile("true")
-    let (result, errors, source) = CELPolicy.optimize(
-      UnconditionalComposer(), env: env, ast: dummy.ast, source: TextSource("true"))
-    let ast = try #require(result, "\(errors)")
-    #expect(CheckedExpression(ast: ast, source: source).description == #""first""#)
+    let result = try env.optimize(dummy, pass: Self.unconditionalComposer)
+    #expect(result.description == #""first""#)
   }
 
   @Test func ruleComposerError() throws {

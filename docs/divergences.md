@@ -29,9 +29,6 @@ checks this against go-yaml output for all cel-go test data. The remaining diffe
   caller and fails with an undeclared `optional.none` or `cel.@block` when they are missing; the composed
   expression always needs them, and returning the environment keeps programs from being planned without
   the `cel.@block` evaluation.
-- **The static optimizer lives in `CELPolicy`** (`StaticOptimizer.swift`) and is internal: the composer is
-  its only user until the core gets a public optimizer API. Swift expressions are values, so updates
-  address nodes by id where cel-go mutates shared pointers.
 - **`CELTest` reads only YAML.** Textproto suites, checked-expression files (`.binarypb`, `.textproto`)
   and file descriptor sets are not supported; message types come from an environment option (generated
   `CELProtobuf` types). Coverage reporting is not ported.
@@ -246,6 +243,7 @@ messages, error node ids, observed ids and runtime cost). The differences:
   matchers treat recorded nodes as literals and never look inside them, which reproduces cel-go's
   decisions. The optimized output of every ported `folding_test.go` and `inlining_test.go` row is the
   same.
-- **No `OptimizeWithSource` and no custom `ASTOptimizer`s.** The optimizer context needs the package-level
-  AST, which is not public (an open API decision), so only the built-in folding and inlining optimizers
-  are available.
+- **No public `OptimizeWithSource` and no custom `ASTOptimizer`s.** The optimizer context needs the
+  package-level AST, which is not public (an open API decision, `docs/decisions.md`), so clients get only
+  the built-in folding and inlining optimizers. The policy composer runs its passes through the same
+  optimizer with a `package` entry point that takes a pass and a source override.

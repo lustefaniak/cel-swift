@@ -64,25 +64,51 @@ extension Environment {
   public func optimize(
     _ expression: CheckedExpression, optimizers: [ExpressionOptimizer]
   ) throws(CompileError) -> CheckedExpression {
-    let source = expression.source
-    var context = OptimizerContext(env: self, ast: expression.ast, source: source)
+    var context = OptimizerContext(env: self, ast: expression.ast, source: expression.source)
     for optimizer in optimizers {
-      optimizer.run(&context)
-      if !context.errors.errors.isEmpty {
-        throw CompileError(context.errors)
-      }
-      // Normalize expression id metadata including coordination with macro call metadata.
-      var ids = StableIDGenerator(seed: 0)
-      var expr = context.ast.expr
-      var info = context.ast.sourceInfo
-      normalizeIDs(&ids, &expr, &info)
-      cleanupMacroRefs(expr, &info)
-      // Recheck the updated expression for any possible type-agreement or validation errors.
-      let checked = try check(ParsedExpression(ast: AST(expr: expr, sourceInfo: info), source: source))
-      context.ast = checked.ast
-      context.literalValues = [:]
+      try context.apply(optimizer.run)
     }
-    return CheckedExpression(ast: context.ast, source: source)
+    return CheckedExpression(ast: context.ast, source: context.source)
+  }
+
+  /// Applies one optimization pass that is not an ``ExpressionOptimizer``, such as the policy
+  /// composer, whose passes keep state between them (cel-go `NewStaticOptimizer` with one
+  /// `ASTOptimizer`).
+  ///
+  /// - Parameters:
+  ///   - expression: An expression checked by this environment.
+  ///   - sourceOverride: Replaces the expression's source and discards its source info (cel-go
+  ///     `OptimizeWithSource`).
+  ///   - pass: The optimization; it rewrites `OptimizerContext.ast`.
+  package func optimize(
+    _ expression: CheckedExpression, sourceOverride: (any Source)? = nil,
+    pass: (inout OptimizerContext) -> Void
+  ) throws(CompileError) -> CheckedExpression {
+    var context = OptimizerContext(
+      env: self, ast: expression.ast, source: expression.source, sourceOverride: sourceOverride)
+    try context.apply(pass)
+    return CheckedExpression(ast: context.ast, source: context.source)
+  }
+}
+
+extension OptimizerContext {
+  /// Runs one pass, then renumbers ids and type-checks the result with the context's environment
+  /// (one iteration of cel-go `StaticOptimizer.Optimize`).
+  mutating func apply(_ pass: (inout OptimizerContext) -> Void) throws(CompileError) {
+    pass(&self)
+    if !errors.errors.isEmpty {
+      throw CompileError(errors)
+    }
+    // Normalize expression id metadata including coordination with macro call metadata.
+    var fresh = StableIDGenerator(seed: 0)
+    var expr = ast.expr
+    var info = ast.sourceInfo
+    normalizeIDs(&fresh, &expr, &info)
+    cleanupMacroRefs(expr, &info)
+    // Recheck the updated expression for any possible type-agreement or validation errors.
+    let checked = try env.check(ParsedExpression(ast: AST(expr: expr, sourceInfo: info), source: source))
+    ast = checked.ast
+    literalValues = [:]
   }
 }
 
@@ -162,10 +188,11 @@ func cleanupMacroRefs(_ expr: Expr, _ info: inout SourceInfo) {
 /// The state shared by the optimizers: the environment, the AST being optimized, an id
 /// generator for new nodes and the issues reported so far (cel-go `OptimizerContext` and
 /// `optimizerExprFactory`).
-struct OptimizerContext {
-  var env: Environment
+package struct OptimizerContext {
+  /// The environment the passes check against; ``extendEnvironment(variables:)`` adds to it.
+  package private(set) var env: Environment
   /// The AST being optimized; its source info holds the macro calls the factory methods update.
-  var ast: AST
+  package var ast: AST
   let source: any Source
   var ids: StableIDGenerator
   var errors: CELErrors
@@ -174,21 +201,33 @@ struct OptimizerContext {
   /// `optional.of(1)`), and its sub-nodes are not visited.
   var literalValues: [Int64: Value] = [:]
 
-  init(env: Environment, ast: AST, source: any Source) {
+  init(env: Environment, ast: AST, source: any Source, sourceOverride: (any Source)? = nil) {
     self.env = env
-    self.ast = ast
-    self.source = source
+    // Ids continue after the input expression's, even when its source info is discarded.
     self.ids = StableIDGenerator(seed: ast.maxID)
-    self.errors = CELErrors(source: source)
+    var ast = ast
+    if let sourceOverride {
+      ast.sourceInfo = SourceInfo(source: sourceOverride)
+    }
+    self.ast = ast
+    self.source = sourceOverride ?? source
+    self.errors = CELErrors(source: sourceOverride ?? source)
   }
 
-  mutating func nextID() -> Int64 {
+  package mutating func nextID() -> Int64 {
     ids.nextID()
   }
 
-  /// Reports an issue at the location of the node `id` (cel-go `Issues.ReportErrorAtID`).
-  mutating func reportError(at id: Int64, _ message: String) {
-    errors.reportError(exprID: id, at: ast.sourceInfo.startLocation(id), message)
+  /// Reports an issue for the node `id` (cel-go `Issues.ReportErrorAtID`). cel-go's optimizer
+  /// issues have no source info, so the issue has no location.
+  package mutating func reportError(at id: Int64, _ message: String) {
+    errors.reportError(exprID: id, at: .none, message)
+  }
+
+  /// Declares variables in the environment later passes and the type-check after this pass use
+  /// (cel-go `OptimizerContext.ExtendEnv`).
+  package mutating func extendEnvironment(variables: [VariableDecl]) throws(DeclarationError) {
+    env = try env.extending(.variables(variables))
   }
 
   /// The current version of the node `id`, if it is still part of the expression.
@@ -227,23 +266,23 @@ struct OptimizerContext {
 
   // MARK: Factory (cel-go optimizerExprFactory)
 
-  mutating func newCall(_ function: String, _ args: [Expr]) -> Expr {
+  package mutating func newCall(_ function: String, _ args: [Expr]) -> Expr {
     .call(id: nextID(), function: function, args: args)
   }
 
-  mutating func newMemberCall(_ function: String, _ target: Expr, _ args: [Expr]) -> Expr {
+  package mutating func newMemberCall(_ function: String, _ target: Expr, _ args: [Expr]) -> Expr {
     .memberCall(id: nextID(), function: function, target: target, args: args)
   }
 
-  mutating func newIdent(_ name: String) -> Expr {
+  package mutating func newIdent(_ name: String) -> Expr {
     .ident(id: nextID(), name)
   }
 
-  mutating func newConstant(_ value: Constant) -> Expr {
+  package mutating func newConstant(_ value: Constant) -> Expr {
     .literal(id: nextID(), value)
   }
 
-  mutating func newList(_ elements: [Expr], _ optionalIndices: [Int32]) -> Expr {
+  package mutating func newList(_ elements: [Expr], _ optionalIndices: [Int32]) -> Expr {
     .list(id: nextID(), elements: elements, optionalIndices: optionalIndices)
   }
 
@@ -353,7 +392,7 @@ struct OptimizerContext {
 
   /// Copies an AST and moves its macro calls and offset ranges into the AST being optimized
   /// (cel-go `CopyASTAndMetadata`).
-  mutating func copyASTAndMetadata(_ other: AST) -> Expr {
+  package mutating func copyASTAndMetadata(_ other: AST) -> Expr {
     let (expr, info) = copyAST(other)
     for (id, call) in info.macroCalls {
       setMacroCall(id, call)
@@ -418,6 +457,17 @@ struct OptimizerContext {
   /// `updated` are rewritten to the new content.
   mutating func updateExpr(_ targetID: Int64, _ updated: Expr) {
     ast.expr.updateNode(targetID) { $0.kind = updated.kind }
+    updateMetadata(targetID, updated)
+  }
+
+  /// Gives `target`, a node outside `ast` that is to become part of it, the kind of `updated`
+  /// and keeps the macro metadata consistent, as the id-based `updateExpr` does.
+  package mutating func updateExpr(_ target: inout Expr, _ updated: Expr) {
+    target.kind = updated.kind
+    updateMetadata(target.id, updated)
+  }
+
+  private mutating func updateMetadata(_ targetID: Int64, _ updated: Expr) {
     if updated.id != targetID {
       literalValues[targetID] = literalValues[updated.id]
     }
@@ -475,7 +525,7 @@ struct OptimizerError: Error, CustomStringConvertible {
 
 extension Expr {
   /// The node with the given id, searching this expression and its descendants.
-  func node(_ id: Int64) -> Expr? {
+  package func node(_ id: Int64) -> Expr? {
     if self.id == id {
       return self
     }
@@ -489,7 +539,7 @@ extension Expr {
 
   /// Applies `body` to the node with the given id; returns whether it was found.
   @discardableResult
-  mutating func updateNode(_ id: Int64, _ body: (inout Expr) -> Void) -> Bool {
+  package mutating func updateNode(_ id: Int64, _ body: (inout Expr) -> Void) -> Bool {
     if self.id == id {
       body(&self)
       return true
@@ -505,7 +555,7 @@ extension Expr {
 
   /// Applies `body` to every node, children before their parent (cel-go `PostOrderVisit` with a
   /// visitor that mutates nodes).
-  mutating func transformPostOrder(_ body: (inout Expr) -> Void) {
+  package mutating func transformPostOrder(_ body: (inout Expr) -> Void) {
     mutateChildren { $0.transformPostOrder(body) }
     body(&self)
   }

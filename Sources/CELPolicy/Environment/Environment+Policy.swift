@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The parts of cel-go cel/env.go the policy compiler uses (CompileSource, Check and Extend with
-// errors as issues), on the public `Environment`, and cel-go `cel.StdLib(StdLibSubset(...))`.
+// The parts of cel-go cel/env.go the policy compiler uses (CompileSource and Extend with errors
+// as issues), on the public `Environment`, and cel-go `cel.StdLib(StdLibSubset(...))`.
 
 import CEL
 
@@ -24,16 +24,6 @@ extension Environment {
     do {
       let parsed = try parse(source: source)
       let checked = try check(parsed)
-      return (checked.ast, CELErrors(source: source))
-    } catch {
-      return (nil, error.errors)
-    }
-  }
-
-  /// Type-checks a parsed AST, returning the errors instead of throwing them (cel-go `Env.Check`).
-  func checkAST(_ ast: AST, source: any Source) -> (ast: AST?, errors: CELErrors) {
-    do {
-      let checked = try check(ParsedExpression(ast: ast, source: source))
       return (checked.ast, CELErrors(source: source))
     } catch {
       return (nil, error.errors)
