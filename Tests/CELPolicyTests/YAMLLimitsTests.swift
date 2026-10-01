@@ -139,6 +139,39 @@ struct YAMLLimitsTests {
     }
   }
 
+  // MARK: Duplicate keys
+
+  /// go-yaml compares every pair of keys of a mapping (`checkUniqueKeys` is quadratic). Decoding a
+  /// mapping 8 times as large should take about 8 times as long, not 64.
+  @Test func duplicateKeyCheckIsLinear() throws {
+    let clock = ContinuousClock()
+    func time(_ n: Int) throws -> Duration {
+      let text = (0..<n).map { "key\($0): \($0)\n" }.joined()
+      let document = try #require(try YAMLNode.parseDocument(text))
+      let start = clock.now
+      _ = try document.decodeValue()
+      return clock.now - start
+    }
+    _ = try time(100)  // warm up
+    let small = try time(1_000)
+    let large = try time(8_000)
+    withKnownIssue("every pair of keys is compared") {
+      #expect(large < small * 20 + .milliseconds(50), "1000 keys: \(small), 8000 keys: \(large)")
+    }
+  }
+
+  /// A key repeated n times is n(n-1)/2 pairs, each an error in go-yaml's message.
+  @Test func duplicateKeyErrorsAreBounded() throws {
+    let text = String(repeating: "a: 1\n", count: 1_000)
+    let document = try #require(try YAMLNode.parseDocument(text))
+    let message = Self.decodeError(document) ?? ""
+    #expect(message.hasPrefix("yaml: unmarshal errors:\n  line 2: mapping key \"a\" already defined at line 1\n"))
+    let lines = message.utf8.split(separator: UInt8(ascii: "\n")).count
+    withKnownIssue("every pair is reported") {
+      #expect(lines <= 1_001)
+    }
+  }
+
   /// A policy whose rules nest `depth` levels, each through a match with a nested rule.
   static func nestedRules(_ depth: Int) -> String {
     var text = "name: nested\nrule:\n"
