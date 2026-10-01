@@ -49,7 +49,7 @@ extension Environment.Configuration {
         throw EnvironmentError("invalid subset of stdlib: create a custom env")
       }
       if !subset.isDisabled {
-        try apply(Library.standard(subset: subset))
+        try apply(Library.standard(subset: subset.librarySubset))
       }
     } else {
       try apply(Library.standard)

@@ -55,46 +55,16 @@ package struct EnvironmentError: Error, Sendable, CustomStringConvertible {
   }
 }
 
-extension Library {
-  /// The standard library restricted to a subset (cel-go `cel.StdLib(StdLibSubset(...))`).
-  package static func standard(subset: EnvironmentConfig.LibrarySubset) -> Library {
-    var functions: [FunctionDecl] = []
-    for fn in StandardLibrary.functions {
-      if let kept = subset.subsetFunction(fn) {
-        functions.append(kept)
-      }
-    }
-    return Library(
-      name: "cel.lib.std", alias: "stdlib", functions: functions, variables: StandardLibrary.types,
-      macros: Macro.allMacros.filter { subset.includesMacro($0.function) })
-  }
-}
-
 extension EnvironmentConfig.LibrarySubset {
-  /// The subset of a function's overloads the library subset keeps, or `nil` when the function is
-  /// excluded (cel-go `LibrarySubset.SubsetFunction`).
-  package func subsetFunction(_ fn: FunctionDecl) -> FunctionDecl? {
-    if isDisabled {
-      return nil
+  /// The subset as the core's ``Library/Subset`` (cel-go `StdLibSubset` takes the config's
+  /// `env.LibrarySubset` directly).
+  package var librarySubset: Library.Subset {
+    func selections(_ functions: [EnvironmentConfig.Function]) -> [Library.Subset.FunctionSelection] {
+      functions.map { Library.Subset.FunctionSelection($0.name, overloadIDs: $0.overloads.map(\.id)) }
     }
-    if !includedFunctions.isEmpty {
-      for include in includedFunctions where include.name == fn.name {
-        if include.overloads.isEmpty {
-          return fn
-        }
-        return fn.including(overloadIDs: include.overloads.map(\.id))
-      }
-      return nil
-    }
-    if !excludedFunctions.isEmpty {
-      for exclude in excludedFunctions where exclude.name == fn.name {
-        if exclude.overloads.isEmpty {
-          return nil
-        }
-        return fn.excluding(overloadIDs: exclude.overloads.map(\.id))
-      }
-      return fn
-    }
-    return fn
+    return Library.Subset(
+      isDisabled: isDisabled, disablesMacros: disablesMacros, includedMacros: includedMacros,
+      excludedMacros: excludedMacros, includedFunctions: selections(includedFunctions),
+      excludedFunctions: selections(excludedFunctions))
   }
 }
