@@ -51,10 +51,19 @@ struct StringsLibrary {
   let maxPrecision: Int
 
   var library: Library {
-    Library(
+    var lib = Library(
       name: "cel.lib.ext.strings", alias: "strings", version: version,
       functions: makeDeclarations(try functions()),
       homogeneousLiteralExemptFunctions: version >= 1 ? ["format"] : [])
+    if version >= 1 {
+      lib.validators = [FormatValidator.make(maxPrecision: effectiveMaxPrecision, v2: version >= 4)]
+    }
+    return lib
+  }
+
+  /// Unbounded (0) before version 5; from version 5 the default is 100.
+  var effectiveMaxPrecision: Int {
+    maxPrecision == 0 && version >= 5 ? 100 : maxPrecision
   }
 
   // swift-format-ignore: FunctionLength

@@ -223,9 +223,11 @@ enum NetworkLibrary {
             return .int(Int64(c.bits))
           })),
     ])
-    return Library(
+    var lib = Library(
       name: "cel.lib.ext.network", alias: "network", version: version, functions: decls,
       types: [ipType, cidrType])
+    lib.validators = NetworkValidators.validators
+    return lib
   }
 
   static func asIP(_ v: Value) -> NetAddr? {
