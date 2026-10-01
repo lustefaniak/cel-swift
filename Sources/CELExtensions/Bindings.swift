@@ -119,6 +119,10 @@ func insertMapKeyValue(_ m: any MapValue, _ key: Value, _ value: Value) -> Value
   if key.isUnknownOrError {
     return key
   }
+  // A comprehension accumulator inserts in place (cel-go mutableMap.Insert).
+  if let mutable = m as? MutableMap {
+    return mutable.insert(key, value)
+  }
   if m.find(key) != nil {
     return errorValue("insert failed: key \(formatGoValue(key)) already exists")
   }
