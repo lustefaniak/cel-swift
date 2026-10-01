@@ -41,6 +41,8 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
     let messageTypes: [String: ProtobufMessageType]
     let messageTypesByMetatype: [ObjectIdentifier: ProtobufMessageType]
     let enumValues: [String: Int32]
+    /// The enum types except `google.protobuf.NullValue`, with their values: the strong enum types.
+    let enumTypes: [String: [String: Int32]]
     let extensions: [String: [ErasedField]]
     let extensionsByName: [String: [String: ErasedField]]
     let extensionMap: SimpleExtensionMap
@@ -63,6 +65,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       var messageTypes: [String: ProtobufMessageType] = [:]
       var byMetatype: [ObjectIdentifier: ProtobufMessageType] = [:]
       var enumValues: [String: Int32] = [:]
+      var enumTypes: [String: [String: Int32]] = [:]
       var extensions: [String: [ErasedField]] = [:]
       var extensionsByName: [String: [String: ErasedField]] = [:]
       var extensionMap = SimpleExtensionMap()
@@ -74,6 +77,10 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
         for enumType in file.enumTypes {
           for value in enumType.values {
             enumValues[enumType.name + "." + value.name] = value.number
+          }
+          if enumType.name != "google.protobuf.NullValue" {
+            enumTypes[enumType.name] = Dictionary(
+              enumType.values.map { ($0.name, $0.number) }, uniquingKeysWith: { first, _ in first })
           }
         }
         for ext in file.extensions {
@@ -88,6 +95,7 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       self.messageTypes = messageTypes
       self.messageTypesByMetatype = byMetatype
       self.enumValues = enumValues
+      self.enumTypes = enumTypes
       self.extensions = extensions
       self.extensionsByName = extensionsByName
       self.extensionMap = extensionMap
@@ -102,14 +110,24 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
   /// The port of cel-go's `JSONFieldNames` registry option.
   public let usesJSONFieldNames: Bool
 
+  /// Whether enum values, enum constants and enum fields are values of their enum type
+  /// (``EnumValue``) instead of `int`s.
+  ///
+  /// ``Environment/Option/strongEnums`` sets it on the environment's types; set it here for message
+  /// values created outside the environment, such as activation values, so they read the same way.
+  /// `google.protobuf.NullValue` stays an `int`.
+  public private(set) var usesStrongEnums: Bool
+
   /// Creates the types of the given files, their dependencies and the well-known types.
   ///
   /// - Parameters:
   ///   - files: Generated file descriptions.
   ///   - jsonFieldNames: Whether fields are selected by their JSON names.
-  public init(files: [ProtobufFile] = [], jsonFieldNames: Bool = false) {
+  ///   - strongEnums: Whether enum values are values of their enum type instead of `int`s.
+  public init(files: [ProtobufFile] = [], jsonFieldNames: Bool = false, strongEnums: Bool = false) {
     storage = Storage(files: files)
     usesJSONFieldNames = jsonFieldNames
+    usesStrongEnums = strongEnums
   }
 
   /// Adds the types of a file and its dependencies.
@@ -251,13 +269,27 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
 
   /// The number of an enum value given its fully qualified name, or an `unknown enum name` error.
   public func enumValue(_ enumName: String) -> Value {
-    if let number = storage.enumValues[sanitizeProtoName(enumName)] {
-      return .int(Int64(number))
+    let name = sanitizeProtoName(enumName)
+    if let number = storage.enumValues[name] {
+      return enumConstant(name, number)
     }
     return .error(EvalError("unknown enum name '\(enumName)'"))
   }
 
-  /// A message type name as a type value, or an enum value as an `int`.
+  /// An enum constant: an `int`, or with strong enums a value of its enum type.
+  private func enumConstant(_ name: String, _ number: Int32) -> Value {
+    guard usesStrongEnums, let dot = name.utf8.lastIndex(of: UInt8(ascii: ".")) else {
+      return .int(Int64(number))
+    }
+    let typeName = String(decoding: name.utf8[..<dot], as: UTF8.self)
+    guard storage.enumTypes[typeName] != nil else {
+      return .int(Int64(number))
+    }
+    return .object(EnumValue(typeName: typeName, number: number))
+  }
+
+  /// A message type name as a type value, or an enum value as an `int`; with strong enums, an enum
+  /// type name as a type value and an enum value as a value of its enum.
   ///
   /// Well-known types with CEL equivalents (wrappers, `Any`, `Struct`, ...) are not identifiers
   /// here, as in cel-go.
@@ -269,7 +301,10 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       }
     }
     if let number = storage.enumValues[identName] {
-      return .int(Int64(number))
+      return enumConstant(identName, number)
+    }
+    if usesStrongEnums, storage.enumTypes[identName] != nil {
+      return .type(.opaque(name: identName, parameters: []))
     }
     return nil
   }
@@ -292,9 +327,10 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
     guard let messageType = messageType(named: structType),
       let field = field(named: fieldName, in: messageType)
     else { return nil }
+    let strongEnums = usesStrongEnums
     return StructFieldType(
       name: field.name,
-      type: field.type,
+      type: strongEnums ? field.strongEnumType ?? field.type : field.type,
       isJSONField: usesJSONFieldNames && !field.isExtension && fieldName == field.jsonName,
       isSet: { object in
         guard let proto = object as? ProtobufObject else {
@@ -306,7 +342,8 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
         guard let proto = object as? ProtobufObject else {
           return object.field(field.name)
         }
-        return field.get(proto.message, proto.types)
+        // The field's checked type follows this provider's enums, whatever the object's types do.
+        return field.get(proto.message, proto.types.settingStrongEnums(strongEnums))
       }
     )
   }
@@ -347,6 +384,23 @@ public struct ProtobufTypes: TypeProvider, TypeAdapter {
       return self.value(of: message)
     }
     return .error(EvalError("unsupported conversion to ref.Val: (\(type(of: value)))\(value)"))
+  }
+}
+
+extension ProtobufTypes: StrongEnumProvider {
+  /// The enum types of the registered files, except `google.protobuf.NullValue`.
+  package var strongEnumTypes: [String: [String: Int32]] {
+    storage.enumTypes
+  }
+
+  /// The types with strong enums enabled or disabled; see ``usesStrongEnums``.
+  package func settingStrongEnums(_ enabled: Bool) -> ProtobufTypes {
+    if usesStrongEnums == enabled {
+      return self
+    }
+    var types = self
+    types.usesStrongEnums = enabled
+    return types
   }
 }
 

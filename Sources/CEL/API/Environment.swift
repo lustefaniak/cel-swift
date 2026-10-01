@@ -121,6 +121,13 @@ public struct Environment: Sendable {
         throw DeclarationError("\(error)")
       }
     }
+    do {
+      try configuration.applyStrongEnums()
+    } catch let error as DeclarationError {
+      throw error
+    } catch {
+      throw DeclarationError("\(error)")
+    }
     self.configuration = configuration
     do {
       self.parser = try Parser(options: configuration.parserOptions)

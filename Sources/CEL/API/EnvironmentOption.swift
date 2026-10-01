@@ -40,6 +40,11 @@ extension Environment {
     /// Types registered by libraries and options, re-registered when the provider is replaced.
     package var registeredTypes: [CELType] = []
     package var homogeneousLiteralExemptFunctions: [String] = []
+    /// Whether enum values are ``EnumValue``s (``Environment/Option/strongEnums``).
+    package var strongEnums = false
+    /// The enum types whose conversion functions are declared, so an extended environment declares
+    /// only the ones its provider adds.
+    package var strongEnumFunctions: Set<String> = []
 
     // Features (cel-go `features`).
     package var crossTypeNumericComparisons = false
@@ -98,6 +103,23 @@ extension Environment {
         functions[i] = try functions[i].merging(function)
       } else {
         functions.append(function)
+      }
+    }
+
+    /// Switches the type provider to strong enums and declares the conversion functions of enum
+    /// types that do not have them yet: `E(int)`, `E(string)` and the `int(E)` overload. Runs after
+    /// the options, so it sees the final provider.
+    package mutating func applyStrongEnums() throws {
+      guard strongEnums else { return }
+      if !registry.usesStrongEnums {
+        registry = registry.settingStrongEnums(true)
+      }
+      let enumTypes = registry.strongEnumTypes
+      for name in enumTypes.keys.sorted() where !strongEnumFunctions.contains(name) {
+        for function in try StrongEnums.functions(enumType: name, values: enumTypes[name] ?? [:]) {
+          try declare(function)
+        }
+        strongEnumFunctions.insert(name)
       }
     }
 
@@ -312,6 +334,23 @@ extension Environment {
     /// types with JSON field names to match.
     public static func jsonFieldNames(_ enabled: Bool = true) -> Option {
       Option { $0.jsonFieldNames = enabled }
+    }
+
+    /// Makes enum values typed: values of their enum type rather than `int`s.
+    ///
+    /// The `strong` enum semantics of the CEL specification, off by default as in cel-go. With it,
+    /// `pkg.Color.RED` and message enum fields evaluate to ``EnumValue``s; `pkg.Color` names the enum
+    /// type, so `type(pkg.Color.RED) == pkg.Color`; enum values equal only values of the same enum;
+    /// `int(e)` gives the number; and each enum type is a conversion function: `pkg.Color(1)`
+    /// (an error outside the 32-bit range) and `pkg.Color('RED')` (an error for an undeclared name).
+    /// Enum fields accept enum values of their type and, as before, `int`s.
+    ///
+    /// Applies to the enums of the type provider's types (registered enum values and the
+    /// `CELProtobuf` types), whatever the option's position among the options. Message values
+    /// created outside the environment read enum fields as enum values only if their `CELProtobuf`
+    /// types have strong enums too. Enabling it cannot be undone in an extended environment.
+    public static var strongEnums: Option {
+      Option { $0.strongEnums = true }
     }
 
     /// Records the original calls of macro expansions, so checked expressions can be printed

@@ -167,7 +167,12 @@ struct FileGenerator {
     case .bool: return ".bool"
     case .string: return ".string"
     case .bytes: return ".bytes"
-    case .enum: return ".enumeration"
+    case .enum:
+      // The enum's name gives strong enum values their type; NullValue stays an int.
+      guard let enumType = field.enumType, enumType.fullName != "google.protobuf.NullValue" else {
+        return ".enumeration"
+      }
+      return ".enumeration(\(swiftString(enumType.fullName)))"
     case .message, .group: return ".message"
     }
   }

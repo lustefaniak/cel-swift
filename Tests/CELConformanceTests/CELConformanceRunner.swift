@@ -53,6 +53,13 @@ struct CELConformanceRunner: ConformanceRunner {
   static let networkEnvironment = makeEnvironment(
     baseOptions + [.macros(Macro.allMacros), .library(networkWithoutValidators)])
 
+  /// The `enums/strong_*` sections test the strong enum semantics, an option off by default (the
+  /// `legacy_*` sections test the default); their bindings and results use types with strong enums.
+  static let strongEnumEnvironment = makeEnvironment(
+    baseOptions + [.macros(Macro.allMacros), .strongEnums])
+
+  static let strongEnumTypes = CELSpecProtos.protobufTypes.settingStrongEnums(true)
+
   static var networkWithoutValidators: Library {
     var library = Library.network
     library.validators = []
@@ -65,10 +72,14 @@ struct CELConformanceRunner: ConformanceRunner {
 
   func run(_ request: ConformanceRequest) -> ConformanceOutcome {
     let test = request.test
+    let strongEnums = request.name.hasPrefix("enums/strong_")
+    let types = strongEnums ? Self.strongEnumTypes : CELSpecProtos.protobufTypes
     let base =
       request.name.hasPrefix("network_ext/")
       ? Self.networkEnvironment
-      : test.disableMacros ? Self.environmentWithoutStandardMacros : Self.baseEnvironment
+      : strongEnums
+        ? Self.strongEnumEnvironment
+        : test.disableMacros ? Self.environmentWithoutStandardMacros : Self.baseEnvironment
     let env: Environment
     switch base {
     case .success(let e): env = e
@@ -108,7 +119,7 @@ struct CELConformanceRunner: ConformanceRunner {
     }
     var bindings: [String: Value] = [:]
     for (name, exprValue) in test.bindings {
-      switch ValueConversion.toValue(exprValue, types: CELSpecProtos.protobufTypes) {
+      switch ValueConversion.toValue(exprValue, types: types) {
       case .success(let v): bindings[name] = v
       case .failure(let reason): return .notImplemented(reason.message)
       }
@@ -136,7 +147,7 @@ struct CELConformanceRunner: ConformanceRunner {
     } catch {
       value = .error(error)
     }
-    switch ValueConversion.toExprValue(value, types: CELSpecProtos.protobufTypes) {
+    switch ValueConversion.toExprValue(value, types: types) {
     case .success(let ev): return .evaluated(result: ev, deducedType: deducedType)
     case .failure(let reason): return .notImplemented(reason.message)
     }

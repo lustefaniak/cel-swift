@@ -25,7 +25,7 @@ package let Google_Expr_Proto2_Test_TestAllTypes_CELFile = ProtobufFile(
   ],
   extensions: [
     ProtobufExtension(ProtobufField<Google_Expr_Proto2_Test_ExampleType>.repeated("google.expr.proto2.test.ExtendedExampleType.extended_examples", number: 103, \Google_Expr_Proto2_Test_ExampleType.Google_Expr_Proto2_Test_ExtendedExampleType_extendedExamples, .string)),
-    ProtobufExtension(ProtobufField<Google_Expr_Proto2_Test_ExampleType>.singular("google.expr.proto2.test.ExtendedExampleType.enum_ext", number: 104, \Google_Expr_Proto2_Test_ExampleType.Google_Expr_Proto2_Test_ExtendedExampleType_enumExt, .enumeration, presence: .explicit(\Google_Expr_Proto2_Test_ExampleType.hasGoogle_Expr_Proto2_Test_ExtendedExampleType_enumExt))),
+    ProtobufExtension(ProtobufField<Google_Expr_Proto2_Test_ExampleType>.singular("google.expr.proto2.test.ExtendedExampleType.enum_ext", number: 104, \Google_Expr_Proto2_Test_ExampleType.Google_Expr_Proto2_Test_ExtendedExampleType_enumExt, .enumeration("google.expr.proto2.test.GlobalEnum"), presence: .explicit(\Google_Expr_Proto2_Test_ExampleType.hasGoogle_Expr_Proto2_Test_ExtendedExampleType_enumExt))),
   ],
   extensionMap: Google_Expr_Proto2_Test_TestAllTypes_Extensions,
   dependencies: []
@@ -49,7 +49,7 @@ fileprivate func _celFields_Google_Expr_Proto2_Test_TestAllTypes() -> [ProtobufF
   fields.append(.singular("single_bool", number: 13, \Google_Expr_Proto2_Test_TestAllTypes.singleBool, .bool, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleBool)))
   fields.append(.singular("single_string", number: 14, \Google_Expr_Proto2_Test_TestAllTypes.singleString, .string, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleString)))
   fields.append(.singular("single_bytes", number: 15, \Google_Expr_Proto2_Test_TestAllTypes.singleBytes, .bytes, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleBytes)))
-  fields.append(.singular("standalone_enum", number: 22, \Google_Expr_Proto2_Test_TestAllTypes.standaloneEnum, .enumeration, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasStandaloneEnum)))
+  fields.append(.singular("standalone_enum", number: 22, \Google_Expr_Proto2_Test_TestAllTypes.standaloneEnum, .enumeration("google.expr.proto2.test.TestAllTypes.NestedEnum"), presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasStandaloneEnum)))
   fields.append(.singular("nestedgroup", number: 23, \Google_Expr_Proto2_Test_TestAllTypes.nestedGroup, .message, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasNestedGroup)))
   fields.append(.singular("single_any", number: 100, \Google_Expr_Proto2_Test_TestAllTypes.singleAny, .message, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleAny)))
   fields.append(.singular("single_duration", number: 101, \Google_Expr_Proto2_Test_TestAllTypes.singleDuration, .message, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleDuration)))
@@ -66,7 +66,7 @@ fileprivate func _celFields_Google_Expr_Proto2_Test_TestAllTypes() -> [ProtobufF
   fields.append(.singular("single_bool_wrapper", number: 112, \Google_Expr_Proto2_Test_TestAllTypes.singleBoolWrapper, .message, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleBoolWrapper)))
   fields.append(.singular("single_bytes_wrapper", number: 113, \Google_Expr_Proto2_Test_TestAllTypes.singleBytesWrapper, .message, presence: .explicit(\Google_Expr_Proto2_Test_TestAllTypes.hasSingleBytesWrapper)))
   fields.append(.singular("single_nested_message", number: 18, \Google_Expr_Proto2_Test_TestAllTypes.singleNestedMessage, .message, presence: .oneof({ if case .singleNestedMessage? = $0.nestedType { return true }; return false })))
-  fields.append(.singular("single_nested_enum", number: 21, \Google_Expr_Proto2_Test_TestAllTypes.singleNestedEnum, .enumeration, presence: .oneof({ if case .singleNestedEnum? = $0.nestedType { return true }; return false })))
+  fields.append(.singular("single_nested_enum", number: 21, \Google_Expr_Proto2_Test_TestAllTypes.singleNestedEnum, .enumeration("google.expr.proto2.test.TestAllTypes.NestedEnum"), presence: .oneof({ if case .singleNestedEnum? = $0.nestedType { return true }; return false })))
   fields.append(.repeated("repeated_int32", number: 31, \Google_Expr_Proto2_Test_TestAllTypes.repeatedInt32, .int32))
   fields.append(.repeated("repeated_int64", number: 32, \Google_Expr_Proto2_Test_TestAllTypes.repeatedInt64, .int64))
   fields.append(.repeated("repeated_uint32", number: 33, \Google_Expr_Proto2_Test_TestAllTypes.repeatedUint32, .uint32))
@@ -83,7 +83,7 @@ fileprivate func _celFields_Google_Expr_Proto2_Test_TestAllTypes() -> [ProtobufF
   fields.append(.repeated("repeated_string", number: 44, \Google_Expr_Proto2_Test_TestAllTypes.repeatedString, .string))
   fields.append(.repeated("repeated_bytes", number: 45, \Google_Expr_Proto2_Test_TestAllTypes.repeatedBytes, .bytes))
   fields.append(.repeated("repeated_nested_message", number: 48, \Google_Expr_Proto2_Test_TestAllTypes.repeatedNestedMessage, .message))
-  fields.append(.repeated("repeated_nested_enum", number: 51, \Google_Expr_Proto2_Test_TestAllTypes.repeatedNestedEnum, .enumeration))
+  fields.append(.repeated("repeated_nested_enum", number: 51, \Google_Expr_Proto2_Test_TestAllTypes.repeatedNestedEnum, .enumeration("google.expr.proto2.test.TestAllTypes.NestedEnum")))
   fields.append(.repeated("repeated_string_piece", number: 54, \Google_Expr_Proto2_Test_TestAllTypes.repeatedStringPiece, .string))
   fields.append(.repeated("repeated_cord", number: 55, \Google_Expr_Proto2_Test_TestAllTypes.repeatedCord, .string))
   fields.append(.repeated("repeated_lazy_message", number: 57, \Google_Expr_Proto2_Test_TestAllTypes.repeatedLazyMessage, .message))

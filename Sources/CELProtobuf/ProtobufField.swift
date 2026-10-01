@@ -33,6 +33,9 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
   public let number: Int32
   /// The CEL type of the field, as the type checker sees it.
   public let type: CELType
+  /// The CEL type of the field with strong enums, when it differs from ``type``: enum fields have
+  /// their enum type.
+  let strongEnumType: CELType?
 
   let get: @Sendable (M, ProtobufTypes) -> Value
   let isSet: @Sendable (M) -> Bool
@@ -85,6 +88,7 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
       jsonName: jsonName ?? defaultJSONName(name),
       number: number,
       type: kind.celType,
+      strongEnumType: kind.enumTypeName.map { _ in kind.celType(strongEnums: true) },
       get: { m, types in
         if let unsetValue, !isSet(m) {
           return unsetValue
@@ -134,6 +138,7 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
       jsonName: jsonName ?? defaultJSONName(name),
       number: number,
       type: .list(kind.celType),
+      strongEnumType: kind.enumTypeName.map { _ in .list(kind.celType(strongEnums: true)) },
       get: { m, types in
         .list(ProtobufRepeatedList(elements: m[keyPath: keyPath], kind: kind, types: types))
       },
@@ -189,6 +194,9 @@ public struct ProtobufField<M: SwiftProtobuf.Message>: Sendable {
       jsonName: jsonName ?? defaultJSONName(name),
       number: number,
       type: .map(key: key.celType, value: value.celType),
+      strongEnumType: value.enumTypeName.map { _ in
+        .map(key: key.celType, value: value.celType(strongEnums: true))
+      },
       get: { m, types in
         .map(
           ProtobufMap(entries: m[keyPath: keyPath], keyKind: key, valueKind: value, types: types))

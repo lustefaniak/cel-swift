@@ -7,7 +7,7 @@ Snapshot: 2026-10-01; the API, CLI and docs rows after `bd4f5d0`, the differenti
 
 ## Conformance (cel-spec v0.25.3)
 
-2473 / 2508 checked, 2310 / 2339 parse-only, `Tests/CELConformanceTests/skip.txt` is empty.
+2508 / 2508 checked, 2339 / 2339 parse-only (100%), `Tests/CELConformanceTests/skip.txt` is empty.
 Run `python3 tools/dashboard/dashboard.py --run` for the per-file table against cel-go, cel-rust and cel-cpp.
 
 **cpp parity reached** (checked mode): every test cel-cpp passes, cel-swift passes. The ten cel-go skips that the spec
@@ -18,9 +18,9 @@ returns -1 pending a spec update, revisit on the next cel-spec bump); `ip()` acc
 the IPv4 address; the conformance matcher accepts a check error carrying an expected eval_error message
 (`network_ext/ip_type/is_ip_cidr_compile_error`).
 
-What still fails: only the `enums` strong-enum sections (35 checked, 29 parse-only), which cel-go and cel-cpp skip
-too. cel-rust "passes" 6 of them (`convert_int_too_big` / `_too_neg` / `convert_string_bad`, which expect an error that
-it raises for an unrelated reason); that is the whole remaining rust gap.
+Nothing fails. The `enums` strong-enum sections (35 checked, 29 parse-only), which cel-go and cel-cpp skip, pass with
+`Environment.Option.strongEnums` (off by default, so the `legacy_*` sections pass too; the runner enables it for the
+strong sections). Enum values are `EnumValue` objects with an opaque enum type (decision 7).
 
 ## Done (on main)
 
@@ -48,8 +48,8 @@ it raises for an unrelated reason); that is the whole remaining rust gap.
 
 Each item is sized for one fresh session. Read `CLAUDE.md` first; every build goes through `tools/build-guard/swiftlock`.
 
-1. **First release (M8)** — the questions in `docs/decisions.md` are decided and applied except the two being
-   implemented (strong enums, shared parser cache); `CHANGELOG.md` has the 0.1.0 section. When those land: update
+1. **First release (M8)** — the questions in `docs/decisions.md` are decided and applied except the one being
+   implemented (shared parser cache); `CHANGELOG.md` has the 0.1.0 section. When those land: update
    the changelog numbers, tag `0.1.0` and point PRBar at it. From then on `tools/api-check/check-api.sh` compares
    against the tag. Custom macros, optimizers and decorators, proto AST conversion and the cel-go tests that need
    them (headers of `Tests/CELTests/API*Tests.swift`) wait for a public AST facade (decision 3).
@@ -60,12 +60,6 @@ Each item is sized for one fresh session. Read `CLAUDE.md` first; every build go
    `perf/shared-parser-cache` made parse 3–5× faster single-threaded).
    Remaining without a decision: plan allocation, `Folder` exclusivity checks, `LargeStack`'s thread hop for
    long inputs.
-3. **Strong enums (optional, beyond cpp parity)** — the last 35 conformance tests (`enums/strong_proto2`,
-   `strong_proto3`). Needs an environment option (the `legacy_*` sections must keep passing), a typed enum value and
-   type (a public `Value` / `CELType` decision: new case or opaque type), enum type names resolving to types and to
-   conversion functions `E(int)` / `E(string)` with int32 range and name checks, `CELProtobuf` field reads and writes
-   producing and accepting enum values, `type()`, equality and `int()` on them, and `enum_value` in the conformance
-   value conversion. About one session after the API decision; cel-go and cel-cpp do not implement it either.
 
 ## After the port
 

@@ -76,6 +76,7 @@ print(result.value)   // true
 - ``MapValue``
 - ``MapKey``
 - ``ObjectValue``
+- ``EnumValue``
 - ``CELDuration``
 - ``CELTimestamp``
 - ``ArrayList``

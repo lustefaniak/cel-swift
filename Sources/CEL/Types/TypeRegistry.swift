@@ -26,6 +26,8 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   private var enumValues: [String: Int64] = [:]
   private var fallbackProvider: (any TypeProvider)?
   private var fallbackAdapter: (any TypeAdapter)?
+  /// Whether enum values are ``EnumValue``s rather than `int`s; see ``Environment/Option/strongEnums``.
+  package private(set) var usesStrongEnums = false
 
   /// Creates a registry with the standard types registered (cel-go `NewProtoRegistry` without
   /// protobuf descriptors).
@@ -93,7 +95,7 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
   /// The numeric value of an enum value name, or `unknown enum name 'x'`.
   public func enumValue(_ enumName: String) -> Value {
     if let number = enumValues[enumName] {
-      return .int(number)
+      return registeredEnumValue(enumName, number)
     }
     if let fallbackProvider {
       return fallbackProvider.enumValue(enumName)
@@ -107,7 +109,10 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
       return .type(type)
     }
     if let number = enumValues[identName] {
-      return .int(number)
+      return registeredEnumValue(identName, number)
+    }
+    if usesStrongEnums, ownEnumTypes[identName] != nil {
+      return .type(.opaque(name: identName, parameters: []))
     }
     return fallbackProvider?.findIdent(identName)
   }
@@ -151,6 +156,29 @@ public struct TypeRegistry: TypeProvider, TypeAdapter {
       return fallbackProvider.newValue(name, fields: fields)
     }
     return .error(message: "unknown type '\(name)'")
+  }
+
+  // MARK: Strong enums
+
+  /// A registered enum value: an `int`, or with strong enums a value of the enum its name is in.
+  private func registeredEnumValue(_ name: String, _ number: Int64) -> Value {
+    guard usesStrongEnums, let dot = name.utf8.lastIndex(of: UInt8(ascii: ".")) else {
+      return .int(number)
+    }
+    let typeName = String(decoding: name.utf8[..<dot], as: UTF8.self)
+    return .object(EnumValue(typeName: typeName, number: Int32(truncatingIfNeeded: number)))
+  }
+
+  /// The enum types of the registered enum values: everything before the last dot of their names.
+  private var ownEnumTypes: [String: [String: Int32]] {
+    var types: [String: [String: Int32]] = [:]
+    for (name, number) in enumValues {
+      guard let dot = name.utf8.lastIndex(of: UInt8(ascii: ".")) else { continue }
+      let typeName = String(decoding: name.utf8[..<dot], as: UTF8.self)
+      let valueName = String(decoding: name.utf8[name.utf8.index(after: dot)...], as: UTF8.self)
+      types[typeName, default: [:]][valueName] = Int32(truncatingIfNeeded: number)
+    }
+    return types
   }
 
   // MARK: TypeAdapter
@@ -237,4 +265,28 @@ private func sanitizeStructTypeName(_ structType: String) -> String {
     return String(decoding: structType.utf8.dropFirst(), as: UTF8.self)
   }
   return structType
+}
+
+extension TypeRegistry: StrongEnumProvider {
+  /// The enum types of the registered enum values and of the composed provider, if it supports
+  /// strong enums.
+  package var strongEnumTypes: [String: [String: Int32]] {
+    var types = (fallbackProvider as? any StrongEnumProvider)?.strongEnumTypes ?? [:]
+    types.merge(ownEnumTypes) { _, own in own }
+    return types
+  }
+
+  /// The registry with strong enums enabled or disabled, here and in the composed provider and
+  /// adapter.
+  package func settingStrongEnums(_ enabled: Bool) -> TypeRegistry {
+    var registry = self
+    registry.usesStrongEnums = enabled
+    if let provider = fallbackProvider as? any StrongEnumProvider {
+      registry.fallbackProvider = provider.settingStrongEnums(enabled)
+    }
+    if let adapter = fallbackAdapter as? any StrongEnumProvider {
+      registry.fallbackAdapter = adapter.settingStrongEnums(enabled) as? any TypeAdapter
+    }
+    return registry
+  }
 }

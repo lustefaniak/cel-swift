@@ -106,6 +106,8 @@ struct ErasedField: Sendable {
   let jsonName: String
   let number: Int32
   let type: CELType
+  /// See ``ProtobufField/strongEnumType``.
+  let strongEnumType: CELType?
   let isExtension: Bool
   /// The `ProtobufField<M>`, cast back where `M` is known.
   let typed: any Sendable
@@ -119,6 +121,7 @@ struct ErasedField: Sendable {
     jsonName = field.jsonName
     number = field.number
     type = field.type
+    strongEnumType = field.strongEnumType
     self.isExtension = isExtension
     typed = field
     get = { message, types in

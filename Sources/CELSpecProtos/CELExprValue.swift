@@ -38,7 +38,8 @@ private let typeNameToType: [String: CELType] = [
 
 extension Cel_Expr_Value {
   /// Converts the value to a CEL value. Port of cel-go `ProtoAsValue`: `object_value` is unpacked
-  /// with `types` (well-known types become their CEL equivalents), `type_value` names a type.
+  /// with `types` (well-known types become their CEL equivalents), `type_value` names a type, and
+  /// `enum_value` is an `int`, or an ``EnumValue`` when `types` has strong enums.
   ///
   /// - Throws: ``EvalError`` for an unset kind, an unpackable object, or an invalid map key.
   package func celValue(types: ProtobufTypes) throws -> Value {
@@ -50,7 +51,11 @@ extension Cel_Expr_Value {
     case .doubleValue(let d)?: return .double(d)
     case .stringValue(let s)?: return .string(s)
     case .bytesValue(let b)?: return .bytes([UInt8](b))
-    case .enumValue(let e)?: return .int(Int64(e.value))
+    case .enumValue(let e)?:
+      if types.usesStrongEnums {
+        return .object(EnumValue(typeName: e.type, number: e.value))
+      }
+      return .int(Int64(e.value))
     case .objectValue(let any)?:
       let value = types.value(of: any)
       if case .error(let error) = value {
@@ -110,6 +115,11 @@ extension Cel_Expr_Value {
       mapValue = result
     case .error(let error):
       throw error
+    case .object(let e as EnumValue):
+      var value = Cel_Expr_EnumValue()
+      value.type = e.typeName
+      value.value = e.number
+      enumValue = value
     default:
       objectValue = try types.message(from: celValue, as: Google_Protobuf_Any.self)
     }

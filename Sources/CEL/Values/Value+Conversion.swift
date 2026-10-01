@@ -126,6 +126,8 @@ extension Value {
       if type.runtimeTypeName == "optional_type" { return self }
     case .object(let o):
       if o.celType.runtimeTypeName == type.runtimeTypeName { return self }
+      // `int(e)` of a strong enum value.
+      if case .int = type, let e = o as? EnumValue { return .int(Int64(e.number)) }
       return .error(message: "type conversion error from '\(o.celType.runtimeTypeName)' to '\(type)'")
     }
     return .error(message: "type conversion error from '\(celType)' to '\(type)'")

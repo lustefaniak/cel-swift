@@ -221,12 +221,12 @@ package struct CheckerEnv: Sendable {
       return VariableDecl(name: candidate, type: t)
     }
     // Next try to import this as an enum value by splitting the name in a type prefix and the
-    // enum inside.
+    // enum inside. With strong enums the value's type is its enum, otherwise `int`.
     let enumValue = provider.enumValue(candidate)
     if case .error = enumValue {
       return nil
     }
-    return VariableDecl(constant: candidate, type: .int, value: enumValue)
+    return VariableDecl(constant: candidate, type: enumValue.celType, value: enumValue)
   }
 
   /// The function a name resolves to in container order.

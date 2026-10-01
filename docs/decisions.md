@@ -20,7 +20,7 @@ the new module can use the core's `package` declarations.
 | 4 | Proto conversion of checked expressions | not in 0.1 | done |
 | 5 | `Value` accessor naming | keep `asInt` and siblings | done |
 | 6 | Boxed list, map, object and error payloads | `indirect` cases, public shape unchanged | done |
-| 7 | Strong enums | no new `Value` / `CELType` cases, opaque object value behind an option | decided: implementing |
+| 7 | Strong enums | no new `Value` / `CELType` cases, opaque object value behind an option | done |
 | 8 | Spec-over-cel-go defaults | keep the spec behaviour, no options | done |
 | 9 | Shared ANTLR prediction cache | shared cache with antlr-go's finer locking | decided: implementing |
 | 10 | Public names that abbreviate or clash | full words, no clash with dependencies | done |
@@ -72,13 +72,17 @@ drops from 41 to 17 bytes and stops going through the outlined value witness on 
 API decision. Replacing the existentials with concrete final classes was rejected: it would change the
 public collection API and remove the extension point for host adapters (lazy lists over client data).
 
-## 7. Strong enums: no new cases (decided: implementing)
+## 7. Strong enums: no new cases (done)
 
 Enum values are modelled as an object value with an opaque enum type, behind an environment option that is
 off by default (the `legacy_*` conformance sections must keep passing), the way `CELExtensions` models
 `net.IP` / `net.CIDR`. `Value` and `CELType` are public enums clients switch over; adding cases for a
 feature most clients never enable would break every exhaustive switch after 0.1. Their case lists stay the
 ones the spec closes today.
+
+Implemented as `Environment.Option.strongEnums` and the `EnumValue` object value (type
+`.opaque(name: "pkg.Enum", parameters: [])`); `CELProtobuf` reads and writes enum fields as enum values when
+its types have strong enums, which the option switches on for the environment's types.
 
 ## 8. Spec-over-cel-go defaults: keep the spec behaviour
 

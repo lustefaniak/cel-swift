@@ -47,6 +47,15 @@ public struct ProtobufValueKind<V: Sendable>: Sendable {
   /// differ: `google.protobuf.NullValue` (always `null` in protojson) and messages that may contain
   /// such values. `nil` when swift-protobuf's JSON is already protojson's.
   var patchJSON: (@Sendable (V, inout Google_Protobuf_Value, ProtobufTypes) -> Void)? = nil
+  /// The fully qualified name of an enum kind's type, which values of this kind have when strong
+  /// enums are enabled (``ProtobufTypes/usesStrongEnums``).
+  var enumTypeName: String? = nil
+
+  /// The CEL type of a value of this kind with or without strong enums.
+  func celType(strongEnums: Bool) -> CELType {
+    guard strongEnums, let enumTypeName else { return celType }
+    return .opaque(name: enumTypeName, parameters: [])
+  }
 }
 
 extension ProtobufValueKind {
@@ -269,16 +278,43 @@ extension ProtobufValueKind where V == Data {
 }
 
 extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
-  /// Enum fields: CEL `int` (strong enum types are not supported, as in cel-go).
+  /// Enum fields of `google.protobuf.NullValue`, or of enums generated before strong enums: CEL
+  /// `int`, also when strong enums are enabled.
   ///
   /// Assignment checks the 32-bit range. Closed (proto2) enums cannot hold numbers they do not
   /// declare in Swift, so assigning one is an error.
   public static var enumeration: Self {
+    makeEnumeration(typeName: nil)
+  }
+
+  /// Enum fields of the enum type with the fully qualified name `typeName`: CEL `int`, or values of
+  /// the enum (``EnumValue``) when ``ProtobufTypes/usesStrongEnums`` is set.
+  ///
+  /// Assignment accepts `int`s and values of the enum, and checks the 32-bit range. Closed (proto2)
+  /// enums cannot hold numbers they do not declare in Swift, so assigning one is an error.
+  ///
+  /// - Parameter typeName: The fully qualified enum name, such as `google.type.DayOfWeek`.
+  public static func enumeration(_ typeName: String) -> Self {
+    makeEnumeration(typeName: typeName)
+  }
+
+  private static func makeEnumeration(typeName: String?) -> Self {
     Self(
       celType: .int,
-      toValue: { v, _ in .int(Int64(v.rawValue)) },
+      toValue: { v, types in
+        if let typeName, types.usesStrongEnums {
+          return .object(EnumValue(typeName: typeName, number: Int32(truncatingIfNeeded: v.rawValue)))
+        }
+        return .int(Int64(v.rawValue))
+      },
       fromValue: { value, _ in
-        guard case .int(let i) = value else {
+        let i: Int64
+        switch value {
+        case .int(let number):
+          i = number
+        case .object(let object as EnumValue) where object.typeName == typeName:
+          i = Int64(object.number)
+        default:
           return .failure(
             EvalError("unsupported type conversion from '\(value.runtimeTypeName)' to int32"))
         }
@@ -295,7 +331,8 @@ extension ProtobufValueKind where V: SwiftProtobuf.Enum, V.RawValue == Int {
       fromMapKey: nil,
       // protojson writes every NullValue as `null`; swift-protobuf writes the number of a map
       // value other than NULL_VALUE.
-      patchJSON: V.self == Google_Protobuf_NullValue.self ? nullJSON : nil
+      patchJSON: V.self == Google_Protobuf_NullValue.self ? nullJSON : nil,
+      enumTypeName: typeName
     )
   }
 }

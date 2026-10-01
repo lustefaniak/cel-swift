@@ -44,7 +44,7 @@ fileprivate func _celFields_Google_Expr_Proto3_Test_TestAllTypes() -> [ProtobufF
   fields.append(.singular("single_bool", number: 13, \Google_Expr_Proto3_Test_TestAllTypes.singleBool, .bool))
   fields.append(.singular("single_string", number: 14, \Google_Expr_Proto3_Test_TestAllTypes.singleString, .string))
   fields.append(.singular("single_bytes", number: 15, \Google_Expr_Proto3_Test_TestAllTypes.singleBytes, .bytes))
-  fields.append(.singular("standalone_enum", number: 22, \Google_Expr_Proto3_Test_TestAllTypes.standaloneEnum, .enumeration))
+  fields.append(.singular("standalone_enum", number: 22, \Google_Expr_Proto3_Test_TestAllTypes.standaloneEnum, .enumeration("google.expr.proto3.test.TestAllTypes.NestedEnum")))
   fields.append(.singular("single_any", number: 100, \Google_Expr_Proto3_Test_TestAllTypes.singleAny, .message, presence: .explicit(\Google_Expr_Proto3_Test_TestAllTypes.hasSingleAny)))
   fields.append(.singular("single_duration", number: 101, \Google_Expr_Proto3_Test_TestAllTypes.singleDuration, .message, presence: .explicit(\Google_Expr_Proto3_Test_TestAllTypes.hasSingleDuration)))
   fields.append(.singular("single_timestamp", number: 102, \Google_Expr_Proto3_Test_TestAllTypes.singleTimestamp, .message, presence: .explicit(\Google_Expr_Proto3_Test_TestAllTypes.hasSingleTimestamp)))
@@ -60,7 +60,7 @@ fileprivate func _celFields_Google_Expr_Proto3_Test_TestAllTypes() -> [ProtobufF
   fields.append(.singular("single_bool_wrapper", number: 112, \Google_Expr_Proto3_Test_TestAllTypes.singleBoolWrapper, .message, presence: .explicit(\Google_Expr_Proto3_Test_TestAllTypes.hasSingleBoolWrapper)))
   fields.append(.singular("single_bytes_wrapper", number: 113, \Google_Expr_Proto3_Test_TestAllTypes.singleBytesWrapper, .message, presence: .explicit(\Google_Expr_Proto3_Test_TestAllTypes.hasSingleBytesWrapper)))
   fields.append(.singular("single_nested_message", number: 18, \Google_Expr_Proto3_Test_TestAllTypes.singleNestedMessage, .message, presence: .oneof({ if case .singleNestedMessage? = $0.nestedType { return true }; return false })))
-  fields.append(.singular("single_nested_enum", number: 21, \Google_Expr_Proto3_Test_TestAllTypes.singleNestedEnum, .enumeration, presence: .oneof({ if case .singleNestedEnum? = $0.nestedType { return true }; return false })))
+  fields.append(.singular("single_nested_enum", number: 21, \Google_Expr_Proto3_Test_TestAllTypes.singleNestedEnum, .enumeration("google.expr.proto3.test.TestAllTypes.NestedEnum"), presence: .oneof({ if case .singleNestedEnum? = $0.nestedType { return true }; return false })))
   fields.append(.repeated("repeated_int32", number: 31, \Google_Expr_Proto3_Test_TestAllTypes.repeatedInt32, .int32))
   fields.append(.repeated("repeated_int64", number: 32, \Google_Expr_Proto3_Test_TestAllTypes.repeatedInt64, .int64))
   fields.append(.repeated("repeated_uint32", number: 33, \Google_Expr_Proto3_Test_TestAllTypes.repeatedUint32, .uint32))
@@ -77,13 +77,13 @@ fileprivate func _celFields_Google_Expr_Proto3_Test_TestAllTypes() -> [ProtobufF
   fields.append(.repeated("repeated_string", number: 44, \Google_Expr_Proto3_Test_TestAllTypes.repeatedString, .string))
   fields.append(.repeated("repeated_bytes", number: 45, \Google_Expr_Proto3_Test_TestAllTypes.repeatedBytes, .bytes))
   fields.append(.repeated("repeated_nested_message", number: 48, \Google_Expr_Proto3_Test_TestAllTypes.repeatedNestedMessage, .message))
-  fields.append(.repeated("repeated_nested_enum", number: 51, \Google_Expr_Proto3_Test_TestAllTypes.repeatedNestedEnum, .enumeration))
+  fields.append(.repeated("repeated_nested_enum", number: 51, \Google_Expr_Proto3_Test_TestAllTypes.repeatedNestedEnum, .enumeration("google.expr.proto3.test.TestAllTypes.NestedEnum")))
   fields.append(.repeated("repeated_string_piece", number: 54, \Google_Expr_Proto3_Test_TestAllTypes.repeatedStringPiece, .string))
   fields.append(.repeated("repeated_cord", number: 55, \Google_Expr_Proto3_Test_TestAllTypes.repeatedCord, .string))
   fields.append(.repeated("repeated_lazy_message", number: 57, \Google_Expr_Proto3_Test_TestAllTypes.repeatedLazyMessage, .message))
   fields.append(.map("map_string_string", number: 58, \Google_Expr_Proto3_Test_TestAllTypes.mapStringString, key: .string, value: .string))
   fields.append(.map("map_int64_nested_type", number: 59, \Google_Expr_Proto3_Test_TestAllTypes.mapInt64NestedType, key: .int64, value: .message))
-  fields.append(.repeated("imported_enums", number: 60, \Google_Expr_Proto3_Test_TestAllTypes.importedEnums, .enumeration))
+  fields.append(.repeated("imported_enums", number: 60, \Google_Expr_Proto3_Test_TestAllTypes.importedEnums, .enumeration("google.expr.proto3.test.ImportedGlobalEnum")))
   return fields
 }
 

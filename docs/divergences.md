@@ -99,6 +99,16 @@ by fixtures generated from cel-go (`tools/value-fixtures`). The differences:
   spec defines it and cel-cpp implements it (`timestamps/duration_converters/get_milliseconds`). cel-go
   converts the whole duration to milliseconds (1234) and skips that conformance test. Negative durations
   give a negative portion (`-1.5s` gives -500).
+- **Strong enums are available as an option** (`Environment.Option.strongEnums`, off by default). cel-go
+  (and cel-cpp) only have the legacy semantics, where every enum value is an `int`, and skip the
+  `enums/strong_*` conformance sections; with the option cel-swift follows the spec's strong semantics and
+  passes them. Enum values are `EnumValue` objects whose type is the opaque type named after the enum,
+  so `Value` and `CELType` keep their case lists (decision 7). Choices the spec leaves open: `E(int)`
+  accepts any 32-bit number, declared or not (protobuf enums are open), and fails outside that range;
+  `E(string)` accepts only declared names; enum fields accept `int`s as well as values of their enum (the
+  checker still requires the enum type); `google.protobuf.NullValue` stays an `int`. Message values carry
+  the `CELProtobuf` types they were created with, so a message made by types without strong enums reads
+  enum fields as `int`s in a parse-only expression (checked selections follow the checked type).
 
 ## Type checker
 

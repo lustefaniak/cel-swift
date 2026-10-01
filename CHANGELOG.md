@@ -29,7 +29,8 @@ behind it are recorded in `docs/decisions.md`.
     error messages; parser recursion, error recovery, expression size and node limits.
   - Type checker with cel-go's overload resolution, type unification and error messages; containers,
     abbreviations and aliases; optional types; cross-type numeric comparisons, JSON field names, identifier
-    escapes and the other cel-go environment options.
+    escapes and the other cel-go environment options; strong enums (`Environment.Option.strongEnums`,
+    `EnumValue`), which cel-go does not have.
   - Interpreter with cel-go's attribute resolution, error messages and runtime cost; the standard library
     with time zones read from the system tz database; Go-compatible formatting of doubles, durations and
     timestamps.
@@ -69,9 +70,9 @@ written against `main`: `FieldType` → `StructFieldType` (no clash with SwiftPr
 
 ### Conformance
 
-cel-spec v0.25.3: 2473 / 2508 tests pass in checked mode, 2310 / 2339 in parse-only mode, with an empty skip
-list. Every test cel-cpp passes, cel-swift passes; the remaining ones are the strong-enum sections
-(`enums/strong_proto2`, `strong_proto3`) that cel-go and cel-cpp skip too. A differential suite compares
+cel-spec v0.25.3: all 2508 tests pass in checked mode and all 2339 in parse-only mode, with an empty skip
+list. That includes the strong-enum sections (`enums/strong_proto2`, `strong_proto3`) that cel-go and cel-cpp
+skip: strong enums are an environment option, `Environment.Option.strongEnums`, off by default. A differential suite compares
 values, errors, types and costs with cel-go on generated expressions (`Tests/CELDifferentialTests`).
 
 ### Differences from cel-go
