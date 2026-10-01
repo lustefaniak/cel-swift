@@ -205,11 +205,13 @@ struct CodingTests {
       #expect(context.codingPath.map(\.stringValue) == ["verdict"])
       #expect(context.debugDescription == "expected String, found a int value")
     }
-    #expect {
-      _ = try Value(["rule": "r"] as [String: Value]).decoded(as: Decision.self)
-    } throws: { error in
-      guard case DecodingError.keyNotFound(let key, _) = error else { return false }
-      return key.stringValue == "verdict"
+    // A do/catch rather than #expect(throws:): Swift 6.0 crashes type-checking that macro expansion.
+    let partial = Value(["rule": "r"] as [String: Value])
+    do {
+      _ = try partial.decoded(as: Decision.self)
+      Issue.record("expected a missing key")
+    } catch DecodingError.keyNotFound(let key, _) {
+      #expect(key.stringValue == "verdict")
     }
   }
 
