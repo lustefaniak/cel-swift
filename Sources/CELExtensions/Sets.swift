@@ -13,7 +13,8 @@
 // limitations under the License.
 //
 // Ported from cel-go ext/sets.go: `sets.contains`, `sets.equivalent` and `sets.intersects`. The
-// set membership optimizer and the cost estimators and trackers are not ported yet.
+// set membership optimizer is not ported yet; the cost estimators and trackers are in
+// SetsCosts.swift.
 
 import CEL
 
@@ -45,7 +46,8 @@ extension Library {
         try decl("sets.contains", "list_sets_contains_list", setsContains),
         try decl("sets.equivalent", "list_sets_equivalent_list", setsEquivalent),
         try decl("sets.intersects", "list_sets_intersects_list", setsIntersects),
-      ]))
+      ])
+    ).withCosts(estimators: SetsCosts.estimators, trackers: SetsCosts.trackers)
   }
 }
 

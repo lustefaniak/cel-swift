@@ -15,7 +15,7 @@
 // Ported from cel-go ext/network.go: the opaque `net.IP` and `net.CIDR` types and their
 // functions, with Kubernetes-compatible overload ids. The `netip.Addr` / `netip.Prefix` type
 // adapter has no Swift counterpart (hosts create values with `IPAddressValue` / `CIDRValue`
-// directly). The literal argument validators and cost functions are not ported yet.
+// directly). The cost estimators and trackers are in NetworkCosts.swift.
 
 import CEL
 
@@ -227,7 +227,7 @@ enum NetworkLibrary {
       name: "cel.lib.ext.network", alias: "network", version: version, functions: decls,
       types: [ipType, cidrType])
     lib.validators = NetworkValidators.validators
-    return lib
+    return lib.withCosts(estimators: NetworkCosts.estimators, trackers: NetworkCosts.trackers)
   }
 
   static func asIP(_ v: Value) -> NetAddr? {

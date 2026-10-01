@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Ported from cel-go ext/strings.go. Cost estimators and trackers (version 5) are not ported yet;
-// they belong to the cost work.
+// Ported from cel-go ext/strings.go. The cost estimators and trackers (version 5) are in
+// StringsCosts.swift.
 
 import CEL
 
@@ -57,6 +57,9 @@ struct StringsLibrary {
       homogeneousLiteralExemptFunctions: version >= 1 ? ["format"] : [])
     if version >= 1 {
       lib.validators = [FormatValidator.make(maxPrecision: effectiveMaxPrecision, v2: version >= 4)]
+    }
+    if version >= 5 {
+      lib = lib.withCosts(estimators: StringsCosts.estimators, trackers: StringsCosts.trackers)
     }
     return lib
   }

@@ -188,6 +188,10 @@ messages, error node ids, observed ids and runtime cost). The differences:
 - **`ext.NativeTypes` is not ported.** It exposes Go structs to CEL through reflection; Swift clients
   implement `ObjectValue` (or use `CELProtobuf`) instead. The ported `ext` test rows that use
   `ext.TestAllTypes` are recorded as known issues for that reason.
+- **Float-to-integer conversions in the extension cost trackers saturate.** A few cel-go trackers (lists,
+  sets, regex) compute in `float64` and convert with `uint64(f)`, which Go leaves to the platform for values
+  out of range: arm64 saturates, amd64 returns 2^63. The port follows arm64 (`goUInt64` in
+  `CELExtensions/Costs.swift`); only sizes near 2^64 reach the difference.
 
 ## Public API and optimizers
 

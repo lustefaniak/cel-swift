@@ -13,8 +13,8 @@
 // limitations under the License.
 //
 // Ported from cel-go ext/lists.go: `slice`, `flatten`, `sort`, `@sortByAssociatedKeys` (behind
-// the `sortBy` macro), `lists.range`, `reverse` and `distinct`. Cost estimators and trackers
-// (version 3) are not ported yet.
+// the `sortBy` macro), `lists.range`, `reverse` and `distinct`. The cost estimators and trackers
+// (version 3) are in ListsCosts.swift.
 
 import CEL
 
@@ -49,10 +49,13 @@ struct ListsLibrary {
   let maxRangeSize: Int64
 
   var library: Library {
-    Library(
+    let lib = Library(
       name: "cel.lib.ext.lists", alias: "lists", version: version,
       functions: makeDeclarations(try functions()),
       macros: version >= 2 ? [ListsMacros.sortBy] : [])
+    guard version >= 3 else { return lib }
+    return lib.withCosts(
+      estimators: ListsCosts.estimators(version: version), trackers: ListsCosts.trackers(version: version))
   }
 
   // swift-format-ignore: FunctionLength

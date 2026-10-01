@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Ported from cel-go ext/encoders.go: `base64.decode`, `base64.encode` and `json.encode`. Cost
-// estimators and trackers (version 1) are not ported yet.
+// Ported from cel-go ext/encoders.go: `base64.decode`, `base64.encode` and `json.encode`. The cost
+// estimators and trackers (version 1) are in EncodersCosts.swift.
 //
 // `json.encode` converts the value to a protobuf `google.protobuf.Value` the way cel-go's
 // `ConvertToNative(JSONValueType)` does, then prints it as Go's `encoding/json` would (cel-go
@@ -65,7 +65,9 @@ extension Library {
             }))
       ])
     }
-    return Library(name: "cel.lib.ext.encoders", alias: "encoders", version: version, functions: decls)
+    let lib = Library(name: "cel.lib.ext.encoders", alias: "encoders", version: version, functions: decls)
+    guard version >= 1 else { return lib }
+    return lib.withCosts(estimators: EncodersCosts.estimators, trackers: EncodersCosts.trackers)
   }
 }
 

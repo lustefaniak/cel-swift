@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 // Ported from cel-go ext/regex.go: `regex.extract`, `regex.extractAll` and `regex.replace`, on
-// CELRegex (the port of Go's regexp). Cost estimators and trackers are not ported yet.
+// CELRegex (the port of Go's regexp). The cost estimators and trackers are in RegexCosts.swift.
 
 import CEL
 import CELRegex
@@ -78,7 +78,8 @@ extension Library {
       name: "cel.lib.ext.regex", alias: "regex", version: version, functions: decls,
       requiredLibraries: [
         (name: "cel.lib.optional", error: "regex library requires the optional library")
-      ])
+      ]
+    ).withCosts(estimators: RegexCosts.estimators, trackers: RegexCosts.trackers)
   }
 }
 

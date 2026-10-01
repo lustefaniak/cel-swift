@@ -16,13 +16,27 @@ struct GoTableRow: Sendable, CustomStringConvertible {
   let flags: [String: Bool]
   /// Fields holding Go expressions the harness cannot use.
   let goFields: [String]
+  /// `expectedRuntimeCost`, when the row has one other than 0 (cel-go then checks costs).
+  var runtimeCost: UInt64? = nil
+  /// `expectedEstimatedCost`.
+  var estimatedCost: ClosedRange<UInt64>? = nil
 
   var description: String { entry }
 }
 
 enum GoTables {
-  /// Go-valued fields the harness ignores: cost expectations belong to the cost work.
-  static let ignoredGoFields: Set<String> = ["expectedRuntimeCost", "expectedEstimatedCost"]
+  /// Go-valued fields the harness reads itself.
+  static let costGoFields: Set<String> = ["expectedRuntimeCost", "expectedEstimatedCost"]
+
+  /// The numbers of a Go `checker.CostEstimate{Min: a, Max: b}` or `checker.FixedCostEstimate(a)`.
+  static func costEstimate(_ go: String) -> ClosedRange<UInt64>? {
+    let numbers = go.split(whereSeparator: { !$0.isNumber }).compactMap { UInt64($0) }
+    switch numbers.count {
+    case 1: return numbers[0]...numbers[0]
+    case 2 where numbers[0] <= numbers[1]: return numbers[0]...numbers[1]
+    default: return nil
+    }
+  }
 
   static let rows: [GoTableRow] = {
     guard let url = Bundle.module.url(forResource: "go-tables", withExtension: "jsonl", subdirectory: "Resources"),
@@ -36,19 +50,26 @@ enum GoTables {
       var strings: [String: String] = [:]
       var flags: [String: Bool] = [:]
       var goFields: [String] = []
+      var costs: [String: String] = [:]
       for (k, v) in fields {
         if let s = v as? String {
           strings[k] = s
         } else if let b = v as? Bool {
           flags[k] = b
-        } else if !ignoredGoFields.contains(k) {
+        } else if costGoFields.contains(k), let go = (v as? [String: Any])?["go"] as? String {
+          costs[k] = go
+        } else {
           goFields.append(k)
         }
       }
-      rows.append(
-        GoTableRow(
-          entry: obj["entry"] as? String ?? "", env: obj["env"] as? String ?? "",
-          kind: obj["kind"] as? String ?? "", fields: strings, flags: flags, goFields: goFields))
+      var row = GoTableRow(
+        entry: obj["entry"] as? String ?? "", env: obj["env"] as? String ?? "",
+        kind: obj["kind"] as? String ?? "", fields: strings, flags: flags, goFields: goFields)
+      if let runtime = costs["expectedRuntimeCost"].flatMap({ UInt64($0) }), runtime != 0 {
+        row.runtimeCost = runtime
+        row.estimatedCost = costs["expectedEstimatedCost"].flatMap(costEstimate)
+      }
+      rows.append(row)
     }
     return rows
   }()
@@ -91,6 +112,13 @@ private let unsupported: [String: String] = {
 }()
 
 struct GoTableTests {
+  /// The format tables carry cel-go's cost expectations; make sure the harness reads them.
+  @Test func costExpectationsLoaded() {
+    let withCosts = GoTables.runnableRows.filter { $0.runtimeCost != nil }
+    #expect(withCosts.count == 99)
+    #expect(withCosts.allSatisfy { $0.estimatedCost != nil })
+  }
+
   @Test(arguments: GoTables.runnableRows)
   func row(_ row: GoTableRow) throws {
     if let reason = unsupported[row.entry] {
@@ -131,7 +159,10 @@ struct GoTableTests {
       if !parseOnly {
         do {
           let checked = try env.check(parsed)
-          programs.append(try env.program(checked))
+          if let estimate = row.estimatedCost {
+            #expect(env.estimateCost(checked) == estimate, "\(row.entry) \(expr): estimated cost")
+          }
+          programs.append(try env.program(checked, options: row.runtimeCost == nil ? [] : [.trackCost]))
         } catch {
           #expect(
             !err.isEmpty && "\(error)".contains(err) && row.kind != "runtime",
@@ -151,6 +182,9 @@ struct GoTableTests {
       do {
         let result = try program.evaluate()
         #expect(err.isEmpty, "\(row.entry) \(expr): got \(result.value), want error \(err)")
+        if let cost = result.cost, let want = row.runtimeCost {
+          #expect(cost == want, "\(row.entry) \(expr): runtime cost")
+        }
         if err.isEmpty {
           #expect(result.value == expected, "\(row.entry) \(expr): got \(result.value), want \(expected)")
         }

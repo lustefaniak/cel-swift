@@ -14,8 +14,8 @@
 //
 // Ported from cel-go ext/math.go: the `math.@min` / `math.@max` functions behind the
 // `math.least` / `math.greatest` macros, rounding, floating point helpers, signedness, bitwise
-// operations and `math.sqrt`. The macros are in MathMacros.swift. Cost estimators and trackers
-// (version 3) are not ported yet.
+// operations and `math.sqrt`. The macros are in MathMacros.swift. The cost estimators and trackers
+// (version 3) are in MathCosts.swift.
 
 import CEL
 
@@ -44,9 +44,11 @@ struct MathLibrary {
   let version: UInt32
 
   var library: Library {
-    Library(
+    let lib = Library(
       name: "cel.lib.ext.math", alias: "math", version: version,
       functions: makeDeclarations(try functions()), macros: MathMacros.macros)
+    guard version >= 3 else { return lib }
+    return lib.withCosts(estimators: MathCosts.estimators, trackers: MathCosts.trackers)
   }
 
   private func minMax(_ name: String, prefix: String, pair: @escaping FunctionBinding.Binary,

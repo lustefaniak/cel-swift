@@ -90,7 +90,9 @@ package final class CostTracker {
       cost &+= 1
     case let t as any InterpretableCall:
       if let argVals = dropArgs(t.args) {
-        cost = Cost.safeAdd(cost, costCall(t, argVals, val))
+        // Wraps as cel-go's `tracker.cost += ...` does: a call charged `UInt64.max`, such as
+        // `json.encode`, exceeds any limit at this step, and without a limit the total wraps.
+        cost &+= costCall(t, argVals, val)
       }
     case let t as any InterpretableConstructor:
       _ = dropArgs(t.initVals)
@@ -168,13 +170,26 @@ package final class CostTracker {
   }
 }
 
-/// The size of a value for cost purposes: string code points, bytes, list or map entries, the
-/// wrapped value of an optional, else 1 (cel-go `actualSize`).
+/// An object value with a size for runtime cost purposes, as cel-go values implementing
+/// `traits.Sizer` have, such as the network extension's IP addresses and CIDR prefixes. `size()`
+/// does not apply to such values; only the cost tracker reads the size.
+package protocol CostSizedValue: ObjectValue {
+  /// The size the cost tracker uses for the value.
+  var costSize: UInt64 { get }
+}
+
+/// The size of a value for cost purposes: string code points, bytes, list or map entries, the size
+/// of a ``CostSizedValue``, the wrapped value of an optional, else 1 (cel-go `actualSize`).
 func actualSize(_ value: Value) -> UInt64 {
   switch value {
   case .string, .bytes, .list, .map:
     if case .int(let n) = value.size() {
       return UInt64(clamping: n)
+    }
+    return 1
+  case .object(let object):
+    if let sized = object as? any CostSizedValue {
+      return sized.costSize
     }
     return 1
   case .optional(let inner?):
