@@ -91,6 +91,38 @@ This is a library other packages depend on, so the public surface is the product
   cel-cpp. The runner is `Tests/CELConformanceTests/CELConformanceRunner.swift`.
 - `tools/oracle` answers parse / check / eval requests with cel-go over JSONL (protocol in its README);
   `tools/gen-protos.sh` regenerates `Sources/CELSpecProtos`.
-- **Commit straight to `main`, no branches or PRs, until the repo is made public.** Run `swift build` and
-  `swift test` first; CI runs on every push. Once public, switch to small PRs per feature area (see
-  `docs/plan.md` § Working method).
+- `tools/api-check/check-api.sh` (CI job `api-breakage`) compares the public API with the latest tag;
+  before 1.0 it reports and does not fail, so read its output on any PR that touches `public` declarations.
+
+## Changes go through pull requests
+
+The repo is public and released (`0.1.0`), so every change, docs included, lands through a PR; nothing is
+pushed to `main` directly.
+
+- Branch from `origin/main` (`git checkout -b <branch> origin/main`; in a worktree `main` is checked out
+  elsewhere). Branch names: `lukasz-<what>`, or `<area>/<what>` for agent branches.
+- One feature area per PR, small enough to review in one sitting. Titles follow the commit form
+  `<area>: <what>`. The description says what changed and why, with the dashboard delta when conformance moves
+  and the `tools/bench/bench.py` numbers when performance does; no test plan.
+- Bug fixes keep the reproducer commit separate from the fix, so the PR shows what was broken.
+- Run `swift build` and `swift test` (through swiftlock) before opening the PR; CI runs the full matrix on
+  every PR (Linux Swift 6.0 to 6.3, macOS, iOS simulator, static Linux SDK, oracle, fuzz, API breakage).
+  Merge only when it is green.
+- Merge with `gh pr merge --squash --delete-branch`; the squashed title is the PR title.
+- Pushes use `--force-with-lease` with the remote and branch named, never bare `--force`.
+- This is a public repo: no customer names, internal hostnames or local paths in code, tests, commits or PR
+  text. GitHub mirrors public commits permanently, so a force-push does not unpublish them.
+- User-visible changes add a line under `## [Unreleased]` in `CHANGELOG.md` in the same PR.
+
+## Releases
+
+- Tags are plain SemVer without a `v` (`0.1.0`), as Swift packages usually tag; SwiftPM resolves
+  `from: "0.1.0"` against them. Before 1.0 a minor release may break the API, a patch release may not.
+- A release is its own PR: move the `[Unreleased]` entries under `## [x.y.z] - YYYY-MM-DD`, refresh the
+  conformance and performance numbers (`tools/dashboard/dashboard.py --run`, `tools/bench/bench.py`) in
+  `CHANGELOG.md` and the README table, update the compare links at the bottom of the changelog.
+- After it merges and CI is green on `main`: `git tag -a x.y.z -m "cel-swift x.y.z" <merge commit>`,
+  `git push origin refs/tags/x.y.z`, then `gh release create x.y.z --verify-tag --notes-file <notes>`. The
+  notes follow the 0.1.0 release: a one-paragraph summary, Highlights, Installation, Conformance (table
+  against cel-go, cel-cpp and cel-rust), Platforms, Performance, Breaking changes (from the `api-breakage`
+  job, with migration notes), Known limitations, and a link to `CHANGELOG.md` at the tag.
