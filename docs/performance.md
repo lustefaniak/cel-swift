@@ -18,8 +18,19 @@ data the same way.
   table. `--swift-only --save a.tsv`, then `--baseline a.tsv` after a change, gives before/after numbers for
   a commit; `--phase ev` (a prefix) and `--filter <case>` narrow the run. The Swift driver also takes
   `--threads n` (inverse throughput with n threads running the phase at once).
-- Profiling: run `.build/release/CELBenchmarks --filter <case> --phase <phase> --rounds 1000` and attach
-  `sample <pid> 6` (or Instruments' Time Profiler). The release binary keeps its symbols.
+- A change's impact: `tools/bench/bench.py --baseline-driver <main checkout>/.build/release/CELBenchmarks`
+  runs a build of `main` (a second worktree) and the branch alternately (`--passes`, default 3) and keeps each
+  one's fastest result, so machine load affects both alike. Every performance pull request carries this
+  table and adds a row to the change log below.
+- Allocations: `tools/bench/allocs.py` (macOS) runs the driver with `--iterations 0` and `--iterations n`
+  under a malloc-counting interposer (`tools/bench/malloc-count`) and prints allocations per operation,
+  which do not depend on machine load. The cel-go driver prints its allocations as the fourth column.
+- Profiling: `tools/bench/profile.py --phase <phase> [--filter <case>]` (macOS) records the driver with
+  Instruments' Time Profiler (`xctrace`) and prints time by leaf category (retain/release, malloc/free,
+  exclusivity checks, dynamic casts, hashing, ...), self and inclusive time per function, and the first
+  caller outside the runtime of the ARC and allocator work; `--focus <frame>` limits it to samples under a
+  frame, `--callers <regex>` breaks down who calls a leaf. The trace stays in `.build/profile/` for
+  Instruments. Run one recording at a time: concurrent `xctrace` sessions hang.
 
 ## Results
 
@@ -86,6 +97,15 @@ Earlier changes on main, measured back to back in their commit messages: policy 
   20–30% of every eval profile. With the boxed payloads `Value` is 17 bytes (stride 24). What remains is
   ARC traffic, dynamic exclusivity checks on the comprehension `Folder`'s stored properties, `as?` casts and
   runtime type guards.
+
+## Change log
+
+Performance pull requests since 0.1.0, each measured against the `main` it merged into with
+`tools/bench/bench.py --baseline-driver` (Apple M1 Max; ranges are after/before over the benchmark cases).
+
+| pull request | change | parse | check | plan | eval |
+|---|---|---:|---:|---:|---:|
+| bench tools | `--iterations`, `--baseline-driver`, `allocs.py`, `profile.py` | - | - | - | - |
 
 ## Decisions
 
