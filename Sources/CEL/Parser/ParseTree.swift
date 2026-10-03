@@ -120,45 +120,131 @@ enum ParseTreeChild {
   }
 }
 
-/// A node of the parse tree (antlr `BaseParserRuleContext` plus the generated labels).
+/// A node of the parse tree (antlr `BaseParserRuleContext` plus the generated labels). A tree belongs to
+/// one parse on one thread, so the stored properties skip the dynamic exclusivity checks.
 final class ParserRuleContext {
-  weak var parent: ParserRuleContext?
-  var invokingState: Int
+  /// Unowned, not weak: a parent always outlives its children (the parser holds the rule being built and
+  /// each node holds its children), and a weak reference gives every context a side table that sends all
+  /// its retains and releases through the slow path, which cost more than a third of parsing.
+  @exclusivity(unchecked) unowned var parent: ParserRuleContext?
+  @exclusivity(unchecked) var invokingState: Int
   let ruleIndex: Int
   let label: ContextLabel
-  var children: [ParseTreeChild] = []
-  var start: Token?
-  var stop: Token?
-  var exception: RecognitionException?
+  @exclusivity(unchecked) var children: [ParseTreeChild] = []
+  @exclusivity(unchecked) var start: Token?
+  @exclusivity(unchecked) var stop: Token?
+  @exclusivity(unchecked) var exception: RecognitionException?
 
-  // Grammar labels. Which ones are used depends on `label`.
-  var e: ParserRuleContext?
-  var e1: ParserRuleContext?
-  var e2: ParserRuleContext?
-  var op: Token?
-  var opt: Token?
-  var leadingDot: Token?
-  var sign: Token?
-  var tok: Token?
-  var open: Token?
+  // Grammar labels. Which ones are used depends on `label`, and no context type uses more than three
+  // context labels, three token labels and two of each kind of list label, so the labels share these
+  // slots (fewer stored properties make contexts cheaper to allocate and free, a large part of parsing).
+  // Labels in the same slot never belong to the same context type.
+  @exclusivity(unchecked) private var c0: ParserRuleContext?
+  @exclusivity(unchecked) private var c1: ParserRuleContext?
+  @exclusivity(unchecked) private var c2: ParserRuleContext?
+  @exclusivity(unchecked) private var t0: Token?
+  @exclusivity(unchecked) private var t1: Token?
+  @exclusivity(unchecked) private var t2: Token?
+  @exclusivity(unchecked) private var ta0: [Token] = []
+  @exclusivity(unchecked) private var ta1: [Token] = []
+  @exclusivity(unchecked) private var ca0: [ParserRuleContext] = []
+  @exclusivity(unchecked) private var ca1: [ParserRuleContext] = []
+  var e: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var e1: ParserRuleContext? {
+    _read { yield c1 }
+    _modify { yield &c1 }
+  }
+  var e2: ParserRuleContext? {
+    _read { yield c2 }
+    _modify { yield &c2 }
+  }
+  var op: Token? {
+    _read { yield t0 }
+    _modify { yield &t0 }
+  }
+  var opt: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var leadingDot: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var sign: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var tok: Token? {
+    _read { yield t2 }
+    _modify { yield &t2 }
+  }
+  var open: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
   /// Token `id` labels (Ident, GlobalCall, MemberCall, SimpleIdentifier, EscapedIdentifier).
-  var idToken: Token?
+  var idToken: Token? {
+    _read { yield t2 }
+    _modify { yield &t2 }
+  }
   /// Select's `id=escapeIdent` label.
-  var idContext: ParserRuleContext?
-  var args: ParserRuleContext?
-  var elems: ParserRuleContext?
-  var entries: ParserRuleContext?
-  var index: ParserRuleContext?
-  var ops: [Token] = []
-  var ids: [Token] = []
-  var cols: [Token] = []
+  var idContext: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var args: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var elems: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var entries: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var index: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var ops: [Token] {
+    _read { yield ta0 }
+    _modify { yield &ta0 }
+  }
+  var ids: [Token] {
+    _read { yield ta1 }
+    _modify { yield &ta1 }
+  }
+  var cols: [Token] {
+    _read { yield ta0 }
+    _modify { yield &ta0 }
+  }
   /// `e1+=...` in conditionalOr / conditionalAnd, `e+=expr` in exprList.
-  var exprs: [ParserRuleContext] = []
+  var exprs: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
   /// `elems+=optExpr` in listInit.
-  var elemList: [ParserRuleContext] = []
-  var fields: [ParserRuleContext] = []
-  var values: [ParserRuleContext] = []
-  var keys: [ParserRuleContext] = []
+  var elemList: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
+  var fields: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
+  var values: [ParserRuleContext] {
+    _read { yield ca1 }
+    _modify { yield &ca1 }
+  }
+  var keys: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
 
   init(parent: ParserRuleContext?, invokingState: Int, ruleIndex: Int, label: ContextLabel) {
     self.parent = parent
