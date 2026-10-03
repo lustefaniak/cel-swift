@@ -18,7 +18,6 @@
 // is one, `eval(_ frame:)`, and `evaluate(_ activation:)` wraps an activation in a fresh frame.
 // Interpretables are immutable final classes, so a planned program is `Sendable`.
 
-/// A planned expression node that evaluates to a value (cel-go `Interpretable` / `InterpretableV2`).
 /// The base class of every interpretable node, attribute and qualifier. Constraining
 /// ``Interpretable`` and ``Qualifier`` to it tells the compiler the nodes are native Swift objects:
 /// `any Interpretable` and `any Qualifier` are a reference and a witness table, calls through them
@@ -46,6 +45,7 @@ package final class ClosureInterpretable: InterpretableNode, Interpretable {
   }
 }
 
+/// A planned expression node that evaluates to a value (cel-go `Interpretable` / `InterpretableV2`).
 package protocol Interpretable: InterpretableNode, Sendable {
   /// The id of the expression node.
   var id: Int64 { get }
