@@ -246,7 +246,7 @@ package enum OptionalLibrary {
 
 /// `lhs.or(rhs)` / `lhs.orValue(rhs)`, evaluating `rhs` only when `lhs` is `optional.none()`
 /// (cel-go `evalOptionalOr` / `evalOptionalOrValue`).
-final class EvalOptionalOr: Interpretable {
+final class EvalOptionalOr: InterpretableNode, Interpretable {
   let id: Int64
   let lhs: any Interpretable
   let rhs: any Interpretable

@@ -55,7 +55,7 @@ package struct EvalStateObserver: StatefulObserver {
 
 /// The root of a program with observers: initialises their state before evaluation and reports it
 /// afterwards (cel-go `ObservableInterpretable`).
-package final class ObservableInterpretable: Interpretable {
+package final class ObservableInterpretable: InterpretableNode, Interpretable {
   package let inner: any Interpretable
   package let observers: [any StatefulObserver]
 

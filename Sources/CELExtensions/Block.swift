@@ -33,14 +33,14 @@ enum BlockPlan {
     }
     let expr = args[1]
     if let block = args[0] as? any InterpretableConstructor {
-      return DynamicBlock(slotExprs: block.initVals, expr: expr)
+      return dynamicBlock(slotExprs: block.initVals, expr: expr)
     }
     // A constant-valued block, which can happen after constant folding.
     if let constant = args[0] as? any InterpretableConst, case .list(let slots) = constant.value {
       if slots.count == 0 {
         return expr
       }
-      return ConstantBlock(slots: slots, expr: expr)
+      return constantBlock(slots: slots, expr: expr)
     }
     throw BlockPlanError(message: "cel.@block expects a list constructor as the first argument")
   }
@@ -61,18 +61,8 @@ private func matchSlot(_ name: String, _ slotCount: Int) -> Int? {
   return idx
 }
 
-final class DynamicBlock: Interpretable {
-  let slotExprs: [any Interpretable]
-  let expr: any Interpretable
-
-  init(slotExprs: [any Interpretable], expr: any Interpretable) {
-    self.slotExprs = slotExprs
-    self.expr = expr
-  }
-
-  var id: Int64 { expr.id }
-
-  func eval(_ frame: ExecutionFrame) -> Value {
+func dynamicBlock(slotExprs: [any Interpretable], expr: any Interpretable) -> any Interpretable {
+  ClosureInterpretable(id: expr.id) { frame in
     let slots = DynamicSlotActivation(activation: frame.activation, slotExprs: slotExprs)
     let child = frame.push(slots)
     slots.frame = child
@@ -116,18 +106,8 @@ private final class DynamicSlotActivation: Activation {
   func asPartialActivation() -> (any PartialActivation)? { activation.asPartialActivation() }
 }
 
-final class ConstantBlock: Interpretable {
-  let slots: any ListValue
-  let expr: any Interpretable
-
-  init(slots: any ListValue, expr: any Interpretable) {
-    self.slots = slots
-    self.expr = expr
-  }
-
-  var id: Int64 { expr.id }
-
-  func eval(_ frame: ExecutionFrame) -> Value {
+func constantBlock(slots: any ListValue, expr: any Interpretable) -> any Interpretable {
+  ClosureInterpretable(id: expr.id) { frame in
     expr.eval(frame.push(ConstantSlotActivation(activation: frame.activation, slots: slots)))
   }
 }
