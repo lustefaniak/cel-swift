@@ -12,6 +12,9 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 - Parsing takes 0.43 to 0.48 times as long (1.1 to 1.3 times cel-go, from 2.3 to 2.9): parse-tree contexts
   no longer get weak-reference side tables, the parser skips dynamic exclusivity checks, and an input with
   many operators no longer starts a thread when the calling thread has enough stack (Darwin).
+- Type checking takes 0.55 to 0.73 times as long (0.8 to 1.1 times cel-go): type substitutions are found
+  without formatting types, expression ids are tracked in a bitset, and a failed unification is undone
+  instead of copying the type mapping.
 
 ### Fixed
 

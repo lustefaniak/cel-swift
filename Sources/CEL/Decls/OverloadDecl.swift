@@ -71,6 +71,7 @@ public struct OverloadDecl: Sendable {
     self.argumentTypes = argumentTypes
     self.resultType = resultType
     self.isMemberFunction = isMemberFunction
+    self.storedTypeParameters = Self.collectTypeParameters(resultType: resultType, argumentTypes: argumentTypes)
     for option in options {
       try option.apply(&self)
     }
@@ -84,6 +85,13 @@ public struct OverloadDecl: Sendable {
   /// The type parameter names used by the argument and result types, in first-use order
   /// (result type first).
   public var typeParameters: [String] {
+    storedTypeParameters
+  }
+
+  /// `typeParameters`, collected once: the checker asks for every overload it considers.
+  private let storedTypeParameters: [String]
+
+  private static func collectTypeParameters(resultType: CELType, argumentTypes: [CELType]) -> [String] {
     var names: [String] = []
     func collect(_ t: CELType) {
       if case .typeParam(let name) = t, !names.contains(name) {

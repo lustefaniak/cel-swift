@@ -92,7 +92,12 @@ Earlier changes on main, measured back to back in their commit messages: policy 
   third of parsing); dynamic exclusivity checks on the runtime's token stream took an eighth; inputs with
   more than 32 operators moved to a new thread even on a thread with megabytes of stack left. Parsing
   allocates fewer objects than cel-go (`tools/bench/allocs.py`).
-- **Check** (1.3–2× cel-go, faster on `long-or`): no single hotspot.
+- **Check** (0.8–1.1× cel-go, 0.4× on `long-or`; 1.3–1.9× before the changes below): overload resolution,
+  mostly real unification work, is about 40% of `policy`. Before, a large share went to formatting types into
+  strings: `TypeMapping.find` formatted every type it looked up and non-generic overloads built a function
+  type per candidate. Each check also built a `Set` of all expression ids twice (`AST.nodeCount`,
+  `clearUnusedIDs`), and a failed unification copied the whole type mapping, which made long expressions
+  quadratic.
 - **Plan** (about 3× cel-go): node and attribute allocation, `Expr.depth`, and freeing the previous
   program; cel-go plans into a garbage-collected graph.
 - **Eval** (1.6–3.3× cel-go): before the payload change, copying `Value` dominated: with 40-byte
@@ -111,6 +116,7 @@ Performance pull requests since 0.1.0, each measured against the `main` it merge
 |---|---|---:|---:|---:|---:|
 | bench tools | `--iterations`, `--baseline-driver`, `allocs.py`, `profile.py` | - | - | - | - |
 | parser | unowned parent, unchecked exclusivity, no thread hop with stack to spare, shared label slots | 0.43–0.48 | 1.00 | 1.00 | 0.97–1.00 |
+| checker | type lookups without formatting, id bitset, undone failed unifications, fewer alias lookups | 1.00 | 0.55–0.73 | 1.00 | 1.00 |
 
 ## Decisions
 

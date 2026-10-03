@@ -59,12 +59,12 @@ package struct AST: Sendable {
   }
 
   /// The number of expression nodes, including macro calls (cel-go `ast.NodeCount`).
-  package var nodeCount: Int { ids.count }
+  package var nodeCount: Int { UsedIDs(self).count }
 
   /// Removes offset ranges for ids that no longer occur in the AST or the macro calls.
   package mutating func clearUnusedIDs() {
-    let ids = self.ids
-    for id in sourceInfo.offsetRanges.keys where !ids.contains(id) {
+    let used = UsedIDs(self)
+    for id in sourceInfo.offsetRanges.keys where !used.contains(id) {
       sourceInfo.clearOffsetRange(id)
     }
   }
@@ -294,5 +294,57 @@ package struct SourceInfo: Sendable {
   /// Records an extension.
   package mutating func addExtension(_ ext: SourceExtension) {
     extensions.append(ext)
+  }
+}
+
+/// The node ids of an AST (``AST/ids``) as a bitset: parser ids are small and dense, so marking bits
+/// is much cheaper than hashing them. Ids below 64 live in one inline word, so small expressions
+/// allocate nothing; negative ids and ids from `denseLimit` on go to a set.
+struct UsedIDs {
+  private static let denseLimit: Int64 = 1 << 20
+  private var low: UInt64 = 0
+  private var high: [UInt64] = []
+  private var sparse: Set<Int64> = []
+  /// The number of distinct ids.
+  private(set) var count = 0
+
+  init(_ ast: AST) {
+    ast.expr.postOrderVisit(expr: { self.insert($0.id) }, entry: { self.insert($0.id) })
+    for call in ast.sourceInfo.macroCalls.values {
+      call.postOrderVisit(expr: { self.insert($0.id) }, entry: { self.insert($0.id) })
+    }
+  }
+
+  private mutating func insert(_ id: Int64) {
+    if id >= 0 && id < 64 {
+      let bit: UInt64 = 1 << UInt64(id)
+      if low & bit == 0 {
+        low |= bit
+        count += 1
+      }
+    } else if id >= 64 && id < Self.denseLimit {
+      let word = Int(id >> 6) - 1
+      if word >= high.count {
+        high.append(contentsOf: repeatElement(0, count: Swift.max(word + 1 - high.count, high.count)))
+      }
+      let bit: UInt64 = 1 << UInt64(id & 63)
+      if high[word] & bit == 0 {
+        high[word] |= bit
+        count += 1
+      }
+    } else if sparse.insert(id).inserted {
+      count += 1
+    }
+  }
+
+  func contains(_ id: Int64) -> Bool {
+    if id >= 0 && id < 64 {
+      return low & (1 << UInt64(id)) != 0
+    }
+    if id >= 64 && id < Self.denseLimit {
+      let word = Int(id >> 6) - 1
+      return word < high.count && high[word] & (1 << UInt64(id & 63)) != 0
+    }
+    return sparse.contains(id)
   }
 }
