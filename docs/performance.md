@@ -98,8 +98,11 @@ Earlier changes on main, measured back to back in their commit messages: policy 
   type per candidate. Each check also built a `Set` of all expression ids twice (`AST.nodeCount`,
   `clearUnusedIDs`), and a failed unification copied the whole type mapping, which made long expressions
   quadratic.
-- **Plan** (about 3× cel-go): node and attribute allocation, `Expr.depth`, and freeing the previous
-  program; cel-go plans into a garbage-collected graph.
+- **Plan** (2.6–3× cel-go): about a fifth of the benchmark is freeing the previous program, which cel-go
+  leaves to its collector, and most of the rest is building an `EvalAttr` and `AbsoluteAttribute` with their
+  arrays per identifier. Planning allocates 1.1–1.3 times as often as cel-go. Fixed work per `program()`
+  call (parser options nobody used, a placeholder `PlanError`, copying the planner) and an explicit stack in
+  `Expr.depth` are gone: planning `true` takes 560 ns against cel-go's 330.
 - **Eval** (1.6–3.3× cel-go): before the payload change, copying `Value` dominated: with 40-byte
   existential payloads `Value` was 41 bytes (stride 48), and every copy or destroy of any `Value`, even an
   `int`, went through the outlined value witness (`initializeWithCopy for Value`, `destroy for Value`),
@@ -117,6 +120,7 @@ Performance pull requests since 0.1.0, each measured against the `main` it merge
 | bench tools | `--iterations`, `--baseline-driver`, `allocs.py`, `profile.py` | - | - | - | - |
 | parser | unowned parent, unchecked exclusivity, no thread hop with stack to spare, shared label slots | 0.43–0.48 | 1.00 | 1.00 | 0.97–1.00 |
 | checker | type lookups without formatting, id bitset, undone failed unifications, fewer alias lookups | 1.00 | 0.55–0.73 | 1.00 | 1.00 |
+| planner | no per-call option building or placeholder error, shared planner, bounded-recursion depth | 1.00 | 1.00 | 0.91–0.97 (trivial 0.64–0.76) | 1.00 |
 
 ## Decisions
 
