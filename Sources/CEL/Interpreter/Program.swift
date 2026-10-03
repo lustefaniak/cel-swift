@@ -196,7 +196,7 @@ package struct ProgramEnvironment: Sendable {
       evalOptions.contains(.partialEval)
       ? PartialAttributeFactory(container: container, provider: provider, errorOnBadPresenceTest: errorOnBadPresenceTest)
       : DefaultAttributeFactory(container: container, provider: provider, errorOnBadPresenceTest: errorOnBadPresenceTest)
-    let planner = Planner(
+    var planner = Planner(
       dispatcher: dispatcher, provider: provider, attrFactory: attrFactory, container: container, ast: ast)
     for decorator in decorators {
       planner.decorators.append(decorator)
