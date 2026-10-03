@@ -3,7 +3,8 @@
 // cel-go's recursive-descent parser relies on Go's growable goroutine stacks; Swift threads have fixed
 // stacks (512 KiB for secondary threads on Darwin, often less in debug builds than the recursion needs).
 // The parser estimates how deep an input can make it recurse and, when that could exceed a small
-// budget, parses on a dedicated thread whose stack is sized for the input, then joins it.
+// budget and (on Darwin, where the thread's stack bounds are cheap to read) the stack the calling thread
+// has left, parses on a dedicated thread whose stack is sized for the input, then joins it.
 
 #if canImport(Darwin)
   import Darwin
@@ -42,15 +43,33 @@ package enum LargeStack {
     return units
   }
 
-  /// The stack size needed for `units` nesting units, or nil when the calling thread suffices.
+  /// The stack size needed for `units` nesting units, or nil when the calling thread suffices. Starting
+  /// a thread costs about as much as parsing a short expression, so the check uses the real stack left.
   package static func requiredStackSize(units: Int) -> Int? {
     let needed = 64 << 10 + units * bytesPerUnit
-    if needed <= inlineBudget {
+    if needed <= inlineBudget || needed <= remainingStack() {
       return nil
     }
     let size = max(needed * 2, 1 << 20)
     let page = 16 << 10
     return min((size + page - 1) / page * page, 1 << 30)
+  }
+
+  /// Bytes of stack left below the caller's frame, less a margin; 0 where the platform does not say.
+  static func remainingStack() -> Int {
+    #if canImport(Darwin)
+      let thread = pthread_self()
+      let top = UInt(bitPattern: pthread_get_stackaddr_np(thread))
+      let bottom = top - UInt(pthread_get_stacksize_np(thread))
+      var marker: UInt8 = 0
+      let here = withUnsafeMutablePointer(to: &marker) { UInt(bitPattern: $0) }
+      guard here > bottom, here <= top else {
+        return 0
+      }
+      return max(0, Int(here - bottom) - (64 << 10))
+    #else
+      return 0
+    #endif
   }
 
   private final class Work {
