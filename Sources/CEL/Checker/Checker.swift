@@ -347,7 +347,10 @@ struct TypeChecker {
         return (.bool, ref)
       }
 
-      var overloadType = newFunctionType(overload.resultType, overload.argumentTypes)
+      // The overload's result and argument types; cel-go builds the function type
+      // `function(result, args...)` for every overload, here only generic ones need it.
+      var candidateResultType = overload.resultType
+      var candidateArgTypes = overload.argumentTypes
       let typeParameters = overload.typeParameters
       if !typeParameters.isEmpty {
         // Instantiate the overload's type with fresh type variables.
@@ -355,11 +358,13 @@ struct TypeChecker {
         for typeParam in typeParameters {
           substitutions.add(.typeParam(typeParam), newTypeVar())
         }
-        overloadType = substitute(substitutions, overloadType, false)
+        let overloadParams = substitute(
+          substitutions, newFunctionType(candidateResultType, candidateArgTypes), false
+        ).parameters
+        candidateResultType = overloadParams[0]
+        candidateArgTypes = Array(overloadParams.dropFirst())
       }
 
-      let overloadParams = overloadType.parameters
-      let candidateArgTypes = Array(overloadParams.dropFirst())
       if isAssignableList(argumentTypes, candidateArgTypes) {
         if checkedRef == nil {
           checkedRef = ReferenceInfo(overloadIDs: [overload.id])
@@ -368,7 +373,7 @@ struct TypeChecker {
         }
 
         // First matching overload, determines result type.
-        let fnResultType = substitute(mappings, overloadParams[0], false)
+        let fnResultType = substitute(mappings, candidateResultType, false)
         if let current = resultType {
           if !isDyn(current) && !fnResultType.isExactType(current) {
             resultType = .dyn
