@@ -27,12 +27,37 @@ struct TypeMapping: Sendable {
   /// Whether a key contains `(`, so that a parameterized type's formatted name could match it.
   private var hasParenthesizedKey = false
 
+  /// The keys added during `trying`, with their previous values, to undo a failed trial.
+  private var undoLog: [(key: String, previous: CELType?)] = []
+  private var isTrying = false
+
   mutating func add(_ from: CELType, _ to: CELType) {
     let key = from.checkerDescription
     if !hasParenthesizedKey && key.utf8.contains(UInt8(ascii: "(")) {
       hasParenthesizedKey = true
     }
-    mapping[key] = to
+    let previous = mapping.updateValue(to, forKey: key)
+    if isTrying {
+      undoLog.append((key, previous))
+    }
+  }
+
+  /// Runs `body` on the mapping and undoes its additions when it returns false. cel-go copies the
+  /// mapping and keeps the copy on success; copying here costs a dictionary copy per unification.
+  mutating func trying(_ body: (inout TypeMapping) -> Bool) -> Bool {
+    let start = undoLog.count
+    let wasTrying = isTrying
+    isTrying = true
+    let succeeded = body(&self)
+    isTrying = wasTrying
+    if !succeeded {
+      while undoLog.count > start, let (key, previous) = undoLog.popLast() {
+        mapping[key] = previous
+      }
+    } else if !wasTrying {
+      undoLog.removeAll(keepingCapacity: true)
+    }
+    return succeeded
   }
 
   func find(_ from: CELType) -> CELType? {

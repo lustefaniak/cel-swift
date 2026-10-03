@@ -199,22 +199,16 @@ func isLegacyNullable(_ t: CELType) -> Bool {
   }
 }
 
-/// The updated substitutions if `t1` is assignable to `t2`, else `nil`.
-func unifyAssignable(_ m: TypeMapping, _ t1: CELType, _ t2: CELType) -> TypeMapping? {
-  var copy = m
-  if internalIsAssignable(&copy, t1, t2) {
-    return copy
-  }
-  return nil
+/// Whether `t1` is assignable to `t2`, keeping the substitutions in `m` if so and leaving `m`
+/// unchanged if not (cel-go returns an updated copy or nil).
+func unifyAssignable(_ m: inout TypeMapping, _ t1: CELType, _ t2: CELType) -> Bool {
+  m.trying { internalIsAssignable(&$0, t1, t2) }
 }
 
-/// The updated substitutions if the types in `l1` are assignable to those in `l2`, else `nil`.
-func unifyAssignableList(_ m: TypeMapping, _ l1: [CELType], _ l2: [CELType]) -> TypeMapping? {
-  var copy = m
-  if internalIsAssignableList(&copy, l1, l2) {
-    return copy
-  }
-  return nil
+/// Whether the types in `l1` are assignable to those in `l2`, keeping the substitutions in `m` if so
+/// and leaving `m` unchanged if not.
+func unifyAssignableList(_ m: inout TypeMapping, _ l1: [CELType], _ l2: [CELType]) -> Bool {
+  m.trying { internalIsAssignableList(&$0, l1, l2) }
 }
 
 /// The more general of two types which are known to unify.

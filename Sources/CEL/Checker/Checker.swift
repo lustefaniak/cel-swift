@@ -596,19 +596,11 @@ struct TypeChecker {
   }
 
   private mutating func isAssignable(_ t1: CELType, _ t2: CELType) -> Bool {
-    if let subs = unifyAssignable(mappings, t1, t2) {
-      mappings = subs
-      return true
-    }
-    return false
+    unifyAssignable(&mappings, t1, t2)
   }
 
   private mutating func isAssignableList(_ l1: [CELType], _ l2: [CELType]) -> Bool {
-    if let subs = unifyAssignableList(mappings, l1, l2) {
-      mappings = subs
-      return true
-    }
-    return false
+    unifyAssignableList(&mappings, l1, l2)
   }
 
   private mutating func setType(_ e: Expr, _ t: CELType) {
