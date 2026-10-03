@@ -122,7 +122,10 @@ enum ParseTreeChild {
 
 /// A node of the parse tree (antlr `BaseParserRuleContext` plus the generated labels).
 final class ParserRuleContext {
-  weak var parent: ParserRuleContext?
+  /// Unowned, not weak: a parent always outlives its children (the parser holds the rule being built and
+  /// each node holds its children), and a weak reference gives every context a side table that sends all
+  /// its retains and releases through the slow path, which cost more than a third of parsing.
+  unowned var parent: ParserRuleContext?
   var invokingState: Int
   let ruleIndex: Int
   let label: ContextLabel
