@@ -26,12 +26,14 @@
 /// existential box). It has no state; each node's sendability is that of its own (immutable) stored
 /// properties.
 package class InterpretableNode: @unchecked Sendable {
-  package init() {}
+  // Internal, not package: with a package initializer the compiler synthesizes an unimplemented
+  // `init()` stub in every internal subclass and warns that it recurses infinitely.
+  init() {}
 }
 
 /// A node evaluated by a closure, for nodes defined outside this module, which cannot subclass
 /// ``InterpretableNode``.
-package final class ClosureInterpretable: InterpretableNode, Interpretable {
+package final class ClosureInterpretable: InterpretableNode, @unchecked Sendable, Interpretable {
   package let id: Int64
   private let body: @Sendable (ExecutionFrame) -> Value
 
@@ -106,7 +108,7 @@ package protocol InterpretableConstructor: Interpretable {
 // MARK: - Constants and logic
 
 /// A constant value (cel-go `evalConst`).
-package final class EvalConst: InterpretableNode, InterpretableConst {
+package final class EvalConst: InterpretableNode, @unchecked Sendable, InterpretableConst {
   package let id: Int64
   package let value: Value
 
@@ -122,7 +124,7 @@ package final class EvalConst: InterpretableNode, InterpretableConst {
 
 /// Logical or: `true` absorbs errors and unknowns in any position; otherwise unknowns win over
 /// errors (cel-go `evalOr`).
-final class EvalOr: InterpretableNode, Interpretable {
+final class EvalOr: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let terms: [any Interpretable]
 
@@ -153,7 +155,7 @@ final class EvalOr: InterpretableNode, Interpretable {
 }
 
 /// Logical and: `false` absorbs errors and unknowns in any position (cel-go `evalAnd`).
-final class EvalAnd: InterpretableNode, Interpretable {
+final class EvalAnd: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let terms: [any Interpretable]
 
@@ -201,7 +203,7 @@ private func strictPair(_ lhs: any Interpretable, _ rhs: any Interpretable, _ fr
 }
 
 /// `==` (cel-go `evalEq`).
-final class EvalEq: InterpretableNode, InterpretableCall {
+final class EvalEq: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let lhs: any Interpretable
   let rhs: any Interpretable
@@ -224,7 +226,7 @@ final class EvalEq: InterpretableNode, InterpretableCall {
 }
 
 /// `!=` (cel-go `evalNe`).
-final class EvalNe: InterpretableNode, InterpretableCall {
+final class EvalNe: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let lhs: any Interpretable
   let rhs: any Interpretable
@@ -258,7 +260,7 @@ private func implApplies(_ trait: TypeTraits, _ strict: Bool, _ arg0: Value) -> 
 }
 
 /// A call without arguments (cel-go `evalZeroArity`).
-final class EvalZeroArity: InterpretableNode, InterpretableCall {
+final class EvalZeroArity: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let function: String
   let overloadID: String
@@ -279,7 +281,7 @@ final class EvalZeroArity: InterpretableNode, InterpretableCall {
 }
 
 /// A one-argument call (cel-go `evalUnary`).
-final class EvalUnary: InterpretableNode, InterpretableCall {
+final class EvalUnary: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let function: String
   let overloadID: String
@@ -320,7 +322,7 @@ final class EvalUnary: InterpretableNode, InterpretableCall {
 }
 
 /// A two-argument call (cel-go `evalBinary`).
-final class EvalBinary: InterpretableNode, InterpretableCall {
+final class EvalBinary: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let function: String
   let overloadID: String
@@ -375,7 +377,7 @@ final class EvalBinary: InterpretableNode, InterpretableCall {
 }
 
 /// A call with any number of arguments (cel-go `evalVarArgs`).
-final class EvalVarArgs: InterpretableNode, InterpretableCall {
+final class EvalVarArgs: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let id: Int64
   let function: String
   let overloadID: String
@@ -440,7 +442,7 @@ private func invalidOptionalEntryInit(_ field: String, _ value: Value) -> Value 
 }
 
 /// A list literal (cel-go `evalList`).
-final class EvalList: InterpretableNode, InterpretableConstructor {
+final class EvalList: InterpretableNode, @unchecked Sendable, InterpretableConstructor {
   let id: Int64
   let elems: [any Interpretable]
   let optionals: [Bool]
@@ -489,7 +491,7 @@ final class EvalList: InterpretableNode, InterpretableConstructor {
 /// cel-go accepts any key value and lets a repeated key overwrite the earlier entry; the spec makes
 /// both an error, and `MapKey` cannot hold other key types, so here they are errors
 /// (docs/divergences.md).
-final class EvalMap: InterpretableNode, InterpretableConstructor {
+final class EvalMap: InterpretableNode, @unchecked Sendable, InterpretableConstructor {
   let id: Int64
   let keys: [any Interpretable]
   let vals: [any Interpretable]
@@ -569,7 +571,7 @@ final class EvalMap: InterpretableNode, InterpretableConstructor {
 }
 
 /// A message literal, built by the type provider (cel-go `evalObj`).
-final class EvalObj: InterpretableNode, InterpretableConstructor {
+final class EvalObj: InterpretableNode, @unchecked Sendable, InterpretableConstructor {
   let id: Int64
   let typeName: String
   let fields: [String]
@@ -625,7 +627,7 @@ final class EvalObj: InterpretableNode, InterpretableConstructor {
 // MARK: - Comprehensions
 
 /// A comprehension (cel-go `evalFold`).
-final class EvalFold: InterpretableNode, Interpretable {
+final class EvalFold: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let accuVar: String
   let iterVar: String
@@ -839,7 +841,7 @@ final class Folder: PartialActivation {
 // MARK: - Attributes
 
 /// Evaluates an attribute (cel-go `evalAttr`).
-final class EvalAttr: InterpretableNode, InterpretableAttribute {
+final class EvalAttr: InterpretableNode, @unchecked Sendable, InterpretableAttribute {
   let attr: any Attribute
   let optional: Bool
 
@@ -880,7 +882,7 @@ final class EvalAttr: InterpretableNode, InterpretableAttribute {
 }
 
 /// A presence test `has(a.b)` (cel-go `evalTestOnly`).
-final class EvalTestOnly: InterpretableNode, InterpretableAttribute {
+final class EvalTestOnly: InterpretableNode, @unchecked Sendable, InterpretableAttribute {
   let testID: Int64
   let inner: any InterpretableAttribute
 
@@ -930,7 +932,7 @@ final class EvalTestOnly: InterpretableNode, InterpretableAttribute {
 }
 
 /// A constant qualifier that only tests presence (cel-go `testOnlyQualifier`).
-final class TestOnlyQualifier: InterpretableNode, ConstantQualifier, QualifierValueEquator {
+final class TestOnlyQualifier: InterpretableNode, @unchecked Sendable, ConstantQualifier, QualifierValueEquator {
   let inner: any ConstantQualifier
 
   init(_ inner: any ConstantQualifier) {
@@ -986,7 +988,7 @@ enum PrimitiveKey: Hashable {
 }
 
 /// `x in [constant list]` as a hash set lookup (cel-go `evalSetMembership`).
-final class EvalSetMembership: InterpretableNode, Interpretable {
+final class EvalSetMembership: InterpretableNode, @unchecked Sendable, Interpretable {
   let inst: any Interpretable
   let arg: any Interpretable
   let valueSet: Set<PrimitiveKey>
@@ -1014,7 +1016,7 @@ final class EvalSetMembership: InterpretableNode, Interpretable {
 // MARK: - Exhaustive evaluation
 
 /// `||` evaluating every term (cel-go `evalExhaustiveOr`).
-final class EvalExhaustiveOr: InterpretableNode, Interpretable {
+final class EvalExhaustiveOr: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let terms: [any Interpretable]
 
@@ -1049,7 +1051,7 @@ final class EvalExhaustiveOr: InterpretableNode, Interpretable {
 }
 
 /// `&&` evaluating every term (cel-go `evalExhaustiveAnd`).
-final class EvalExhaustiveAnd: InterpretableNode, Interpretable {
+final class EvalExhaustiveAnd: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let terms: [any Interpretable]
 
@@ -1084,7 +1086,7 @@ final class EvalExhaustiveAnd: InterpretableNode, Interpretable {
 }
 
 /// `?:` evaluating both branches (cel-go `evalExhaustiveConditional`).
-final class EvalExhaustiveConditional: InterpretableNode, Interpretable {
+final class EvalExhaustiveConditional: InterpretableNode, @unchecked Sendable, Interpretable {
   let id: Int64
   let attr: ConditionalAttribute
 
@@ -1116,7 +1118,7 @@ final class EvalExhaustiveConditional: InterpretableNode, Interpretable {
 package typealias EvalObserver = @Sendable (_ frame: ExecutionFrame, _ id: Int64, _ step: Any, _ value: Value) -> Void
 
 /// Observes a node's value (cel-go `evalWatch`).
-final class EvalWatch: InterpretableNode, Interpretable {
+final class EvalWatch: InterpretableNode, @unchecked Sendable, Interpretable {
   let inner: any Interpretable
   let observer: EvalObserver
 
@@ -1135,7 +1137,7 @@ final class EvalWatch: InterpretableNode, Interpretable {
 }
 
 /// Observes a constant (cel-go `evalWatchConst`).
-final class EvalWatchConst: InterpretableNode, InterpretableConst {
+final class EvalWatchConst: InterpretableNode, @unchecked Sendable, InterpretableConst {
   let inner: any InterpretableConst
   let observer: EvalObserver
 
@@ -1155,7 +1157,7 @@ final class EvalWatchConst: InterpretableNode, InterpretableConst {
 }
 
 /// Observes a constructor (cel-go `evalWatchConstructor`).
-final class EvalWatchConstructor: InterpretableNode, InterpretableConstructor {
+final class EvalWatchConstructor: InterpretableNode, @unchecked Sendable, InterpretableConstructor {
   let inner: any InterpretableConstructor
   let observer: EvalObserver
 
@@ -1176,7 +1178,7 @@ final class EvalWatchConstructor: InterpretableNode, InterpretableConstructor {
 }
 
 /// Observes an attribute and the qualifications added to it (cel-go `evalWatchAttr`).
-final class EvalWatchAttr: InterpretableNode, InterpretableAttribute {
+final class EvalWatchAttr: InterpretableNode, @unchecked Sendable, InterpretableAttribute {
   let inner: any InterpretableAttribute
   let observer: EvalObserver
 
@@ -1265,7 +1267,7 @@ private func observeQualifyIfPresent(
 }
 
 /// Observes a constant qualification (cel-go `evalWatchConstQual`).
-final class EvalWatchConstQual: InterpretableNode, ConstantQualifier, QualifierValueEquator {
+final class EvalWatchConstQual: InterpretableNode, @unchecked Sendable, ConstantQualifier, QualifierValueEquator {
   let inner: any ConstantQualifier
   let observer: EvalObserver
 
@@ -1299,7 +1301,7 @@ final class EvalWatchConstQual: InterpretableNode, ConstantQualifier, QualifierV
 }
 
 /// Observes a qualification by an attribute (cel-go `evalWatchAttrQual`).
-final class EvalWatchAttrQual: InterpretableNode, Attribute {
+final class EvalWatchAttrQual: InterpretableNode, @unchecked Sendable, Attribute {
   let inner: any Attribute
   let observer: EvalObserver
 
@@ -1336,7 +1338,7 @@ final class EvalWatchAttrQual: InterpretableNode, Attribute {
 }
 
 /// Observes a custom qualifier (cel-go `evalWatchQual`).
-final class EvalWatchQual: InterpretableNode, Qualifier {
+final class EvalWatchQual: InterpretableNode, @unchecked Sendable, Qualifier {
   let inner: any Qualifier
   let observer: EvalObserver
 
