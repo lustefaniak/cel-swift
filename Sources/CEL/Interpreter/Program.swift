@@ -228,9 +228,12 @@ package struct ProgramEnvironment: Sendable {
       planner.observers = observers
     }
     let depth = ast.expr.depth
-    var planned: Result<any Interpretable, any Error> = .failure(PlanError("not planned"))
+    var planned: Result<any Interpretable, any Error>?
     withStack(depth: depth) {
       planned = Result { try planner.plan(ast.expr) }
+    }
+    guard let planned else {
+      throw PlanError("not planned")
     }
     return PlannedProgram(
       interpretable: try planned.get(), depth: depth,
