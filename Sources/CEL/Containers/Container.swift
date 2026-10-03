@@ -86,17 +86,17 @@ public struct Container: Sendable, Hashable {
   /// The alias expansion of `name` (without a leading dot): an alias of the first component is
   /// expanded and the remaining components appended.
   func findAlias(_ name: String) -> String? {
-    let bytes = Array(name.utf8)
-    var simple = name
-    var qualifier = ""
-    if let dot = bytes.firstIndex(of: UInt8(ascii: ".")) {
-      simple = String(decoding: bytes[..<dot], as: UTF8.self)
-      qualifier = String(decoding: bytes[dot...], as: UTF8.self)
-    }
-    guard let alias = aliases[simple] else {
+    if aliases.isEmpty {
       return nil
     }
-    return alias + qualifier
+    let utf8 = name.utf8
+    guard let dot = utf8.firstIndex(of: UInt8(ascii: ".")) else {
+      return aliases[name]
+    }
+    guard let alias = aliases[String(decoding: utf8[..<dot], as: UTF8.self)] else {
+      return nil
+    }
+    return alias + String(decoding: utf8[dot...], as: UTF8.self)
   }
 }
 
