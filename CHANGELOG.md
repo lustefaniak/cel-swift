@@ -15,7 +15,7 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 - Type checking takes 0.55 to 0.73 times as long (0.8 to 1.1 times cel-go): type substitutions are found
   without formatting types, expression ids are tracked in a bitset, and a failed unification is undone
   instead of copying the type mapping.
-- Planning (`Environment.program`) takes 0.91 to 0.97 times as long, and 0.64 to 0.76 times for trivial
+- Planning (`Environment.program`) takes 0.90 to 0.97 times as long, and 0.64 to 0.76 times for trivial
   expressions: no parser options or placeholder error are built per call, and expression depth is measured
   by bounded recursion.
 
