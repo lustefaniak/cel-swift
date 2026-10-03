@@ -196,7 +196,7 @@ package struct ProgramEnvironment: Sendable {
       evalOptions.contains(.partialEval)
       ? PartialAttributeFactory(container: container, provider: provider, errorOnBadPresenceTest: errorOnBadPresenceTest)
       : DefaultAttributeFactory(container: container, provider: provider, errorOnBadPresenceTest: errorOnBadPresenceTest)
-    var planner = Planner(
+    let planner = Planner(
       dispatcher: dispatcher, provider: provider, attrFactory: attrFactory, container: container, ast: ast)
     for decorator in decorators {
       planner.decorators.append(decorator)
@@ -315,8 +315,16 @@ func withStack(depth: Int, _ body: () -> Void) {
 extension Expr {
   /// The height of the expression tree (a leaf is 1), computed without recursion.
   package var depth: Int {
+    switch kind {
+    case .unspecified, .literal, .ident:
+      return 1
+    default:
+      break
+    }
     var maxDepth = 0
-    var stack: [(Expr, Int)] = [(self, 1)]
+    var stack: [(Expr, Int)] = []
+    stack.reserveCapacity(32)
+    stack.append((self, 1))
     while let (e, d) = stack.popLast() {
       maxDepth = Swift.max(maxDepth, d)
       switch e.kind {

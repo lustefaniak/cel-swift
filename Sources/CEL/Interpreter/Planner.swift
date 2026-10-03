@@ -34,7 +34,7 @@ extension Constant {
 
 /// Turns a checked or parse-only AST into a tree of interpretables, resolving functions, types and
 /// namespaced identifiers once at plan time (cel-go `planner`).
-package struct Planner {
+package final class Planner {
   package let dispatcher: Dispatcher
   package let provider: any TypeProvider
   package let attrFactory: any AttributeFactory
