@@ -135,34 +135,116 @@ final class ParserRuleContext {
   @exclusivity(unchecked) var stop: Token?
   @exclusivity(unchecked) var exception: RecognitionException?
 
-  // Grammar labels. Which ones are used depends on `label`.
-  @exclusivity(unchecked) var e: ParserRuleContext?
-  @exclusivity(unchecked) var e1: ParserRuleContext?
-  @exclusivity(unchecked) var e2: ParserRuleContext?
-  @exclusivity(unchecked) var op: Token?
-  @exclusivity(unchecked) var opt: Token?
-  @exclusivity(unchecked) var leadingDot: Token?
-  @exclusivity(unchecked) var sign: Token?
-  @exclusivity(unchecked) var tok: Token?
-  @exclusivity(unchecked) var open: Token?
+  // Grammar labels. Which ones are used depends on `label`, and no context type uses more than three
+  // context labels, three token labels and two of each kind of list label, so the labels share these
+  // slots (fewer stored properties make contexts cheaper to allocate and free, a large part of parsing).
+  // Labels in the same slot never belong to the same context type.
+  @exclusivity(unchecked) private var c0: ParserRuleContext?
+  @exclusivity(unchecked) private var c1: ParserRuleContext?
+  @exclusivity(unchecked) private var c2: ParserRuleContext?
+  @exclusivity(unchecked) private var t0: Token?
+  @exclusivity(unchecked) private var t1: Token?
+  @exclusivity(unchecked) private var t2: Token?
+  @exclusivity(unchecked) private var ta0: [Token] = []
+  @exclusivity(unchecked) private var ta1: [Token] = []
+  @exclusivity(unchecked) private var ca0: [ParserRuleContext] = []
+  @exclusivity(unchecked) private var ca1: [ParserRuleContext] = []
+  var e: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var e1: ParserRuleContext? {
+    _read { yield c1 }
+    _modify { yield &c1 }
+  }
+  var e2: ParserRuleContext? {
+    _read { yield c2 }
+    _modify { yield &c2 }
+  }
+  var op: Token? {
+    _read { yield t0 }
+    _modify { yield &t0 }
+  }
+  var opt: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var leadingDot: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var sign: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
+  var tok: Token? {
+    _read { yield t2 }
+    _modify { yield &t2 }
+  }
+  var open: Token? {
+    _read { yield t1 }
+    _modify { yield &t1 }
+  }
   /// Token `id` labels (Ident, GlobalCall, MemberCall, SimpleIdentifier, EscapedIdentifier).
-  @exclusivity(unchecked) var idToken: Token?
+  var idToken: Token? {
+    _read { yield t2 }
+    _modify { yield &t2 }
+  }
   /// Select's `id=escapeIdent` label.
-  @exclusivity(unchecked) var idContext: ParserRuleContext?
-  @exclusivity(unchecked) var args: ParserRuleContext?
-  @exclusivity(unchecked) var elems: ParserRuleContext?
-  @exclusivity(unchecked) var entries: ParserRuleContext?
-  @exclusivity(unchecked) var index: ParserRuleContext?
-  @exclusivity(unchecked) var ops: [Token] = []
-  @exclusivity(unchecked) var ids: [Token] = []
-  @exclusivity(unchecked) var cols: [Token] = []
+  var idContext: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var args: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var elems: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var entries: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var index: ParserRuleContext? {
+    _read { yield c0 }
+    _modify { yield &c0 }
+  }
+  var ops: [Token] {
+    _read { yield ta0 }
+    _modify { yield &ta0 }
+  }
+  var ids: [Token] {
+    _read { yield ta1 }
+    _modify { yield &ta1 }
+  }
+  var cols: [Token] {
+    _read { yield ta0 }
+    _modify { yield &ta0 }
+  }
   /// `e1+=...` in conditionalOr / conditionalAnd, `e+=expr` in exprList.
-  @exclusivity(unchecked) var exprs: [ParserRuleContext] = []
+  var exprs: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
   /// `elems+=optExpr` in listInit.
-  @exclusivity(unchecked) var elemList: [ParserRuleContext] = []
-  @exclusivity(unchecked) var fields: [ParserRuleContext] = []
-  @exclusivity(unchecked) var values: [ParserRuleContext] = []
-  @exclusivity(unchecked) var keys: [ParserRuleContext] = []
+  var elemList: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
+  var fields: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
+  var values: [ParserRuleContext] {
+    _read { yield ca1 }
+    _modify { yield &ca1 }
+  }
+  var keys: [ParserRuleContext] {
+    _read { yield ca0 }
+    _modify { yield &ca0 }
+  }
 
   init(parent: ParserRuleContext?, invokingState: Int, ruleIndex: Int, label: ContextLabel) {
     self.parent = parent
