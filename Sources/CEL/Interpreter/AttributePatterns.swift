@@ -215,7 +215,7 @@ private func goInt64(_ d: Double) -> Int64 {
 
 /// A namespaced attribute that first tests the unknown patterns of a partial activation
 /// (cel-go `attributeMatcher`).
-final class AttributeMatcher: NamespacedAttribute {
+final class AttributeMatcher: InterpretableNode, NamespacedAttribute {
   let attribute: any NamespacedAttribute
   let matcherQualifiers: [any Qualifier]
   let factory: PartialAttributeFactory

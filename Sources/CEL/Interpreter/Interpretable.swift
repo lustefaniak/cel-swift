@@ -19,11 +19,13 @@
 // Interpretables are immutable final classes, so a planned program is `Sendable`.
 
 /// A planned expression node that evaluates to a value (cel-go `Interpretable` / `InterpretableV2`).
-/// The base class of every interpretable node. Constraining ``Interpretable`` to it, instead of to
-/// `AnyObject`, tells the compiler the nodes are native Swift objects: calls through
-/// `any Interpretable` read the type from the object instead of calling `swift_getObjectType`, and
-/// copies use native reference counting instead of `swift_unknownObjectRetain`. It has no state;
-/// each node's sendability is that of its own (immutable) stored properties.
+/// The base class of every interpretable node, attribute and qualifier. Constraining
+/// ``Interpretable`` and ``Qualifier`` to it tells the compiler the nodes are native Swift objects:
+/// `any Interpretable` and `any Qualifier` are a reference and a witness table, calls through them
+/// read the type from the object instead of calling `swift_getObjectType`, and copies use native
+/// reference counting instead of `swift_unknownObjectRetain` (or, for qualifiers, copying an opaque
+/// existential box). It has no state; each node's sendability is that of its own (immutable) stored
+/// properties.
 package class InterpretableNode: @unchecked Sendable {
   package init() {}
 }
@@ -928,7 +930,7 @@ final class EvalTestOnly: InterpretableNode, InterpretableAttribute {
 }
 
 /// A constant qualifier that only tests presence (cel-go `testOnlyQualifier`).
-final class TestOnlyQualifier: ConstantQualifier, QualifierValueEquator {
+final class TestOnlyQualifier: InterpretableNode, ConstantQualifier, QualifierValueEquator {
   let inner: any ConstantQualifier
 
   init(_ inner: any ConstantQualifier) {
@@ -1263,7 +1265,7 @@ private func observeQualifyIfPresent(
 }
 
 /// Observes a constant qualification (cel-go `evalWatchConstQual`).
-final class EvalWatchConstQual: ConstantQualifier, QualifierValueEquator {
+final class EvalWatchConstQual: InterpretableNode, ConstantQualifier, QualifierValueEquator {
   let inner: any ConstantQualifier
   let observer: EvalObserver
 
@@ -1297,7 +1299,7 @@ final class EvalWatchConstQual: ConstantQualifier, QualifierValueEquator {
 }
 
 /// Observes a qualification by an attribute (cel-go `evalWatchAttrQual`).
-final class EvalWatchAttrQual: Attribute {
+final class EvalWatchAttrQual: InterpretableNode, Attribute {
   let inner: any Attribute
   let observer: EvalObserver
 
@@ -1334,7 +1336,7 @@ final class EvalWatchAttrQual: Attribute {
 }
 
 /// Observes a custom qualifier (cel-go `evalWatchQual`).
-final class EvalWatchQual: Qualifier {
+final class EvalWatchQual: InterpretableNode, Qualifier {
   let inner: any Qualifier
   let observer: EvalObserver
 
