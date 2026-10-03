@@ -36,12 +36,8 @@ package enum Checker {
     var ast = parsed
     ast.expr = expr
     // Substitute type parameters in the final type map by their bound value or by `dyn`.
-    var typeMap: [Int64: CELType] = [:]
-    typeMap.reserveCapacity(checker.typeMap.count)
-    for (id, t) in checker.typeMap {
-      typeMap[id] = substitute(checker.mappings, t, true)
-    }
-    ast.typeMap = typeMap
+    let mappings = checker.mappings
+    ast.typeMap = checker.typeMap.mapValues { substitute(mappings, $0, true) }
     ast.referenceMap = checker.referenceMap
     // Remove source info for ids without a node: rewrites drop nodes, such as the operand of a
     // select replaced by a qualified identifier.
