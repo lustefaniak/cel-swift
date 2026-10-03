@@ -22,52 +22,55 @@ enum ParseAbort: Error {
 let celParserATN = ATN(serialized: celParserSerializedATN)
 
 /// Per-parse state of the ANTLR runtime: token stream, parser, error strategy and prediction.
+///
+/// One parse uses one runtime on one thread, so its stored properties skip the dynamic exclusivity
+/// checks (`@exclusivity(unchecked)`), which were about an eighth of parsing.
 final class ParserRuntime {
   let atn: ATN
 
   // MARK: Token stream (antlr CommonTokenStream, default channel only)
 
-  private var lexer: CELLexer
-  private(set) var tokens: [Token] = []
-  private(set) var tokenIndex = -1
-  private var fetchedEOF = false
+  @exclusivity(unchecked) private var lexer: CELLexer
+  @exclusivity(unchecked) private(set) var tokens: [Token] = []
+  @exclusivity(unchecked) private(set) var tokenIndex = -1
+  @exclusivity(unchecked) private var fetchedEOF = false
 
   // MARK: Parser state (antlr BaseParser)
 
-  var state = -1
-  var ctx: ParserRuleContext?
-  private var precedenceStack: [Int] = [0]
+  @exclusivity(unchecked) var state = -1
+  @exclusivity(unchecked) var ctx: ParserRuleContext?
+  @exclusivity(unchecked) private var precedenceStack: [Int] = [0]
   /// The pending recognition error (antlr `HasError` / `GetError`).
-  var error: RecognitionException?
+  @exclusivity(unchecked) var error: RecognitionException?
 
   // MARK: Error strategy (antlr DefaultErrorStrategy + cel-go recoveryLimitErrorStrategy)
 
-  private var errorRecoveryMode = false
-  private var lastErrorIndex = -1
-  private var lastErrorStates: IntervalSet?
-  private var recoveryAttempts = 0
+  @exclusivity(unchecked) private var errorRecoveryMode = false
+  @exclusivity(unchecked) private var lastErrorIndex = -1
+  @exclusivity(unchecked) private var lastErrorStates: IntervalSet?
+  @exclusivity(unchecked) private var recoveryAttempts = 0
   private let errorRecoveryLimit: Int
   private let lookaheadLimit: Int
-  private var lookaheadAttempts = 0
+  @exclusivity(unchecked) private var lookaheadAttempts = 0
 
   // MARK: Listeners (cel-go recursionListener and the parser as error listener)
 
-  private var ruleDepth = [Int](repeating: 0, count: CELRule.count)
+  @exclusivity(unchecked) private var ruleDepth = [Int](repeating: 0, count: CELRule.count)
   private let maxRecursionDepth: Int
-  private var errorReports = 0
+  @exclusivity(unchecked) private var errorReports = 0
   private let errorReportingLimit: Int
   private let sourceInfo: SourceInfo
-  var errors: CELErrors
+  @exclusivity(unchecked) var errors: CELErrors
 
   // MARK: Prediction (antlr ParserATNSimulator)
 
   /// The prediction DFAs, shared with other parses; see `PredictionCache` for what its locks guard.
   private let cache: PredictionCache
   private let errorState: DFAState
-  private var mergeCache: MergeCache?
-  private var startIndex = 0
-  private var outerContext: ParserRuleContext?
-  private var currentDFA: DFA?
+  @exclusivity(unchecked) private var mergeCache: MergeCache?
+  @exclusivity(unchecked) private var startIndex = 0
+  @exclusivity(unchecked) private var outerContext: ParserRuleContext?
+  @exclusivity(unchecked) private var currentDFA: DFA?
 
   init(
     input: [Unicode.Scalar], sourceInfo: SourceInfo, errors: CELErrors, maxRecursionDepth: Int,

@@ -120,48 +120,49 @@ enum ParseTreeChild {
   }
 }
 
-/// A node of the parse tree (antlr `BaseParserRuleContext` plus the generated labels).
+/// A node of the parse tree (antlr `BaseParserRuleContext` plus the generated labels). A tree belongs to
+/// one parse on one thread, so the stored properties skip the dynamic exclusivity checks.
 final class ParserRuleContext {
   /// Unowned, not weak: a parent always outlives its children (the parser holds the rule being built and
   /// each node holds its children), and a weak reference gives every context a side table that sends all
   /// its retains and releases through the slow path, which cost more than a third of parsing.
-  unowned var parent: ParserRuleContext?
-  var invokingState: Int
+  @exclusivity(unchecked) unowned var parent: ParserRuleContext?
+  @exclusivity(unchecked) var invokingState: Int
   let ruleIndex: Int
   let label: ContextLabel
-  var children: [ParseTreeChild] = []
-  var start: Token?
-  var stop: Token?
-  var exception: RecognitionException?
+  @exclusivity(unchecked) var children: [ParseTreeChild] = []
+  @exclusivity(unchecked) var start: Token?
+  @exclusivity(unchecked) var stop: Token?
+  @exclusivity(unchecked) var exception: RecognitionException?
 
   // Grammar labels. Which ones are used depends on `label`.
-  var e: ParserRuleContext?
-  var e1: ParserRuleContext?
-  var e2: ParserRuleContext?
-  var op: Token?
-  var opt: Token?
-  var leadingDot: Token?
-  var sign: Token?
-  var tok: Token?
-  var open: Token?
+  @exclusivity(unchecked) var e: ParserRuleContext?
+  @exclusivity(unchecked) var e1: ParserRuleContext?
+  @exclusivity(unchecked) var e2: ParserRuleContext?
+  @exclusivity(unchecked) var op: Token?
+  @exclusivity(unchecked) var opt: Token?
+  @exclusivity(unchecked) var leadingDot: Token?
+  @exclusivity(unchecked) var sign: Token?
+  @exclusivity(unchecked) var tok: Token?
+  @exclusivity(unchecked) var open: Token?
   /// Token `id` labels (Ident, GlobalCall, MemberCall, SimpleIdentifier, EscapedIdentifier).
-  var idToken: Token?
+  @exclusivity(unchecked) var idToken: Token?
   /// Select's `id=escapeIdent` label.
-  var idContext: ParserRuleContext?
-  var args: ParserRuleContext?
-  var elems: ParserRuleContext?
-  var entries: ParserRuleContext?
-  var index: ParserRuleContext?
-  var ops: [Token] = []
-  var ids: [Token] = []
-  var cols: [Token] = []
+  @exclusivity(unchecked) var idContext: ParserRuleContext?
+  @exclusivity(unchecked) var args: ParserRuleContext?
+  @exclusivity(unchecked) var elems: ParserRuleContext?
+  @exclusivity(unchecked) var entries: ParserRuleContext?
+  @exclusivity(unchecked) var index: ParserRuleContext?
+  @exclusivity(unchecked) var ops: [Token] = []
+  @exclusivity(unchecked) var ids: [Token] = []
+  @exclusivity(unchecked) var cols: [Token] = []
   /// `e1+=...` in conditionalOr / conditionalAnd, `e+=expr` in exprList.
-  var exprs: [ParserRuleContext] = []
+  @exclusivity(unchecked) var exprs: [ParserRuleContext] = []
   /// `elems+=optExpr` in listInit.
-  var elemList: [ParserRuleContext] = []
-  var fields: [ParserRuleContext] = []
-  var values: [ParserRuleContext] = []
-  var keys: [ParserRuleContext] = []
+  @exclusivity(unchecked) var elemList: [ParserRuleContext] = []
+  @exclusivity(unchecked) var fields: [ParserRuleContext] = []
+  @exclusivity(unchecked) var values: [ParserRuleContext] = []
+  @exclusivity(unchecked) var keys: [ParserRuleContext] = []
 
   init(parent: ParserRuleContext?, invokingState: Int, ruleIndex: Int, label: ContextLabel) {
     self.parent = parent
