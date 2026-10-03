@@ -2,13 +2,16 @@
 // as the cel-go driver in tools/bench/go so the two can be compared (tools/bench/bench.py).
 //
 //   swift run -c release CELBenchmarks [--cases tools/bench/cases.json] [--rounds 5] [--round-ms 100]
-//                                      [--filter name] [--phase eval] [--threads n]
+//                                      [--filter name] [--phase eval] [--threads n] [--iterations n]
 //
 // Each phase is calibrated to rounds of about --round-ms, run --rounds times, and the fastest round's time per
 // operation is printed as one tab-separated line: name, phase, ns/op. Bindings are CEL expressions
 // evaluated once with the lists extension, so both drivers build their inputs the same way.
 // With --threads n every round runs the operation on n threads at once and ns/op is wall time divided
 // by all operations, i.e. inverse throughput (shows contention on shared state; Swift driver only).
+// With --iterations n each phase runs exactly n times in one round instead of being calibrated: two runs
+// with different n under a malloc-counting interposer give allocations per operation, which unlike
+// times do not depend on the load on the machine.
 
 import CEL
 import CELExtensions
@@ -28,6 +31,7 @@ struct Options {
   var filter: String?
   var phase: String?
   var threads = 1
+  var iterations: Int?
 
   init(_ arguments: [String]) {
     var iterator = arguments.dropFirst().makeIterator()
@@ -40,6 +44,7 @@ struct Options {
       case "--filter": filter = value
       case "--phase": phase = value
       case "--threads": threads = max(1, Int(value) ?? 1)
+      case "--iterations": iterations = max(0, Int(value) ?? 0)
       default: fail("unknown argument \(argument)")
       }
     }
@@ -67,6 +72,11 @@ func now() -> UInt64 { DispatchTime.now().uptimeNanoseconds }
 /// The nanoseconds per call of `body` in the fastest of `rounds` rounds of about `roundMilliseconds`
 /// each: the round least disturbed by other load on the machine.
 func measure(_ options: Options, _ body: @Sendable () -> Void) -> Double {
+  if let iterations = options.iterations {
+    let start = now()
+    for _ in 0..<iterations { body() }
+    return Double(now() - start) / Double(max(iterations, 1))
+  }
   let target = UInt64(options.roundMilliseconds) * 1_000_000
   var n = 1
   while true {
