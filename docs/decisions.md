@@ -172,3 +172,19 @@ additive, and it gives requirements added later a place for a default, so adding
 conformers. `ObjectValue` and `PolicyTagVisitor` already had defaults; `StructTypeDescriptor` has none
 because every requirement describes the type, and `TypeAdapter` has a single requirement.
 
+## 15. Interpreter nodes share an `@unchecked Sendable` base class
+
+`Interpretable` was constrained to `AnyObject`. On Darwin a class existential may hold an Objective-C object,
+so every call through `any Interpretable` asked the runtime for the object's type (`swift_getObjectType`) and
+every copy used `swift_unknownObjectRetain` / `Release`; with qualifiers stored as 40-byte opaque existentials,
+these were about a sixth of evaluation. `Interpretable`, `Qualifier` and `Attribute` are now constrained to
+`package class InterpretableNode`, an empty class every node inherits, so the compiler knows the nodes are
+native Swift objects (evaluation 0.51–0.88× with the other changes of that pull request, `docs/performance.md`).
+
+The base class is `@unchecked Sendable` and the nodes inherit the conformance, so the compiler no longer
+checks each node's stored properties for sendability. That is accepted because the nodes are immutable by
+construction: final classes whose stored properties are `let`s of `Sendable` types, built once when a program
+is planned and only read afterwards. A node with mutable state would break that invariant silently, so new
+nodes keep to `let` properties; state that changes during evaluation lives in the `ExecutionFrame`, which is
+created per evaluation. `package` classes cannot be subclassed from other modules, so nodes defined outside
+`CEL` (the `cel.block` nodes in `CELExtensions`) are `ClosureInterpretable` instances.
