@@ -228,9 +228,12 @@ package struct ProgramEnvironment: Sendable {
       planner.observers = observers
     }
     let depth = ast.expr.depth
-    var planned: Result<any Interpretable, any Error> = .failure(PlanError("not planned"))
+    var planned: Result<any Interpretable, any Error>?
     withStack(depth: depth) {
       planned = Result { try planner.plan(ast.expr) }
+    }
+    guard let planned else {
+      throw PlanError("not planned")
     }
     return PlannedProgram(
       interpretable: try planned.get(), depth: depth,
@@ -312,8 +315,15 @@ func withStack(depth: Int, _ body: () -> Void) {
 extension Expr {
   /// The height of the expression tree (a leaf is 1), computed without recursion.
   package var depth: Int {
+    // Recursion is cheaper than the explicit stack below; it gives up past 64 levels, so deep
+    // expressions cannot overflow the stack.
+    if let height = boundedHeight(limit: 64) {
+      return height
+    }
     var maxDepth = 0
-    var stack: [(Expr, Int)] = [(self, 1)]
+    var stack: [(Expr, Int)] = []
+    stack.reserveCapacity(32)
+    stack.append((self, 1))
     while let (e, d) = stack.popLast() {
       maxDepth = Swift.max(maxDepth, d)
       switch e.kind {
@@ -340,5 +350,40 @@ extension Expr {
       }
     }
     return maxDepth
+  }
+
+  /// The height of the expression tree, or nil when it exceeds `limit`.
+  private func boundedHeight(limit: Int) -> Int? {
+    if limit == 0 {
+      return nil
+    }
+    let below = limit - 1
+    var height = 0
+    func visit(_ e: Expr) -> Bool {
+      guard let h = e.boundedHeight(limit: below) else {
+        return false
+      }
+      height = Swift.max(height, h)
+      return true
+    }
+    switch kind {
+    case .unspecified, .literal, .ident:
+      return 1
+    case .select(let s):
+      guard visit(s.operand) else { return nil }
+    case .call(let c):
+      if let t = c.target, !visit(t) { return nil }
+      for a in c.args where !visit(a) { return nil }
+    case .list(let l):
+      for a in l.elements where !visit(a) { return nil }
+    case .map(let m):
+      for entry in m.entries where !visit(entry.key) || !visit(entry.value) { return nil }
+    case .struct(let s):
+      for f in s.fields where !visit(f.value) { return nil }
+    case .comprehension(let c):
+      guard visit(c.iterRange), visit(c.accuInit), visit(c.loopCondition), visit(c.loopStep), visit(c.result)
+      else { return nil }
+    }
+    return height + 1
   }
 }

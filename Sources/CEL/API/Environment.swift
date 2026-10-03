@@ -301,13 +301,15 @@ public struct Environment: Sendable {
     for option in configuration.programOptions + options {
       option.apply(&settings)
     }
+    // Only planning reads this environment: the parser settings are left out, building them costs
+    // more than planning a small expression.
     var base = ProgramEnvironment(
       container: configuration.container,
       functions: configuration.functions,
       variables: configuration.variables,
       provider: configuration.registry,
-      macros: configuration.macros,
-      parserOptions: configuration.parserOptions,
+      macros: [],
+      parserOptions: [],
       errorOnBadPresenceTest: configuration.errorOnBadPresenceTest)
     base.decorators = configuration.decorators + settings.decorators
     base.costEstimateOptions = configuration.costEstimateOptions
