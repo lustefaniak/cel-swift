@@ -10,6 +10,11 @@ Swift/Go ratio.
   tools/bench/bench.py --swift-only --baseline before.tsv   # Swift now vs a saved Swift run
   tools/bench/bench.py --go-results go.tsv   # reuse a saved cel-go run
   tools/bench/bench.py --swift-results a.tsv --baseline b.tsv   # compare two saved Swift runs
+  tools/bench/bench.py --baseline-driver ../main/.build/release/CELBenchmarks   # this branch vs another build
+
+--baseline-driver runs another build of the Swift driver (e.g. main in a second worktree) and this one in
+alternation for --passes passes and keeps each one's fastest result, so load on the machine affects both
+alike; this is how a change's impact is measured for its pull request.
 
 Options --rounds, --round-ms, --filter and --phase are passed to both drivers. --threads n runs each phase on n
 threads at once in the Swift driver (wall time per operation); the cel-go driver has no such mode, so use it with
@@ -38,11 +43,15 @@ def driver_args(args):
         ["--filter", args.filter] if args.filter else [])
 
 
-def run_swift(args):
+def build_swift(args):
     if not args.no_build:
         subprocess.run([os.path.join(ROOT, "tools/build-guard/swiftlock"), "swift", "build", "-c", "release",
                         "--product", "CELBenchmarks", "-j", "4"], cwd=ROOT, check=True, stdout=sys.stderr)
-    cmd = [os.path.join(ROOT, ".build/release/CELBenchmarks"), "--cases", "tools/bench/cases.json"] + driver_args(args)
+
+
+def run_swift(args, driver=None):
+    driver = driver or os.path.join(ROOT, ".build/release/CELBenchmarks")
+    cmd = [driver, "--cases", os.path.join(ROOT, "tools/bench/cases.json")] + driver_args(args)
     if args.phase:
         cmd += ["--phase", args.phase]
     if args.threads > 1:
@@ -100,6 +109,8 @@ def main():
     p.add_argument("--baseline", help="compare against a saved Swift TSV instead of cel-go")
     p.add_argument("--go-results", help="use a saved cel-go TSV instead of running the Go driver")
     p.add_argument("--swift-results", help="use a saved Swift TSV instead of building and running CELBenchmarks")
+    p.add_argument("--baseline-driver", help="compare against another build of CELBenchmarks, run alternately")
+    p.add_argument("--passes", type=int, default=3, help="alternating passes with --baseline-driver")
     args = p.parse_args()
     if args.phase:
         matches = [phase for phase in PHASES if phase.startswith(args.phase)]
@@ -107,10 +118,20 @@ def main():
             p.error(f"--phase {args.phase}: expected one of {', '.join(PHASES)}")
         args.phase = matches[0]
 
+    if args.baseline_driver:
+        build_swift(args)
+        after, before = {}, {}
+        for _ in range(args.passes):
+            for results, driver in ((before, args.baseline_driver), (after, None)):
+                for key, ns in parse_tsv(run_swift(args, driver)).items():
+                    results[key] = min(ns, results.get(key, ns))
+        table(after, before, "after", "before")
+        return
     if args.swift_results:
         with open(args.swift_results) as f:
             swift_out = f.read()
     else:
+        build_swift(args)
         swift_out = run_swift(args)
     if args.save:
         with open(args.save, "w") as f:
