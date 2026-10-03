@@ -85,9 +85,13 @@ Earlier changes on main, measured back to back in their commit messages: policy 
 
 ## Where the time goes
 
-- **Parse** (2–3× cel-go with a warm prediction cache, 8× before it was shared): what remains is
-  parse-tree and token allocation and release (ARC frees the per-parse tree eagerly, about a fifth of the
-  profile) and the thread hop `LargeStack` makes for inputs with many operators.
+- **Parse** (1.1–1.3× cel-go; 2.3–2.9× before the changes below, 8× before the prediction cache was
+  shared): freeing the parse tree is about a quarter of the profile, since ARC frees it eagerly inside the
+  call while cel-go's collector frees it later. The parse tree used to cost much more: a weak `parent`
+  gave every context a side table, which sent all its retains and releases through the slow path (over a
+  third of parsing); dynamic exclusivity checks on the runtime's token stream took an eighth; inputs with
+  more than 32 operators moved to a new thread even on a thread with megabytes of stack left. Parsing
+  allocates fewer objects than cel-go (`tools/bench/allocs.py`).
 - **Check** (1.3–2× cel-go, faster on `long-or`): no single hotspot.
 - **Plan** (about 3× cel-go): node and attribute allocation, `Expr.depth`, and freeing the previous
   program; cel-go plans into a garbage-collected graph.
@@ -106,6 +110,7 @@ Performance pull requests since 0.1.0, each measured against the `main` it merge
 | pull request | change | parse | check | plan | eval |
 |---|---|---:|---:|---:|---:|
 | bench tools | `--iterations`, `--baseline-driver`, `allocs.py`, `profile.py` | - | - | - | - |
+| parser | unowned parent, unchecked exclusivity, no thread hop with stack to spare, shared label slots | 0.43–0.48 | 1.00 | 1.00 | 0.97–1.00 |
 
 ## Decisions
 

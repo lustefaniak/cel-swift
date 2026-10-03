@@ -7,6 +7,12 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 
 ## [Unreleased]
 
+### Performance
+
+- Parsing takes 0.43 to 0.48 times as long (1.1 to 1.3 times cel-go, from 2.3 to 2.9): parse-tree contexts
+  no longer get weak-reference side tables, the parser skips dynamic exclusivity checks, and an input with
+  many operators no longer starts a thread when the calling thread has enough stack (Darwin).
+
 ### Fixed
 
 - `CELSwift`: an explanation of a condition or term that starts with a global function call, such as
