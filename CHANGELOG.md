@@ -18,6 +18,9 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 - Planning (`Environment.program`) takes 0.90 to 0.97 times as long, and 0.64 to 0.76 times for trivial
   expressions: no parser options or placeholder error are built per call, and expression depth is measured
   by bounded recursion.
+- Evaluation takes 0.51 to 0.88 times as long (1.2 to 2 times cel-go, from 1.7 to 3.1): interpreter nodes,
+  attributes and qualifiers share a native base class, so calls through them need no runtime type lookup;
+  maps and variable bindings with up to 8 entries are searched without hashing; less fixed work per call.
 
 ### Fixed
 

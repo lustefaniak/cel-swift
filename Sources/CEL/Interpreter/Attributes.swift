@@ -69,7 +69,7 @@ package struct PlanError: Error, Sendable, CustomStringConvertible {
 // MARK: - Protocols
 
 /// A field selection or index on a value (cel-go `Qualifier`).
-package protocol Qualifier: Sendable {
+package protocol Qualifier: InterpretableNode, Sendable {
   /// The id of the expression the qualifier appears in.
   var id: Int64 { get }
 
@@ -276,7 +276,7 @@ func goTypeName(_ value: Value) -> String {
 // MARK: - Attributes
 
 /// A variable with qualifiers (cel-go `absoluteAttribute`).
-final class AbsoluteAttribute: NamespacedAttribute {
+final class AbsoluteAttribute: InterpretableNode, @unchecked Sendable, NamespacedAttribute {
   let attrID: Int64
   /// The names the variable could have given the container, in resolution order.
   let namespaceNames: [String]
@@ -364,7 +364,7 @@ final class AbsoluteAttribute: NamespacedAttribute {
 }
 
 /// `(cond ? a : b).field` (cel-go `conditionalAttribute`).
-final class ConditionalAttribute: Attribute {
+final class ConditionalAttribute: InterpretableNode, @unchecked Sendable, Attribute {
   let condID: Int64
   let expr: any Interpretable
   let truthy: any Attribute
@@ -421,7 +421,7 @@ final class ConditionalAttribute: Attribute {
 
 /// A parse-only identifier or select chain that is either a qualified variable name or a field
 /// selection on a shorter name (cel-go `maybeAttribute`).
-final class MaybeAttribute: Attribute {
+final class MaybeAttribute: InterpretableNode, @unchecked Sendable, Attribute {
   let attrID: Int64
   /// The candidate attributes, most specific variable name first.
   let attrs: [any NamespacedAttribute]
@@ -493,7 +493,7 @@ final class MaybeAttribute: Attribute {
 }
 
 /// Qualifiers applied to the result of an expression (cel-go `relativeAttribute`).
-final class RelativeAttribute: Attribute {
+final class RelativeAttribute: InterpretableNode, @unchecked Sendable, Attribute {
   let attrID: Int64
   let operand: any Interpretable
   let qualifiers: [any Qualifier]
@@ -547,7 +547,7 @@ final class RelativeAttribute: Attribute {
 
 /// An attribute used as a qualifier, `a[b.c]`, carrying the id of the index expression and its
 /// optionality (cel-go `attrQualifier`). Qualification goes through the wrapped attribute.
-final class AttrQualifier: Attribute {
+final class AttrQualifier: InterpretableNode, @unchecked Sendable, Attribute {
   let qualID: Int64
   let attribute: any Attribute
   let optional: Bool
@@ -584,7 +584,7 @@ final class AttrQualifier: Attribute {
 /// A constant `string`, `int`, `uint`, `bool` or `double` qualifier (cel-go `stringQualifier`,
 /// `intQualifier`, `uintQualifier`, `boolQualifier` and `doubleQualifier`, which behave
 /// identically on CEL values).
-final class ValueQualifier: ConstantQualifier, QualifierValueEquator {
+final class ValueQualifier: InterpretableNode, @unchecked Sendable, ConstantQualifier, QualifierValueEquator {
   let id: Int64
   let value: Value
   let isOptional: Bool
@@ -642,7 +642,7 @@ extension AttributeQualifier {
 }
 
 /// A field of a known struct type, read with the field's accessor (cel-go `fieldQualifier`).
-final class FieldQualifier: ConstantQualifier, QualifierValueEquator {
+final class FieldQualifier: InterpretableNode, @unchecked Sendable, ConstantQualifier, QualifierValueEquator {
   let id: Int64
   let name: String
   let fieldType: StructFieldType
@@ -703,7 +703,7 @@ final class FieldQualifier: ConstantQualifier, QualifierValueEquator {
 }
 
 /// A qualifier that always yields an unknown (cel-go `unknownQualifier`).
-final class UnknownQualifier: ConstantQualifier {
+final class UnknownQualifier: InterpretableNode, @unchecked Sendable, ConstantQualifier {
   let id: Int64
   let unknown: UnknownSet
 

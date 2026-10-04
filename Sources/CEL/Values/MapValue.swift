@@ -170,17 +170,27 @@ extension MapValue {
 public struct OrderedMap: MapValue {
   /// The keys in insertion order.
   public private(set) var keys: [MapKey]
-  private var storage: [MapKey: Value]
+  /// The values, in the order of `keys`.
+  private var values: [Value]
+  /// The position of each key in `keys`, kept only while the map has more than
+  /// `linearScanLimit` entries; smaller maps are searched linearly, which is faster than hashing.
+  private var positions: [MapKey: Int]
+
+  /// The most entries a map searches linearly instead of through `positions`.
+  private static let linearScanLimit = 8
 
   /// Creates an empty map.
   public init() {
     keys = []
-    storage = [:]
+    values = []
+    positions = [:]
   }
 
   /// Creates a map from key-value pairs; a later duplicate key replaces the earlier value.
   public init(_ entries: [(MapKey, Value)]) {
     self.init()
+    keys.reserveCapacity(entries.count)
+    values.reserveCapacity(entries.count)
     for (key, value) in entries {
       self[key] = value
     }
@@ -200,19 +210,28 @@ public struct OrderedMap: MapValue {
 
   /// Returns the value stored under `key`, or `nil`.
   public func value(forKey key: MapKey) -> Value? {
-    storage[key]
+    position(of: key).map { values[$0] }
   }
 
   /// Accesses the value stored under `key`. Assigning `nil` removes the entry.
   public subscript(key: MapKey) -> Value? {
-    get { storage[key] }
+    get { value(forKey: key) }
     set {
       if let newValue {
-        if storage.updateValue(newValue, forKey: key) == nil {
-          keys.append(key)
+        if let i = position(of: key) {
+          values[i] = newValue
+        } else {
+          append(key, newValue)
         }
-      } else if storage.removeValue(forKey: key) != nil {
-        keys.removeAll { $0 == key }
+      } else if let i = position(of: key) {
+        keys.remove(at: i)
+        values.remove(at: i)
+        positions = [:]
+        if keys.count > Self.linearScanLimit {
+          for (j, k) in keys.enumerated() {
+            positions[k] = j
+          }
+        }
       }
     }
   }
@@ -220,12 +239,30 @@ public struct OrderedMap: MapValue {
   /// Inserts a new entry, returning `false` when the key is already present.
   @discardableResult
   public mutating func insert(_ value: Value, forKey key: MapKey) -> Bool {
-    if storage[key] != nil {
+    if position(of: key) != nil {
       return false
     }
-    storage[key] = value
-    keys.append(key)
+    append(key, value)
     return true
+  }
+
+  private func position(of key: MapKey) -> Int? {
+    if keys.count <= Self.linearScanLimit {
+      return keys.firstIndex(of: key)
+    }
+    return positions[key]
+  }
+
+  private mutating func append(_ key: MapKey, _ value: Value) {
+    keys.append(key)
+    values.append(value)
+    if keys.count == Self.linearScanLimit + 1 {
+      for (j, k) in keys.enumerated() {
+        positions[k] = j
+      }
+    } else if keys.count > Self.linearScanLimit {
+      positions[key] = keys.count - 1
+    }
   }
 }
 

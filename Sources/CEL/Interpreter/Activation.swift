@@ -74,7 +74,14 @@ package struct MapActivation: Activation {
   }
 
   package func resolveName(_ name: String) -> Value? {
-    bindings[name]
+    // A few bindings are found faster by comparing names than by hashing the name.
+    if bindings.count <= 8 {
+      for (key, value) in bindings where key == name {
+        return value
+      }
+      return nil
+    }
+    return bindings[name]
   }
 }
 

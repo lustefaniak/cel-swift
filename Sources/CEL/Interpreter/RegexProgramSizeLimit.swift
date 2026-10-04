@@ -64,7 +64,7 @@ private func regexProgramSizeMessage(_ size: Int, _ limit: Int) -> String {
 
 /// A regex call whose pattern is checked against the size limit before the call (cel-go
 /// `regexLimitCall`). As in cel-go the pattern argument is evaluated twice.
-final class RegexLimitCall: InterpretableCall {
+final class RegexLimitCall: InterpretableNode, @unchecked Sendable, InterpretableCall {
   let call: any InterpretableCall
   let limit: Int
 

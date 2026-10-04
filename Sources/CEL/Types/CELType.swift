@@ -337,6 +337,27 @@ extension CELType {
     if case .wrapper(let wrapped) = self {
       return CELType.null.isAssignableRuntime(value) || wrapped.isAssignableRuntime(value)
     }
+    // Fast path for the common guards, deciding by case what comparing the runtime type names below
+    // decides: dynamic types accept every value, and a scalar type accepts the values of its own case
+    // (objects are left to the names, since an object reports its own type).
+    if isDynamic {
+      return true
+    }
+    if case .object = value {
+    } else {
+      switch self {
+      case .bool, .int, .uint, .double, .string, .bytes, .null, .duration, .timestamp:
+        switch (self, value) {
+        case (.bool, .bool), (.int, .int), (.uint, .uint), (.double, .double), (.string, .string),
+          (.bytes, .bytes), (.null, .null), (.duration, .duration), (.timestamp, .timestamp):
+          return true
+        default:
+          return false
+        }
+      default:
+        break
+      }
+    }
     let valueTypeName = value.runtimeTypeName
     if !(isDynamic || runtimeTypeName == valueTypeName) {
       return false

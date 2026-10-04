@@ -1,0 +1,2 @@
+API breakage: protocol Qualifier has generic signature change from <Self : Swift.Sendable> to <Self : CEL.InterpretableNode>
+API breakage: protocol Interpretable has generic signature change from <Self : AnyObject, Self : Swift.Sendable> to <Self : CEL.InterpretableNode>

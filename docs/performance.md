@@ -103,12 +103,15 @@ Earlier changes on main, measured back to back in their commit messages: policy 
   arrays per identifier. Planning allocates 1.1–1.3 times as often as cel-go. Fixed work per `program()`
   call (parser options nobody used, a placeholder `PlanError`) and an explicit stack in
   `Expr.depth` are gone: planning `true` takes 560 ns against cel-go's 330.
-- **Eval** (1.6–3.3× cel-go): before the payload change, copying `Value` dominated: with 40-byte
-  existential payloads `Value` was 41 bytes (stride 48), and every copy or destroy of any `Value`, even an
-  `int`, went through the outlined value witness (`initializeWithCopy for Value`, `destroy for Value`),
-  20–30% of every eval profile. With the boxed payloads `Value` is 17 bytes (stride 24). What remains is
-  ARC traffic, dynamic exclusivity checks on the comprehension `Folder`'s stored properties, `as?` casts and
-  runtime type guards.
+- **Eval** (1.2–2× cel-go; 1.7–3.1× before the changes below): what remains is ARC traffic (about a
+  quarter of the profile), copying and consuming `Value` (about 8%), `String ==` on comprehension variable
+  names, SipHash for maps over 8 entries, and a fixed cost of about 130 ns per evaluation (cel-go 25 ns),
+  mostly allocating and freeing the root frame. Before the payload change, copying `Value` dominated: with
+  40-byte existential payloads `Value` was 41 bytes (stride 48), and every copy or destroy of any `Value`,
+  even an `int`, went through the outlined value witness, 20–30% of every eval profile. Before the native
+  base class (`docs/decisions.md` § 15), every call through `any Interpretable` asked the runtime for the
+  object's type (`swift_getObjectType`) and retained it as a possible Objective-C object, and qualifiers were
+  40-byte opaque existentials. Maps and activations with up to 8 entries are now searched without hashing.
 
 ## Change log
 
@@ -121,6 +124,7 @@ Performance pull requests since 0.1.0, each measured against the `main` it merge
 | parser | unowned parent, unchecked exclusivity, no thread hop with stack to spare, shared label slots | 0.43–0.48 | 1.00 | 1.00 | 0.97–1.00 |
 | checker | type lookups without formatting, id bitset, undone failed unifications, fewer alias lookups | 1.00 | 0.55–0.73 | 1.00 | 1.00 |
 | planner | no per-call option building or placeholder error, bounded-recursion depth | 1.00 | 1.00 | 0.90–0.97 (trivial 0.64–0.76) | 1.00 |
+| evaluation | native base class for nodes and qualifiers, small maps and activations without hashing, less fixed work per call | 1.00 | 1.00 | 0.96–0.99 | 0.51–0.88 (trivial 0.72–0.83) |
 
 ## Decisions
 

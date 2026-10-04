@@ -258,6 +258,15 @@ package struct PlannedProgram: Sendable {
   /// The expression depth, used to size the evaluation stack.
   package let depth: Int
   package let interruptCheckFrequency: UInt
+  /// `interpretable` when it reports state to observers, resolved once instead of on every evaluation.
+  private let observable: ObservableInterpretable?
+
+  package init(interpretable: any Interpretable, depth: Int, interruptCheckFrequency: UInt) {
+    self.interpretable = interpretable
+    self.depth = depth
+    self.interruptCheckFrequency = interruptCheckFrequency
+    self.observable = interpretable as? ObservableInterpretable
+  }
 
   /// Evaluates with an activation (cel-go `Eval` / `ContextEval`). `interrupt` is consulted every
   /// `interruptCheckFrequency` comprehension iterations.
@@ -268,7 +277,7 @@ package struct PlannedProgram: Sendable {
     }
     var result = EvalResult(value: .null)
     withStack(depth: depth) {
-      if let observable = interpretable as? ObservableInterpretable {
+      if let observable {
         result.value = observable.observeEval(frame) { state in
           switch state {
           case let s as any EvalState: result.state = s

@@ -69,25 +69,27 @@ public struct Program: Sendable {
   }
 
   package func run(_ activation: any Activation) -> EvaluationResult {
-    let raw: EvalResult
-    if planned.interruptCheckFrequency > 0 {
-      let deadline = settings.timeLimit.map { ContinuousClock.now.advanced(by: $0) }
-      raw = withUnsafeCurrentTask { task in
-        planned.eval(activation) {
-          if let task, task.isCancelled {
-            return true
-          }
-          if let deadline, ContinuousClock.now >= deadline {
-            return true
-          }
-          return false
-        }
-      }
-    } else {
-      raw = planned.eval(activation)
-    }
+    let raw = planned.interruptCheckFrequency > 0 ? runInterruptible(activation) : planned.eval(activation)
     return EvaluationResult(
       value: raw.value, cost: raw.actualCost, state: raw.state.map(EvaluationState.init))
+  }
+
+  /// Evaluates with interrupt checks for task cancellation and the time limit; kept out of `run` so
+  /// evaluations without them do not pay for its stack frame.
+  @inline(never)
+  private func runInterruptible(_ activation: any Activation) -> EvalResult {
+    let deadline = settings.timeLimit.map { ContinuousClock.now.advanced(by: $0) }
+    return withUnsafeCurrentTask { task in
+      planned.eval(activation) {
+        if let task, task.isCancelled {
+          return true
+        }
+        if let deadline, ContinuousClock.now >= deadline {
+          return true
+        }
+        return false
+      }
+    }
   }
 }
 
