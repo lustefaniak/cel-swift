@@ -126,3 +126,5 @@ pushed to `main` directly.
   notes follow the 0.1.0 release: a one-paragraph summary, Highlights, Installation, Conformance (table
   against cel-go, cel-cpp and cel-rust), Platforms, Performance, Breaking changes (from the `api-breakage`
   job, with migration notes), Known limitations, and a link to `CHANGELOG.md` at the tag.
+- After the tag is pushed, empty `tools/api-check/allowlist.txt` in its own PR. Not in the release PR: CI
+  compares against the latest tag, which is still the previous release until the tag exists.

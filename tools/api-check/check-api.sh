@@ -7,7 +7,7 @@
 #   tools/build-guard/swiftlock tools/api-check/check-api.sh 0.1.0    # against a given treeish
 #
 # Breakages that are intended (a minor bump before 1.0, a major one after) go in
-# tools/api-check/allowlist.txt, one exact message per line, and are cleared at each release.
+# tools/api-check/allowlist.txt, one exact message per line, and are cleared once the next release is tagged.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/../.." && pwd)"
