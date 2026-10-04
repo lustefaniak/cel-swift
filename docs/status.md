@@ -50,17 +50,13 @@ strong sections). Enum values are `EnumValue` objects with an opaque enum type (
 
 Each item is sized for one fresh session. Read `CLAUDE.md` first; every build goes through `tools/build-guard/swiftlock`.
 
-1. **After 0.1.0** — released 2026-10-01 (`CHANGELOG.md`). Point PRBar at `from: "0.1.0"`;
-   `tools/api-check/check-api.sh` now compares against the tag. Custom macros, optimizers and decorators,
-   proto AST conversion and the cel-go tests that need them (headers of `Tests/CELTests/API*Tests.swift`) wait
-   for a public AST facade (decision 3).
-2. **Performance** — baseline and method in `docs/performance.md` (`tools/bench/bench.py` runs the same
-   expressions through cel-swift and cel-go, parse / check / plan / eval). On main: parse about 8× cel-go,
-   check 1.3–2×, plan about 3×, eval 1.6–3.3× (after the boxed `Value` payloads, decision 6). The shared ANTLR
-   prediction cache with antlr-go's per-DFA locking is being implemented (decision 9; the coarse-lock prototype
-   `perf/shared-parser-cache` made parse 3–5× faster single-threaded).
-   Remaining without a decision: plan allocation, `Folder` exclusivity checks, `LargeStack`'s thread hop for
-   long inputs.
+1. **After 0.1.1** — 0.1.0 released 2026-10-01, 0.1.1 (performance) 2026-10-04 (`CHANGELOG.md`). Point PRBar
+   at `from: "0.1.1"`; `tools/api-check/check-api.sh` compares against the latest tag. Custom macros,
+   optimizers and decorators, proto AST conversion and the cel-go tests that need them (headers of
+   `Tests/CELTests/API*Tests.swift`) wait for a public AST facade (decision 3).
+2. **Performance** — method, numbers and what is left in `docs/performance.md`. As of 0.1.1, against cel-go:
+   parse 1.1–1.3×, check 0.8–1.1×, plan 2.6–3×, eval 1.2–2×. Remaining: plan allocation and freeing the
+   previous program, ARC traffic in eval, the fixed cost of about 130 ns per evaluation.
 
 ## After the port
 

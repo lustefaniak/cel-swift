@@ -7,6 +7,13 @@ conformance numbers (`python3 tools/dashboard/dashboard.py --run`).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-04
+
+Faster in every phase, with the same public API and the same conformance as 0.1.0: cel-go v0.32.0,
+cel-spec v0.25.3, 2508 / 2508 tests in checked mode and 2339 / 2339 in parse-only mode. Against cel-go on
+`tools/bench` (`docs/performance.md`): parsing 1.1 to 1.3 times as long, checking 0.8 to 1.1, planning 2.6 to
+3, evaluation 1.2 to 2.
+
 ### Performance
 
 - Parsing takes 0.43 to 0.48 times as long (1.1 to 1.3 times cel-go, from 2.3 to 2.9): parse-tree contexts
@@ -156,5 +163,6 @@ Against cel-go on the benchmark expressions (`docs/performance.md`, `tools/bench
 without changing the public cases. Parsing takes 2 to 3 times as long as cel-go with the shared ANTLR prediction
 cache (`docs/decisions.md` § 9; about 8 times before it), and concurrent parses on one environment scale.
 
-[Unreleased]: https://github.com/lustefaniak/cel-swift/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/lustefaniak/cel-swift/compare/0.1.1...HEAD
+[0.1.1]: https://github.com/lustefaniak/cel-swift/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/lustefaniak/cel-swift/releases/tag/0.1.0

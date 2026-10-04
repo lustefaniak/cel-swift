@@ -338,6 +338,6 @@ struct CELSwiftGenerator: CodeGenerator {
     Google_Protobuf_Edition.proto2...Google_Protobuf_Edition.edition2023
   }
 
-  var version: String? { "0.1.0" }
+  var version: String? { "0.1.1" }
   var projectURL: String? { "https://github.com/lustefaniak/cel-swift" }
 }

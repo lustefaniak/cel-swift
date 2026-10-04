@@ -3,7 +3,7 @@
 A pure-Swift implementation of the [Common Expression Language](https://github.com/google/cel-spec),
 ported from [cel-go](https://github.com/cel-expr/cel-go) and measured against the cel-spec conformance suite.
 
-Status: 0.1.0, the first release. The parser, checker, interpreter, cost model, unknowns and residuals,
+Status: 0.1.1. The parser, checker, interpreter, cost model, unknowns and residuals,
 standard library, cel-go's extension libraries, protobuf support, CEL policies and the `tests.yaml` runner
 are ported, and every cel-spec conformance test passes.
 [docs/status.md](docs/status.md) has the current state, [docs/plan.md](docs/plan.md) the milestones,
@@ -34,7 +34,7 @@ implementations' numbers come from their skip lists at the commits in `tools/das
 Add the package and depend on the products you need:
 
 ```swift
-.package(url: "https://github.com/lustefaniak/cel-swift.git", from: "0.1.0"),
+.package(url: "https://github.com/lustefaniak/cel-swift.git", from: "0.1.1"),
 ```
 
 | Product | Contents | Dependencies |
